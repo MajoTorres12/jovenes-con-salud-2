@@ -67,7 +67,7 @@ export default function Home() {
         minHeight: '85vh',
         display: 'flex',
         alignItems: 'center',
-        background: 'linear-gradient(135deg, var(--color-primary-800) 0%, var(--color-primary-600) 50%, var(--color-accent-700) 100%)',
+        background: 'var(--hero-gradient)',
         overflow: 'hidden',
       }}>
         {/* Background pattern */}
@@ -311,25 +311,25 @@ export default function Home() {
             className="logos-grid"
           >
             {[
-              { src: '/logo-tamaulipas.png', alt: 'Gobierno del Estado de Tamaulipas', maxW: '200px', href: 'https://www.tamaulipas.gob.mx/' },
-              { src: '/logo-injuventud.png', alt: 'Instituto de la Juventud de Tamaulipas', maxW: '160px', href: 'https://www.tamaulipas.gob.mx/jovenes/' },
-              { src: '/logo-salud.png', alt: 'Secretaría de Salud de Tamaulipas', maxW: '180px', href: 'https://www.tamaulipas.gob.mx/salud/' },
-              { src: '/logo-bienestar.png', alt: 'Secretaría del Bienestar', maxW: '200px', href: 'https://www.tamaulipas.gob.mx/bienestarsocial/' },
+              { src: '/logo-tamaulipas.png', alt: 'Gobierno del Estado de Tamaulipas', maxW: '240px', href: 'https://www.tamaulipas.gob.mx/' },
+              { src: '/logo-injuventud.png', alt: 'Instituto de la Juventud de Tamaulipas', maxW: '180px', href: 'https://www.tamaulipas.gob.mx/jovenes/' },
+              { src: '/logo-salud.jpg', alt: 'Secretaría de Salud de Tamaulipas', maxW: '200px', href: 'https://www.tamaulipas.gob.mx/salud/' },
+              { src: '/logo-bienestar.png', alt: 'Secretaría del Bienestar', maxW: '240px', href: 'https://www.tamaulipas.gob.mx/bienestarsocial/' },
             ].map((logo, i) => (
               <a key={i} href={logo.href} target="_blank" rel="noopener noreferrer" style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(255,255,255,0.97)',
-                borderRadius: '14px',
-                padding: '0.85rem 1.25rem',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.18)',
+                background: dark ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.97)',
+                borderRadius: '16px',
+                padding: '1.25rem 1.75rem',
+                boxShadow: dark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.18)',
                 transition: 'transform 0.22s ease, box-shadow 0.22s ease',
-                minHeight: '76px',
+                minHeight: '100px',
                 textDecoration: 'none',
               }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(0,0,0,0.25)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.18)' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = dark ? '0 8px 28px rgba(0,0,0,0.55)' : '0 8px 28px rgba(0,0,0,0.25)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = dark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.18)' }}
               >
                 <img
                   src={logo.src}
@@ -337,7 +337,7 @@ export default function Home() {
                   title={logo.alt}
                   style={{
                     height: 'auto',
-                    maxHeight: '52px',
+                    maxHeight: '68px',
                     width: '100%',
                     maxWidth: logo.maxW,
                     objectFit: 'contain',
@@ -658,7 +658,7 @@ export default function Home() {
       {/* CTA */}
       <section style={{
         padding: '5rem 1.5rem',
-        background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-accent-600))',
+        background: 'var(--cta-gradient)',
         textAlign: 'center',
       }}>
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>

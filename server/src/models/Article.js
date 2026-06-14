@@ -64,4 +64,8 @@ const Article = sequelize.define('Article', {
   underscored: true,
 })
 
+import Disease from './Disease.js'
+Disease.hasMany(Article, { foreignKey: 'diseaseId', as: 'articles', onDelete: 'SET NULL' })
+Article.belongsTo(Disease, { foreignKey: 'diseaseId', as: 'disease' })
+
 export default Article

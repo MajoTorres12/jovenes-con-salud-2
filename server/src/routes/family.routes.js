@@ -3,6 +3,9 @@ import { Op } from 'sequelize'
 import FamilyMember from '../models/FamilyMember.js'
 import HealthRecord from '../models/HealthRecord.js'
 import { authenticate } from '../middleware/auth.middleware.js'
+import User from '../models/User.js'
+import MedicalAlert from '../models/MedicalAlert.js'
+import { checkHealthLimits } from '../utils/healthLimits.js'
 
 const router = Router()
 
@@ -16,6 +19,20 @@ const UNITS = {
   heartRate: 'bpm',
   cholesterol: 'mg/dL',
   triglycerides: 'mg/dL',
+}
+
+const RELATIONSHIP_LABELS = {
+  abuelo: 'Abuelo',
+  abuela: 'Abuela',
+  padre: 'Padre',
+  madre: 'Madre',
+  tio: 'Tío',
+  tia: 'Tía',
+  hermano: 'Hermano',
+  hermana: 'Hermana',
+  hijo: 'Hijo',
+  hija: 'Hija',
+  otro: 'Otro',
 }
 
 // Helper: Validate CURP format
@@ -193,6 +210,42 @@ router.post('/:memberId/health', async (req, res, next) => {
       notes: notes || null,
       recordedAt: recordedAt ? new Date(recordedAt) : new Date(),
     })
+
+    // Check health limits and trigger alert for family member if abnormal
+    try {
+      const user = await User.findByPk(req.user.id)
+      if (user && user.doctorId) {
+        const checkResult = checkHealthLimits(type, value, value2)
+        if (checkResult && checkResult.isAbnormal) {
+          let displayValue = `${value} ${UNITS[type] || ''}`
+          if (type === 'bloodPressure' && value2 != null) {
+            displayValue = `${value}/${value2} ${UNITS[type] || ''}`
+          } else if (type === 'weight' && value2 != null) {
+            const heightM = value2 / 100
+            const bmi = value / (heightM * heightM)
+            displayValue = `${value} kg (IMC: ${bmi.toFixed(1)})`
+          }
+
+          const relLabel = RELATIONSHIP_LABELS[member.relationship] || member.relationship
+          const familyName = `${member.name} (${relLabel})`
+
+          await MedicalAlert.create({
+            userId: user.id,
+            doctorId: user.doctorId,
+            healthRecordId: record.id,
+            severity: checkResult.severity,
+            type,
+            message: `${checkResult.message} - ${familyName}`,
+            value: displayValue,
+            description: `Familiar de ${user.name}: ${checkResult.description}`,
+            status: 'pending',
+            recordedAt: record.recordedAt,
+          })
+        }
+      }
+    } catch (alertErr) {
+      console.error('Error generating medical alert for family member:', alertErr)
+    }
 
     res.status(201).json({ message: 'Registro creado', record })
   } catch (err) {

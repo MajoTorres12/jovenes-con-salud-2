@@ -1,4 +1,15 @@
+import { useState } from 'react'
+import { FaUser, FaLock, FaEnvelope, FaCalendar, FaCheck, FaExclamationCircle } from 'react-icons/fa'
+import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import api from '../services/api'
 
+export default function Profile() {
+  const { user, setUser } = useAuth()
+  const { dark, toggleDark } = useTheme()
+  const [activeTab, setActiveTab] = useState('info')
+  const [name, setName] = useState(user?.name || '')
+  const [birthDate, setBirthDate] = useState(user?.birthDate?.slice(0, 10) || '')
   const [profileMsg, setProfileMsg] = useState(null)
   const [savingProfile, setSavingProfile] = useState(false)
 

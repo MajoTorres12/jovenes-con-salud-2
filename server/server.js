@@ -12,6 +12,11 @@ import './src/models/Article.js'
 import './src/models/NewsPost.js'
 import './src/models/Medication.js'
 import './src/models/Supplement.js'
+import './src/models/ContactSettings.js'
+import './src/models/Location.js'
+import './src/models/ChatMessage.js'
+import './src/models/MedicalAlert.js'
+
 
 
 const PORT = process.env.PORT || 3001

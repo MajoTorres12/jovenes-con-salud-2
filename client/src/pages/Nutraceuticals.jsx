@@ -124,13 +124,13 @@ function ProductCard({ product }) {
   return (
     <div style={{
       borderRadius: '14px', overflow: 'hidden',
-      background: 'white', border: '1px solid #e8e0d8',
-      boxShadow: '0 2px 12px rgba(135,18,51,0.07)',
+      background: 'var(--color-surface-100)', border: '1px solid var(--color-surface-200)',
+      boxShadow: 'var(--shadow-card)',
       display: 'flex', flexDirection: 'column',
       transition: 'box-shadow 0.25s, transform 0.25s',
     }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 28px rgba(135,18,51,0.15)'; e.currentTarget.style.transform = 'translateY(-3px)' }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(135,18,51,0.07)'; e.currentTarget.style.transform = 'translateY(0)' }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = 'var(--shadow-elevated)'; e.currentTarget.style.transform = 'translateY(-3px)' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'var(--shadow-card)'; e.currentTarget.style.transform = 'translateY(0)' }}
     >
       {/* Image carousel */}
       <CardCarousel images={product.images} productName={product.name} />
@@ -278,11 +278,11 @@ export default function Nutraceuticals() {
     : products.filter(p => p.disease?.category === filter || p.disease?.slug?.includes(filter))
 
   return (
-    <div style={{ background: '#faf8f6', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--color-surface-50)', minHeight: '100vh' }}>
 
       {/* ── Hero ──────────────────────────────────────────── */}
       <section style={{
-        background: 'linear-gradient(135deg, #871233 0%, #5e0c23 55%, #3a0310 100%)',
+        background: 'var(--hero-gradient)',
         padding: '4.5rem 1.5rem 3.5rem',
         position: 'relative', overflow: 'hidden',
       }}>

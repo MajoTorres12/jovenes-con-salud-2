@@ -19,6 +19,38 @@ export default function Navbar() {
   const { dark, toggleDark } = useTheme()
   const [showWearableModal, setShowWearableModal] = useState(false)
 
+  // Translation support
+  const [langOpen, setLangOpen] = useState(false)
+  const langRef = useRef(null)
+
+  const LANGUAGES = [
+    { code: 'es', label: 'Español', flag: '🇪🇸' },
+    { code: 'en', label: 'English', flag: '🇺🇸' },
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+    { code: 'pt', label: 'Português', flag: '🇵🇹' },
+    { code: 'de', label: 'Deutsch', flag: '🇩🇪' }
+  ]
+
+  const getLanguageFromCookie = () => {
+    const match = document.cookie.match(/googtrans=\/es\/([a-z]{2})/)
+    return match ? match[1] : 'es'
+  }
+
+  const selectLanguage = (langCode) => {
+    if (langCode === 'es') {
+      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.localhost";
+      document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=localhost";
+    } else {
+      document.cookie = `googtrans=/es/${langCode}; path=/`;
+      document.cookie = `googtrans=/es/${langCode}; path=/; domain=localhost`;
+      document.cookie = `googtrans=/es/${langCode}; path=/; domain=.localhost`;
+    }
+    window.location.reload()
+  }
+
+  const activeLang = LANGUAGES.find(l => l.code === getLanguageFromCookie()) || LANGUAGES[0]
+
   // Alerts and Notifications
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [alerts, setAlerts] = useState([])
@@ -188,6 +220,9 @@ export default function Navbar() {
       if (medsRef.current && !medsRef.current.contains(e.target)) {
         setMedsOpen(false)
       }
+      if (langRef.current && !langRef.current.contains(e.target)) {
+        setLangOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -234,6 +269,55 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+
+            {/* Language Selector Dropdown (Desktop Nav) */}
+            <div ref={langRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <button
+                onClick={() => setLangOpen(!langOpen)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.4rem',
+                  padding: '0.45rem 0.8rem', borderRadius: 'var(--radius-lg)',
+                  background: dark ? 'var(--color-surface-200)' : 'var(--color-surface-50)', 
+                  border: `1px solid ${dark ? '#272530' : 'var(--color-surface-200)'}`,
+                  color: 'var(--color-surface-700)', fontSize: '0.78rem', fontWeight: '700',
+                  cursor: 'pointer', transition: 'all 0.2s',
+                }}
+              >
+                <span>{activeLang.flag}</span>
+                <span style={{ textTransform: 'uppercase' }}>{activeLang.code}</span>
+                <FaChevronDown size={10} style={{ transform: langOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+              </button>
+
+              {langOpen && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 100,
+                  background: dark ? 'var(--color-surface-100)' : 'var(--color-surface-50)',
+                  borderRadius: '10px', minWidth: '130px',
+                  boxShadow: 'var(--shadow-elevated)', border: `1px solid ${dark ? '#272530' : 'var(--color-surface-200)'}`,
+                  padding: '0.4rem 0', animation: 'slideUp 0.15s ease',
+                }}>
+                  {LANGUAGES.map(lang => (
+                    <button
+                      key={lang.code}
+                      onClick={() => { selectLanguage(lang.code); setLangOpen(false); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        width: '100%', padding: '0.5rem 1rem', border: 'none',
+                        background: activeLang.code === lang.code ? (dark ? '#272530' : '#f0fdf4') : 'transparent',
+                        color: activeLang.code === lang.code ? 'var(--color-primary-500)' : 'var(--color-surface-700)',
+                        fontSize: '0.82rem', fontWeight: activeLang.code === lang.code ? '700' : '500',
+                        textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => { if (activeLang.code !== lang.code) e.currentTarget.style.background = dark ? '#1e1c25' : '#faf8f5' }}
+                      onMouseLeave={e => { if (activeLang.code !== lang.code) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <span>{lang.flag}</span>
+                      <span>{lang.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {isAuthenticated ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.75rem' }}>
@@ -818,6 +902,26 @@ export default function Navbar() {
                   <FaChartLine size={14} /> Mi Salud
                 </Link>
 
+                {/* Admin link móvil */}
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                      padding: '0.75rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      textDecoration: 'none',
+                      fontSize: '0.95rem',
+                      fontWeight: '700',
+                      color: '#871233',
+                      background: '#87123312',
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    }}
+                  >
+                    <FaUserShield size={14} /> Panel de Administración
+                  </Link>
+                )}
+
                 {user && (
                   <button
                     onClick={() => {
@@ -917,25 +1021,7 @@ export default function Navbar() {
                   <FaUserCircle size={14} /> Mi Perfil
                 </Link>
 
-                {/* Admin link móvil */}
-                {user?.role === 'admin' && (
-                  <Link
-                    to="/admin"
-                    onClick={() => setIsOpen(false)}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: 'var(--radius-md)',
-                      textDecoration: 'none',
-                      fontSize: '0.95rem',
-                      fontWeight: '700',
-                      color: '#871233',
-                      background: '#87123312',
-                      display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    }}
-                  >
-                    <FaUserShield size={14} /> Panel de Administración
-                  </Link>
-                )}
+
 
                 {/* Doctor link móvil */}
                 {user?.role === 'doctor' && (
@@ -976,6 +1062,35 @@ export default function Navbar() {
                 Iniciar Sesión
               </Link>
             )}
+
+            {/* Language Selector (Mobile Nav Drawer) */}
+            <div style={{
+              padding: '0.75rem 1rem',
+              display: 'flex', flexDirection: 'column', gap: '0.5rem',
+              borderTop: `1px solid ${dark ? '#1e1c25' : '#e8ddd0'}`,
+              marginTop: '0.5rem',
+            }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-surface-400)' }}>Idioma / Language</div>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                {LANGUAGES.map(lang => (
+                  <button
+                    key={lang.code}
+                    onClick={() => selectLanguage(lang.code)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.35rem',
+                      padding: '0.4rem 0.65rem', borderRadius: '8px',
+                      border: `1.5px solid ${activeLang.code === lang.code ? 'var(--color-primary-500)' : (dark ? '#272530' : '#e8ddd0')}`,
+                      background: activeLang.code === lang.code ? (dark ? 'rgba(135,18,51,0.15)' : 'var(--color-primary-50)') : 'transparent',
+                      color: activeLang.code === lang.code ? 'var(--color-primary-500)' : 'var(--color-surface-700)',
+                      fontSize: '0.78rem', fontWeight: '600', cursor: 'pointer',
+                    }}
+                  >
+                    <span>{lang.flag}</span>
+                    <span>{lang.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

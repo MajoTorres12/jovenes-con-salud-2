@@ -150,16 +150,16 @@ export default function Diseases() {
                 position: 'relative',
                 overflow: 'hidden',
               }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-4px)'
-                e.currentTarget.style.boxShadow = 'var(--shadow-elevated)'
-                e.currentTarget.style.borderColor = disease.colorHex + '60'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'var(--shadow-card)'
-                e.currentTarget.style.borderColor = 'var(--color-surface-200)'
-              }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-4px)'
+                  e.currentTarget.style.boxShadow = 'var(--shadow-elevated)'
+                  e.currentTarget.style.borderColor = disease.colorHex + '60'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = 'var(--shadow-card)'
+                  e.currentTarget.style.borderColor = 'var(--color-surface-200)'
+                }}
               >
                 {/* Accent bar */}
                 <div style={{

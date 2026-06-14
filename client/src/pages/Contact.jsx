@@ -4,50 +4,19 @@ import { HiMail, HiPhone, HiLocationMarker } from 'react-icons/hi'
 import { FaEnvelope, FaUser, FaPaperPlane, FaCheckCircle } from 'react-icons/fa'
 import api from '../services/api'
 
-const PREDEFINED_LOCATIONS = [
-  {
-    key: 'torre_bicentenario',
-    label: 'Torre Bicentenario Injuve (piso 18)',
-    address: 'Parque Bicentenario, Blvrd Praxedis Balboa, Sin Nombre de Col 13, 87083 Cdad. Victoria, Tamps.',
-    latitude: 23.75166,
-    longitude: -99.09692,
-  },
-  {
-    key: 'imss_hosp_general',
-    label: 'IMSS Hospital General',
-    address: 'i m s s Justo Sierra SN-S I.M.S.S, Centro Universitario, Cdad. Victoria, Tamps.',
-    latitude: 23.738,
-    longitude: -99.131,
-  },
-  {
-    key: 'cruz_roja',
-    label: 'Cruz Roja',
-    address: 'C. Lomas de Calamaco 462, Lomas de Calamaco, 87018 Cdad. Victoria, Tamps.',
-    latitude: 23.7548,
-    longitude: -99.1675,
-  },
-  {
-    key: 'clinica_issste',
-    label: 'Clínica Hospital Issste',
-    address: '19 Oaxaca y San Luis Potosí, Fovissste, 87020 Cdad. Victoria, Tamps.',
-    latitude: 23.75424,
-    longitude: -99.15119,
-  },
-  {
-    key: 'hosp_general_vic',
-    label: 'Hospital General Victoria',
-    address: 'Blvd. Fidel Velazquez 1845, Revolución Verde, 87024 Cdad. Victoria, Tamps.',
-    latitude: 23.748455,
-    longitude: -99.137461,
-  }
-]
-
 export default function Contact() {
   const { register, handleSubmit, formState: { errors }, reset } = useForm()
   const [sending, setSending] = useState(false)
   const [feedback, setFeedback] = useState(null)
+  
+  const [locations, setLocations] = useState([])
+  const [locationsLoading, setLocationsLoading] = useState(true)
+  
   const [settings, setSettings] = useState({
     address: 'Parque Bicentenario, Blvrd Praxedis Balboa, Sin Nombre de Col 13, 87083 Cdad. Victoria, Tamps.',
+    phone: '(834) 123-4567',
+    email: 'contacto@jovenesconsalud.gob.mx',
+    schedule: 'Lunes a Viernes: 8:00 AM - 5:00 PM\nSábados: 9:00 AM - 1:00 PM',
     latitude: 23.75166,
     longitude: -99.09692,
     label: 'Instituto de la Juventud de Tamaulipas',
@@ -58,42 +27,55 @@ export default function Contact() {
     latitude: 23.75166,
     longitude: -99.09692,
   })
-  const [selectedKey, setSelectedKey] = useState('torre_bicentenario')
+  const [selectedKey, setSelectedKey] = useState('')
 
   useEffect(() => {
-    api.get('/contact/settings')
-      .then(res => {
-        if (res.data.settings) {
-          const s = res.data.settings
-          setSettings(s)
-          
-          const lat = parseFloat(s.latitude)
-          const lng = parseFloat(s.longitude)
-          const match = PREDEFINED_LOCATIONS.find(loc => 
-            Math.abs(loc.latitude - lat) < 0.001 && 
-            Math.abs(loc.longitude - lng) < 0.001
-          )
-          
-          if (match) {
-            setSelectedKey(match.key)
-            setActiveMap({
-              label: match.label,
-              address: match.address,
-              latitude: match.latitude,
-              longitude: match.longitude
-            })
-          } else {
-            setSelectedKey('official')
-            setActiveMap({
-              label: s.label || 'Dirección Oficial',
-              address: s.address,
-              latitude: lat,
-              longitude: lng
-            })
-          }
-        }
-      })
-      .catch(err => console.error('Error fetching contact settings:', err))
+    Promise.all([
+      api.get('/contact/settings'),
+      api.get('/contact/locations')
+    ]).then(([settingsRes, locationsRes]) => {
+      const s = settingsRes.data.settings || {}
+      const locs = locationsRes.data.locations || []
+      
+      setSettings(prev => ({ ...prev, ...s }))
+      setLocations(locs)
+      
+      const lat = parseFloat(s.latitude)
+      const lng = parseFloat(s.longitude)
+      
+      const match = locs.find(loc => 
+        Math.abs(loc.latitude - lat) < 0.001 && 
+        Math.abs(loc.longitude - lng) < 0.001
+      )
+      
+      if (match) {
+        setSelectedKey(match.id)
+        setActiveMap({
+          label: match.label,
+          address: match.address,
+          latitude: match.latitude,
+          longitude: match.longitude
+        })
+      } else if (locs.length > 0) {
+        setSelectedKey(locs[0].id)
+        setActiveMap({
+          label: locs[0].label,
+          address: locs[0].address,
+          latitude: locs[0].latitude,
+          longitude: locs[0].longitude
+        })
+      } else {
+        setSelectedKey('official')
+        setActiveMap({
+          label: s.label || 'Dirección Oficial',
+          address: s.address || 'Victoria, Tamps.',
+          latitude: isNaN(lat) ? 23.75166 : lat,
+          longitude: isNaN(lng) ? -99.09692 : lng
+        })
+      }
+    })
+    .catch(err => console.error('Error fetching contact settings/locations:', err))
+    .finally(() => setLocationsLoading(false))
   }, [])
 
   const onSubmit = async (data) => {
@@ -130,8 +112,8 @@ export default function Contact() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {[
               { icon: HiLocationMarker, label: 'Dirección', value: settings.address },
-              { icon: HiPhone, label: 'Teléfono', value: '(834) 123-4567' },
-              { icon: HiMail, label: 'Correo', value: 'contacto@jovenesconsalud.gob.mx' },
+              { icon: HiPhone, label: 'Teléfono', value: settings.phone },
+              { icon: HiMail, label: 'Correo', value: settings.email },
             ].map((item, i) => (
               <div key={i} style={{
                 display: 'flex', gap: '1rem', padding: '1rem',
@@ -162,9 +144,8 @@ export default function Contact() {
             <h3 style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--color-primary-700)', marginBottom: '0.5rem' }}>
               Horario de Atención
             </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-surface-600)' }}>
-              Lunes a Viernes: 8:00 AM - 5:00 PM<br />
-              Sábados: 9:00 AM - 1:00 PM
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-surface-600)', whiteSpace: 'pre-line' }}>
+              {settings.schedule}
             </p>
           </div>
         </div>
@@ -317,48 +298,58 @@ export default function Contact() {
               </button>
             )}
 
-            {PREDEFINED_LOCATIONS.map((loc) => {
-              const isActive = selectedKey === loc.key
-              return (
-                <button
-                  key={loc.key}
-                  type="button"
-                  onClick={() => {
-                    setSelectedKey(loc.key)
-                    setActiveMap({
-                      label: loc.label,
-                      address: loc.address,
-                      latitude: loc.latitude,
-                      longitude: loc.longitude
-                    })
-                  }}
-                  className={`location-menu-item ${isActive ? 'active' : ''}`}
-                  style={{
-                    textAlign: 'left',
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius-lg)',
-                    border: isActive ? '1px solid var(--color-primary-200)' : '1px solid var(--color-surface-200)',
-                    background: isActive ? 'var(--color-primary-50)' : 'var(--color-surface-100)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    gap: '0.75rem',
-                    alignItems: 'flex-start',
-                    transition: 'all 0.2s ease',
-                    width: '100%'
-                  }}
-                >
-                  <HiLocationMarker style={{ color: isActive ? 'var(--color-primary-500)' : 'var(--color-surface-400)', fontSize: '1.2rem', marginTop: '2px', flexShrink: 0 }} />
-                  <div>
-                    <div className="location-title" style={{ fontSize: '0.85rem', fontWeight: '700', color: isActive ? 'var(--color-primary-900)' : 'var(--color-surface-800)' }}>
-                      {loc.label}
+            {locationsLoading ? (
+              <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-surface-400)', fontSize: '0.85rem' }}>
+                Cargando sedes...
+              </div>
+            ) : locations.length === 0 ? (
+              <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-surface-400)', fontSize: '0.85rem' }}>
+                No hay sedes registradas
+              </div>
+            ) : (
+              locations.map((loc) => {
+                const isActive = selectedKey === loc.id
+                return (
+                  <button
+                    key={loc.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedKey(loc.id)
+                      setActiveMap({
+                        label: loc.label,
+                        address: loc.address,
+                        latitude: loc.latitude,
+                        longitude: loc.longitude
+                      })
+                    }}
+                    className={`location-menu-item ${isActive ? 'active' : ''}`}
+                    style={{
+                      textAlign: 'left',
+                      padding: '0.75rem 1rem',
+                      borderRadius: 'var(--radius-lg)',
+                      border: isActive ? '1px solid var(--color-primary-200)' : '1px solid var(--color-surface-200)',
+                      background: isActive ? 'var(--color-primary-50)' : 'var(--color-surface-100)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      gap: '0.75rem',
+                      alignItems: 'flex-start',
+                      transition: 'all 0.2s ease',
+                      width: '100%'
+                    }}
+                  >
+                    <HiLocationMarker style={{ color: isActive ? 'var(--color-primary-500)' : 'var(--color-surface-400)', fontSize: '1.2rem', marginTop: '2px', flexShrink: 0 }} />
+                    <div>
+                      <div className="location-title" style={{ fontSize: '0.85rem', fontWeight: '700', color: isActive ? 'var(--color-primary-900)' : 'var(--color-surface-800)' }}>
+                        {loc.label}
+                      </div>
+                      <div className="location-address" style={{ fontSize: '0.72rem', color: isActive ? 'var(--color-primary-700)' : 'var(--color-surface-500)', marginTop: '2px', lineHeight: '1.3' }}>
+                        {loc.address}
+                      </div>
                     </div>
-                    <div className="location-address" style={{ fontSize: '0.72rem', color: isActive ? 'var(--color-primary-700)' : 'var(--color-surface-500)', marginTop: '2px', lineHeight: '1.3' }}>
-                      {loc.address}
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
+                  </button>
+                )
+              })
+            )}
           </div>
 
           {/* Map Column */}

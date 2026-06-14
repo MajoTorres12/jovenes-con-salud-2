@@ -20,6 +20,10 @@ import familyRoutes from './routes/family.routes.js'
 import medicationRoutes from './routes/medication.routes.js'
 import supplementRoutes from './routes/supplement.routes.js'
 import nutraceuticalRoutes from './routes/nutraceutical.routes.js'
+import adminRoutes from './routes/admin.routes.js'
+import doctorRoutes from './routes/doctor.routes.js'
+import chatRoutes from './routes/chat.routes.js'
+import ContactSettings from './models/ContactSettings.js'
 
 const app = express()
 
@@ -42,12 +46,12 @@ app.use(cors({
 }))
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: { error: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.' },
-})
-app.use('/api/', limiter)
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 min
+//   max: 100, // limit each IP to 100 requests per windowMs
+//   message: { error: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.' },
+// })
+// app.use('/api/', limiter)
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }))
@@ -84,6 +88,9 @@ app.use('/api/family', familyRoutes)
 app.use('/api/medications', medicationRoutes)
 app.use('/api/supplements', supplementRoutes)
 app.use('/api/nutraceuticals', nutraceuticalRoutes)
+app.use('/api/admin', adminRoutes)
+app.use('/api/doctor', doctorRoutes)
+app.use('/api/chat', chatRoutes)
 
 // ========================================
 // Error handling

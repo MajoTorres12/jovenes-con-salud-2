@@ -4,11 +4,71 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="google" content="notranslate" />
     <title>Jóvenes con Salud</title>
+    <style type="text/css">
+      /* Strict overrides to hide Google Translate banner, tooltips and page offsets */
+      html, body {
+        top: 0px !important;
+        margin-top: 0px !important;
+        position: static !important;
+      }
+      .translated-ltr, .translated-rtl {
+        margin-top: 0px !important;
+        top: 0px !important;
+      }
+      /* Hide Google Translate top banner, tooltip popups, and wrapper containers */
+      .goog-te-banner-frame,
+      iframe.goog-te-banner-frame,
+      .goog-te-banner,
+      .goog-te-balloon-frame,
+      #goog-gt-tt,
+      .goog-tooltip,
+      .goog-tooltip:hover,
+      [class*="VIpgJd-ZVi9od-aahgUe"],
+      [class*="VIpgJd-ZVi9od-xl07Ob"],
+      body > .skiptranslate {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0px !important;
+        border: none !important;
+        pointer-events: none !important;
+      }
+      .goog-text-highlight {
+        background-color: transparent !important;
+        box-shadow: none !important;
+        box-sizing: border-box !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="google_translate_element" style="display: none;"></div>
+    
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+          pageLanguage: 'es',
+          includedLanguages: 'es,en,fr,pt,de',
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false
+        }, 'google_translate_element');
+      }
+
+      // Continuous dynamic cleaner to keep resetting body/html offsets
+      const cleanTranslate = () => {
+        // Force reset body/html margins and offsets to avoid layout shifting
+        document.body.style.setProperty('top', '0px', 'important');
+        document.body.style.setProperty('margin-top', '0px', 'important');
+        document.documentElement.style.setProperty('top', '0px', 'important');
+        document.documentElement.style.setProperty('margin-top', '0px', 'important');
+      };
+
+      // Run cleaner on interval
+      setInterval(cleanTranslate, 50);
+      window.addEventListener('load', cleanTranslate);
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -31,8 +31,17 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('user', 'admin'),
+    type: DataTypes.ENUM('user', 'admin', 'doctor'),
     defaultValue: 'user',
+  },
+  doctorId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id',
+    },
+    field: 'doctor_id',
   },
   isActive: {
     type: DataTypes.BOOLEAN,
@@ -47,5 +56,9 @@ const User = sequelize.define('User', {
   timestamps: true,
   underscored: true,
 })
+
+// Associations
+User.belongsTo(User, { foreignKey: 'doctorId', as: 'doctor' })
+User.hasMany(User, { foreignKey: 'doctorId', as: 'patients' })
 
 export default User

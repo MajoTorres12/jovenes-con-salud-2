@@ -2,6 +2,9 @@ import { Router } from 'express'
 import { Op } from 'sequelize'
 import HealthRecord from '../models/HealthRecord.js'
 import { authenticate } from '../middleware/auth.middleware.js'
+import User from '../models/User.js'
+import MedicalAlert from '../models/MedicalAlert.js'
+import { checkHealthLimits } from '../utils/healthLimits.js'
 
 const router = Router()
 
@@ -44,6 +47,40 @@ router.post('/records', async (req, res) => {
       notes: notes || null,
       recordedAt: recordedAt ? new Date(recordedAt) : new Date(),
     })
+
+    // Check health limits and trigger alert if necessary
+    try {
+      const user = await User.findByPk(req.user.id)
+      if (user && user.doctorId) {
+        const checkResult = checkHealthLimits(type, value, value2)
+        if (checkResult && checkResult.isAbnormal) {
+          let displayValue = `${value} ${UNITS[type] || ''}`
+          if (type === 'bloodPressure' && value2 != null) {
+            displayValue = `${value}/${value2} ${UNITS[type] || ''}`
+          } else if (type === 'weight' && value2 != null) {
+            const heightM = value2 / 100
+            const bmi = value / (heightM * heightM)
+            displayValue = `${value} kg (IMC: ${bmi.toFixed(1)})`
+          }
+
+          await MedicalAlert.create({
+            userId: user.id,
+            doctorId: user.doctorId,
+            healthRecordId: record.id,
+            severity: checkResult.severity,
+            type,
+            message: checkResult.message,
+            value: displayValue,
+            description: checkResult.description,
+            status: 'pending',
+            recordedAt: record.recordedAt,
+          })
+        }
+      }
+    } catch (alertErr) {
+      console.error('Error generating medical alert:', alertErr)
+      // Do not block record response if alert creation fails
+    }
 
     res.status(201).json({ message: 'Registro creado', record })
   } catch (error) {
@@ -104,6 +141,20 @@ router.get('/stats', async (req, res) => {
   } catch (error) {
     console.error('Error obteniendo estadísticas:', error)
     res.status(500).json({ error: 'Error al obtener estadísticas' })
+  }
+})
+
+// GET /api/health-tracking/alerts — list patient's alerts
+router.get('/alerts', async (req, res) => {
+  try {
+    const alerts = await MedicalAlert.findAll({
+      where: { userId: req.user.id },
+      order: [['recordedAt', 'DESC']]
+    })
+    res.json({ alerts })
+  } catch (error) {
+    console.error('Error obteniendo alertas:', error)
+    res.status(500).json({ error: 'Error al obtener alertas' })
   }
 })
 

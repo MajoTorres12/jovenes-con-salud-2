@@ -132,7 +132,7 @@ export default function News() {
     <div style={{ background: 'var(--color-surface-50)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Banner Superior / Hero */}
       <section style={{
-        background: 'linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-700) 100%)',
+        background: 'var(--hero-gradient)',
         padding: '5rem 1.5rem',
         textAlign: 'center',
         position: 'relative',

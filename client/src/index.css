@@ -64,6 +64,38 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+
+  /* Banners gradients */
+  --hero-gradient: linear-gradient(135deg, var(--color-primary-800) 0%, var(--color-primary-600) 50%, var(--color-accent-700) 100%);
+  --cta-gradient: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-600));
+  --institutions-gradient: linear-gradient(135deg, var(--color-primary-900) 0%, var(--color-primary-800) 100%);
+  --color-hero-badge: #ffffff;
+  --color-hero-highlight: var(--color-accent-300);
+
+  /* Health tracking metrics — Light mode defaults */
+  --color-metric-weight: #871233;
+  --color-metric-weight-grad-0: #eb9aad;
+  --color-metric-weight-grad-1: #fdf2f4;
+
+  --color-metric-glucose: #d97706;
+  --color-metric-glucose-grad-0: #fde68a;
+  --color-metric-glucose-grad-1: #fefbeb;
+
+  --color-metric-bloodPressure: #dc2626;
+  --color-metric-bloodPressure-grad-0: #fecaca;
+  --color-metric-bloodPressure-grad-1: #fef2f2;
+
+  --color-metric-heartRate: #0d9488;
+  --color-metric-heartRate-grad-0: #99f6e4;
+  --color-metric-heartRate-grad-1: #f0fdfa;
+
+  --color-metric-cholesterol: #2563eb;
+  --color-metric-cholesterol-grad-0: #bfdbfe;
+  --color-metric-cholesterol-grad-1: #eff6ff;
+
+  --color-metric-triglycerides: #7c3aed;
+  --color-metric-triglycerides-grad-0: #ddd6fe;
+  --color-metric-triglycerides-grad-1: #f5f3ff;
 }
 
 /* ========================================
@@ -182,4 +214,334 @@ body {
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
+
+/* ========================================
+   Dark Mode System & Variables
+   ======================================== */
+
+.dark {
+  /* Surface Overrides - Sleek Charcoal/Navy Dark Theme */
+  --color-surface-50: #0c0b0f;   /* Main page background */
+  --color-surface-100: #141319;  /* Card / nav / primary surface background */
+  --color-surface-200: #1e1c25;  /* Secondary surface / border / input background */
+  --color-surface-300: #272530;  /* Active hover surface / border */
+  --color-surface-400: #3f3b4e;  /* Muted elements / borders */
+  --color-surface-500: #7e7a8c;  /* Subtitles / inactive labels */
+  --color-surface-600: #9ea4b0;  /* Standard paragraph texts */
+  --color-surface-700: #c5bfae;  /* Highlight texts */
+  --color-surface-800: #e5dfef;  /* Heading accents */
+  --color-surface-900: #ffffff;  /* High-contrast pure white heading text */
+
+  /* Primary Accent - Government Guinda in Dark Mode */
+  --color-primary-50: #29030a;
+  --color-primary-100: #420410;
+  --color-primary-200: #5c0817;
+  --color-primary-300: #7d0f23;
+  --color-primary-400: #a81a33;
+  --color-primary-500: #e03b60;  /* Vibrant high-contrast red/guinda for visibility */
+  --color-primary-600: #eb5575;
+  --color-primary-700: #f47590;
+  --color-primary-800: #fca5b7;
+  --color-primary-900: #fde5ea;
+
+  /* Golden Accent in Dark Mode */
+  --color-accent-50: #231c12;
+  --color-accent-100: #362c1c;
+  --color-accent-200: #4d3e29;
+  --color-accent-300: #675439;
+  --color-accent-400: #937b5a;
+  --color-accent-500: #d4a96a;  /* Readable gold */
+  --color-accent-600: #e3c49a;
+
+  /* Elevation and Shadow tweaks for Dark Mode */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.55);
+  --shadow-elevated: 0 12px 35px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 0 25px rgba(224, 59, 96, 0.2);
+  --color-footer-border: rgba(255, 255, 255, 0.06);
+
+  /* Banners gradients - Dark Mode overrides */
+  --hero-gradient: linear-gradient(135deg, #0c0b0f 0%, #29030a 60%, #141319 100%);
+  --cta-gradient: linear-gradient(135deg, #141319 0%, #29030a 100%);
+  --institutions-gradient: linear-gradient(135deg, #0c0b0f 0%, #141319 100%);
+  --color-hero-badge: var(--color-accent-400);
+  --color-hero-highlight: var(--color-accent-500);
+
+  /* Health tracking metrics — Dark mode overrides */
+  --color-metric-weight: #e03b60;
+  --color-metric-weight-grad-0: rgba(224, 59, 96, 0.4);
+  --color-metric-weight-grad-1: rgba(224, 59, 96, 0.05);
+
+  --color-metric-glucose: #fb923c;
+  --color-metric-glucose-grad-0: rgba(251, 146, 60, 0.4);
+  --color-metric-glucose-grad-1: rgba(251, 146, 60, 0.05);
+
+  --color-metric-bloodPressure: #f87171;
+  --color-metric-bloodPressure-grad-0: rgba(248, 113, 113, 0.4);
+  --color-metric-bloodPressure-grad-1: rgba(248, 113, 113, 0.05);
+
+  --color-metric-heartRate: #2dd4bf;
+  --color-metric-heartRate-grad-0: rgba(45, 212, 191, 0.4);
+  --color-metric-heartRate-grad-1: rgba(45, 212, 191, 0.05);
+
+  --color-metric-cholesterol: #60a5fa;
+  --color-metric-cholesterol-grad-0: rgba(96, 165, 250, 0.4);
+  --color-metric-cholesterol-grad-1: rgba(96, 165, 250, 0.05);
+
+  --color-metric-triglycerides: #a78bfa;
+  --color-metric-triglycerides-grad-0: rgba(167, 139, 250, 0.4);
+  --color-metric-triglycerides-grad-1: rgba(167, 139, 250, 0.05);
+}
+
+/* Base Body override */
+.dark body {
+  background-color: var(--color-surface-50) !important;
+  color: var(--color-surface-900) !important;
+}
+
+/* Glassmorphism Navigation in Dark Mode */
+.dark .glass {
+  background: rgba(12, 11, 15, 0.85) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* General Layout modifications */
+.dark main {
+  background-color: var(--color-surface-50) !important;
+}
+
+/* Override hardcoded inline style background colors */
+.dark div[style*="background: white"],
+.dark div[style*="background: 'white'"],
+.dark div[style*="background: rgb(255, 255, 255)"],
+.dark div[style*="background: #ffffff"],
+.dark div[style*="background: #fff"],
+.dark div[style*="background-color: white"],
+.dark div[style*="background-color: 'white'"],
+.dark div[style*="background-color: rgb(255, 255, 255)"],
+.dark div[style*="background-color: #ffffff"],
+.dark div[style*="background-color: #fff"],
+.dark form[style*="background: white"],
+.dark form[style*="background-color: white"],
+.dark section[style*="background: white"],
+.dark section[style*="background-color: white"] {
+  background: var(--color-surface-100) !important;
+  background-color: var(--color-surface-100) !important;
+}
+
+/* Override Wrapper & Main backgrounds */
+.dark #dashboard-content,
+.dark div[style*="background: #f8fafc"],
+.dark div[style*="background-color: #f8fafc"],
+.dark div[style*="background: rgb(248, 250, 252)"],
+.dark div[style*="background-color: rgb(248, 250, 252)"],
+.dark div[style*="background: rgb(249, 250, 251)"],
+.dark div[style*="background-color: rgb(249, 250, 251)"],
+.dark div[style*="background: #f9fafb"],
+.dark div[style*="background-color: #f9fafb"] {
+  background: var(--color-surface-50) !important;
+  background-color: var(--color-surface-50) !important;
+}
+
+/* Handle secondary page elements (cards, headers, FAQ blocks, accordion headers) */
+.dark div[style*="background: var(--color-surface-100)"],
+.dark div[style*="background-color: var(--color-surface-100)"] {
+  background: var(--color-surface-200) !important;
+  background-color: var(--color-surface-200) !important;
+}
+
+/* Inputs, Textareas, Select elements override */
+.dark input[style*="background: white"],
+.dark input[style*="background-color: white"],
+.dark input[style*="background: #ffffff"],
+.dark input[style*="background-color: #ffffff"],
+.dark input[style*="background:rgb(255, 255, 255)"],
+.dark select[style*="background: white"],
+.dark select[style*="background-color: white"],
+.dark select[style*="background: #ffffff"],
+.dark select[style*="background-color: #ffffff"],
+.dark select[style*="background:rgb(255, 255, 255)"],
+.dark textarea[style*="background: white"],
+.dark textarea[style*="background-color: white"],
+.dark textarea[style*="background: #ffffff"],
+.dark textarea[style*="background-color: #ffffff"],
+.dark textarea[style*="background:rgb(255, 255, 255)"],
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--color-surface-200) !important;
+  color: var(--color-surface-900) !important;
+  border-color: var(--color-surface-300) !important;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: var(--color-primary-500) !important;
+  box-shadow: 0 0 0 2px rgba(235, 71, 112, 0.2) !important;
+}
+
+/* Hover style dropdown containers and popup cards */
+.dark div[style*="position: absolute"][style*="background: white"],
+.dark div[style*="position: absolute"][style*="background-color: white"],
+.dark div[style*="position: absolute"][style*="background: #ffffff"],
+.dark div[style*="position: absolute"][style*="background-color: #ffffff"],
+.dark div[style*="position: absolute"][style*="background:rgb(255, 255, 255)"] {
+  background: var(--color-surface-100) !important;
+  background-color: var(--color-surface-100) !important;
+  border-color: var(--color-surface-300) !important;
+  color: var(--color-surface-900) !important;
+}
+
+/* Text Colors overrides for high contrast and readability */
+.dark [style*="color: #0f172a"],
+.dark [style*="color:#0f172a"],
+.dark [style*="color: #1e293b"],
+.dark [style*="color:#1e293b"],
+.dark [style*="color: #000000"],
+.dark [style*="color: #000"],
+.dark [style*="color: #111827"],
+.dark [style*="color:#111827"],
+.dark [style*="color: #1f2937"],
+.dark [style*="color:#1f2937"],
+.dark [style*="color: #374151"],
+.dark [style*="color:#374151"],
+.dark [style*="color: #2c3e50"] {
+  color: var(--color-surface-900) !important;
+}
+
+.dark [style*="color: #64748b"],
+.dark [style*="color:#64748b"],
+.dark [style*="color: #475569"],
+.dark [style*="color:#475569"],
+.dark [style*="color: #4b5563"],
+.dark [style*="color:#4b5563"],
+.dark [style*="color: #555555"],
+.dark [style*="color: #6b7280"],
+.dark [style*="color:#6b7280"] {
+  color: var(--color-surface-600) !important;
+}
+
+.dark [style*="color: #94a3b8"],
+.dark [style*="color:#94a3b8"],
+.dark [style*="color: #9ca3af"],
+.dark [style*="color:#9ca3af"] {
+  color: var(--color-surface-500) !important;
+}
+
+/* Primary Guinda texts (like price, active text tags) */
+.dark [style*="color: #871233"],
+.dark [style*="color:#871233"] {
+  color: var(--color-primary-500) !important;
+}
+
+/* Borders overrides */
+.dark *[style*="border: 1px solid #e2e8f0"],
+.dark *[style*="border:1px solid #e2e8f0"],
+.dark *[style*="border: 1.5px solid #e2e8f0"],
+.dark *[style*="border: 1.5px solid var(--color-surface-200)"],
+.dark *[style*="border: 1px solid var(--color-surface-200)"],
+.dark *[style*="border: 1.5px solid #e8e0d8"],
+.dark *[style*="border: 1px solid #e8e0d8"],
+.dark *[style*="border-bottom: 1px solid #e8e0d8"],
+.dark *[style*="border: 1px solid #e5e7eb"],
+.dark *[style*="border:1px solid #e5e7eb"] {
+  border-color: var(--color-surface-300) !important;
+}
+
+/* Table elements */
+.dark table {
+  color: var(--color-surface-900) !important;
+}
+
+.dark th {
+  background-color: var(--color-surface-200) !important;
+  color: var(--color-surface-900) !important;
+  border-color: var(--color-surface-300) !important;
+}
+
+.dark td {
+  border-color: var(--color-surface-200) !important;
+}
+
+/* Program badges */
+.dark span[style*="background: #dcfce7"] {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.dark span[style*="background: #dbeafe"] {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: #60a5fa !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.dark span[style*="background: #fee2e2"] {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.dark span[style*="background: #ede9fe"] {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+  color: #a78bfa !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+/* ========================================
+   RGB Normalized DOM overrides
+   ======================================== */
+
+/* RGB inline color overrides */
+.dark [style*="color: rgb(15, 23, 42)"],
+.dark [style*="color:rgb(15, 23, 42)"],
+.dark [style*="color: rgb(30, 41, 59)"],
+.dark [style*="color:rgb(30, 41, 59)"],
+.dark [style*="color: rgb(17, 24, 39)"],
+.dark [style*="color:rgb(17, 24, 39)"],
+.dark [style*="color: rgb(31, 41, 55)"],
+.dark [style*="color:rgb(31, 41, 55)"],
+.dark [style*="color: rgb(55, 65, 81)"],
+.dark [style*="color:rgb(55, 65, 81)"],
+.dark [style*="color: rgb(51, 65, 85)"],
+.dark [style*="color:rgb(51, 65, 85)"] {
+  color: var(--color-surface-900) !important;
+}
+
+.dark [style*="color: rgb(100, 116, 139)"],
+.dark [style*="color:rgb(100, 116, 139)"],
+.dark [style*="color: rgb(71, 85, 105)"],
+.dark [style*="color:rgb(71, 85, 105)"],
+.dark [style*="color: rgb(75, 85, 99)"],
+.dark [style*="color:rgb(75, 85, 99)"],
+.dark [style*="color: rgb(107, 114, 128)"],
+.dark [style*="color:rgb(107, 114, 128)"] {
+  color: var(--color-surface-600) !important;
+}
+
+.dark [style*="color: rgb(148, 163, 184)"],
+.dark [style*="color:rgb(148, 163, 184)"],
+.dark [style*="color: rgb(156, 163, 175)"],
+.dark [style*="color:rgb(156, 163, 175)"] {
+  color: var(--color-surface-500) !important;
+}
+
+.dark [style*="color: rgb(135, 18, 51)"],
+.dark [style*="color:rgb(135, 18, 51)"] {
+  color: var(--color-primary-500) !important;
+}
+
+/* RGB border overrides */
+.dark *[style*="border: 1px solid rgb(226, 232, 240)"],
+.dark *[style*="border: 1.5px solid rgb(226, 232, 240)"],
+.dark *[style*="border: 1px solid rgb(203, 213, 225)"],
+.dark *[style*="border: 1px solid rgb(229, 231, 235)"],
+.dark *[style*="border: 1px solid rgb(232, 224, 216)"],
+.dark *[style*="border-bottom: 1px solid rgb(232, 224, 216)"] {
+  border-color: var(--color-surface-300) !important;
+}
+
+
 

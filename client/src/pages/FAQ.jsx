@@ -41,7 +41,7 @@ function FaqItem({ question, answer }) {
     <div style={{
       borderRadius: 'var(--radius-lg)',
       border: '1px solid var(--color-surface-200)',
-      background: 'white',
+      background: 'var(--color-surface-100)',
       overflow: 'hidden',
       transition: 'all 0.2s',
     }}>

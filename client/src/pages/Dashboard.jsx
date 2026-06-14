@@ -9,6 +9,7 @@ import {
 } from 'recharts'
 import jsPDF from 'jspdf'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import api from '../services/api'
 import MedicationsPanel from '../components/dashboard/MedicationsPanel'
 import SupplementsPanel from '../components/dashboard/SupplementsPanel'
@@ -37,6 +38,7 @@ const TYPES = [
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const { dark } = useTheme()
   const [stats, setStats] = useState(null)
   const [records, setRecords] = useState([])
   const [activeType, setActiveType] = useState('weight')
@@ -109,7 +111,7 @@ export default function Dashboard() {
         : '/health-tracking/records'
       const allRecordsRes = await api.get(recordsEndpoint, { params: { limit: 500 } })
       const from = fromDate ? new Date(fromDate) : (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })()
-      const to   = toDate   ? new Date(toDate)   : new Date()
+      const to = toDate ? new Date(toDate) : new Date()
       to.setHours(23, 59, 59, 999)  // include the full end day
       const allRecords = (allRecordsRes.data.records || [])
         .filter(r => { const d = new Date(r.recordedAt); return d >= from && d <= to })
@@ -147,9 +149,9 @@ export default function Dashboard() {
         }
         if (!hex || !hex.startsWith('#')) return [136, 136, 136]
         return [
-          parseInt(hex.slice(1,3),16),
-          parseInt(hex.slice(3,5),16),
-          parseInt(hex.slice(5,7),16),
+          parseInt(hex.slice(1, 3), 16),
+          parseInt(hex.slice(3, 5), 16),
+          parseInt(hex.slice(5, 7), 16),
         ]
       }
 
@@ -291,11 +293,11 @@ export default function Dashboard() {
             ? calcBMI(latest.value, heightForBMI)
             : null
           const bmiCat = getBMICategory(bmi)
-          const glucoseCat       = t.key === 'glucose'       ? getGlucoseCategory(latest.value)                        : null
-          const heartRateCat     = t.key === 'heartRate'     ? getHeartRateCategory(latest.value)                      : null
-          const bpCat            = t.key === 'bloodPressure' ? getBloodPressureCategory(latest.value, latest.value2)   : null
-          const cholesterolCat   = t.key === 'cholesterol'   ? getCholesterolCategory(latest.value)                    : null
-          const triglyceridesCat = t.key === 'triglycerides' ? getTriglyceridesCategory(latest.value)                  : null
+          const glucoseCat = t.key === 'glucose' ? getGlucoseCategory(latest.value) : null
+          const heartRateCat = t.key === 'heartRate' ? getHeartRateCategory(latest.value) : null
+          const bpCat = t.key === 'bloodPressure' ? getBloodPressureCategory(latest.value, latest.value2) : null
+          const cholesterolCat = t.key === 'cholesterol' ? getCholesterolCategory(latest.value) : null
+          const triglyceridesCat = t.key === 'triglycerides' ? getTriglyceridesCategory(latest.value) : null
           const indicatorCat = bmiCat || glucoseCat || heartRateCat || bpCat || cholesterolCat || triglyceridesCat
           const indicatorLabel = bmiCat
             ? `IMC ${bmi} - ${bmiCat.label}`
@@ -363,10 +365,10 @@ export default function Dashboard() {
 
       // ── Per-type: Table + Chart ──────────────────────────
       const colsT = [
-        { label: 'Fecha',  x: margin,      w: 44 },
-        { label: 'Valor',  x: margin + 44, w: 28 },
+        { label: 'Fecha', x: margin, w: 44 },
+        { label: 'Valor', x: margin + 44, w: 28 },
         { label: 'Unidad', x: margin + 72, w: 24 },
-        { label: 'Notas',  x: margin + 96, w: pageW - margin - 96 - margin },
+        { label: 'Notas', x: margin + 96, w: pageW - margin - 96 - margin },
       ]
       const rowH = 6.5
 
@@ -377,44 +379,44 @@ export default function Dashboard() {
         addPageIfNeeded(chartH + 8)
         const cW = pageW - margin * 2
         const cX = margin, cY = y
-        const [r,g,b] = hexToRgb(color)
+        const [r, g, b] = hexToRgb(color)
         pdf.setFillColor(248, 250, 252)
         pdf.rect(cX, cY, cW, chartH, 'F')
         pdf.setDrawColor(226, 232, 240)
         pdf.rect(cX, cY, cW, chartH, 'S')
         if (data.length < 2) {
-          pdf.setFontSize(8); pdf.setTextColor(148,163,184)
-          pdf.text('Insuficientes datos para graficar', cX + cW/2, cY + chartH/2, { align:'center' })
+          pdf.setFontSize(8); pdf.setTextColor(148, 163, 184)
+          pdf.text('Insuficientes datos para graficar', cX + cW / 2, cY + chartH / 2, { align: 'center' })
           y += chartH + 5; return
         }
         const vals = data.map(d => d.v)
         const minV = Math.min(...vals), maxV = Math.max(...vals), range = maxV - minV || 1
         const pad = 7
-        const toX = (i) => cX + pad + (i/(data.length-1)) * (cW - pad*2)
-        const toY = (v) => cY + chartH - pad - ((v-minV)/range)*(chartH-pad*2)
+        const toX = (i) => cX + pad + (i / (data.length - 1)) * (cW - pad * 2)
+        const toY = (v) => cY + chartH - pad - ((v - minV) / range) * (chartH - pad * 2)
         // grid lines
-        pdf.setDrawColor(226,232,240); pdf.setLineWidth(0.15)
-        for (let g=0; g<=4; g++) {
-          const gy = cY + pad + (g/4)*(chartH-pad*2)
-          pdf.line(cX+pad, gy, cX+cW-pad, gy)
+        pdf.setDrawColor(226, 232, 240); pdf.setLineWidth(0.15)
+        for (let g = 0; g <= 4; g++) {
+          const gy = cY + pad + (g / 4) * (chartH - pad * 2)
+          pdf.line(cX + pad, gy, cX + cW - pad, gy)
         }
         // axis value labels
-        pdf.setFontSize(5.5); pdf.setTextColor(148,163,184)
-        pdf.text(`${maxV}`, cX+1, cY+pad+1)
-        pdf.text(`${minV}`, cX+1, cY+chartH-pad+1)
+        pdf.setFontSize(5.5); pdf.setTextColor(148, 163, 184)
+        pdf.text(`${maxV}`, cX + 1, cY + pad + 1)
+        pdf.text(`${minV}`, cX + 1, cY + chartH - pad + 1)
         // line
-        pdf.setDrawColor(r,g,b); pdf.setLineWidth(0.7)
-        for (let i=1; i<data.length; i++) {
-          pdf.line(toX(i-1), toY(vals[i-1]), toX(i), toY(vals[i]))
+        pdf.setDrawColor(r, g, b); pdf.setLineWidth(0.7)
+        for (let i = 1; i < data.length; i++) {
+          pdf.line(toX(i - 1), toY(vals[i - 1]), toX(i), toY(vals[i]))
         }
         // dots
-        pdf.setFillColor(r,g,b)
-        const step = Math.max(1, Math.floor(data.length/8))
+        pdf.setFillColor(r, g, b)
+        const step = Math.max(1, Math.floor(data.length / 8))
         data.forEach((d, i) => {
           pdf.circle(toX(i), toY(d.v), 0.9, 'F')
-          if (i % step === 0 || i === data.length-1) {
-            pdf.setFontSize(5.5); pdf.setTextColor(148,163,184)
-            pdf.text(d.label, toX(i), cY+chartH-1, { align:'center' })
+          if (i % step === 0 || i === data.length - 1) {
+            pdf.setFontSize(5.5); pdf.setTextColor(148, 163, 184)
+            pdf.text(d.label, toX(i), cY + chartH - 1, { align: 'center' })
           }
         })
         pdf.setLineWidth(0.2)
@@ -424,43 +426,43 @@ export default function Dashboard() {
       TYPES.forEach(t => {
         const recs = allRecords
           .filter(r => r.type === t.key)
-          .sort((a,b) => new Date(a.recordedAt) - new Date(b.recordedAt))
+          .sort((a, b) => new Date(a.recordedAt) - new Date(b.recordedAt))
         if (recs.length === 0) return
 
         addPageIfNeeded(20)
-        const [cr,cg,cb] = hexToRgb(t.color)
+        const [cr, cg, cb] = hexToRgb(t.color)
         // Section header
-        pdf.setFillColor(cr,cg,cb)
-        pdf.rect(margin, y, pageW-margin*2, 8, 'F')
-        pdf.setTextColor(255,255,255); pdf.setFontSize(9); pdf.setFont('helvetica','bold')
-        pdf.text(`${t.label}  (${t.unit})`, margin+3, y+5.5)
-        pdf.setFontSize(7.5); pdf.setFont('helvetica','normal')
-        pdf.text(`${recs.length} registro${recs.length!==1?'s':''}`, pageW-margin-2, y+5.5, { align:'right' })
+        pdf.setFillColor(cr, cg, cb)
+        pdf.rect(margin, y, pageW - margin * 2, 8, 'F')
+        pdf.setTextColor(255, 255, 255); pdf.setFontSize(9); pdf.setFont('helvetica', 'bold')
+        pdf.text(`${t.label}  (${t.unit})`, margin + 3, y + 5.5)
+        pdf.setFontSize(7.5); pdf.setFont('helvetica', 'normal')
+        pdf.text(`${recs.length} registro${recs.length !== 1 ? 's' : ''}`, pageW - margin - 2, y + 5.5, { align: 'right' })
         y += 8
         // Column headers
-        pdf.setFillColor(240,242,245)
-        pdf.rect(margin, y, pageW-margin*2, 6, 'F')
-        pdf.setTextColor(71,85,105); pdf.setFontSize(7.5); pdf.setFont('helvetica','bold')
-        colsT.forEach(c => pdf.text(c.label, c.x+2, y+4.2))
+        pdf.setFillColor(240, 242, 245)
+        pdf.rect(margin, y, pageW - margin * 2, 6, 'F')
+        pdf.setTextColor(71, 85, 105); pdf.setFontSize(7.5); pdf.setFont('helvetica', 'bold')
+        colsT.forEach(c => pdf.text(c.label, c.x + 2, y + 4.2))
         y += 6
         // Rows
-        pdf.setFont('helvetica','normal')
+        pdf.setFont('helvetica', 'normal')
         recs.forEach((r, i) => {
-          addPageIfNeeded(rowH+2)
-          pdf.setFillColor(i%2===0?248:255, i%2===0?250:255, i%2===0?252:255)
-          pdf.rect(margin, y, pageW-margin*2, rowH, 'F')
-          pdf.setTextColor(71,85,105); pdf.setFontSize(8)
-          const rDate = new Date(r.recordedAt).toLocaleString('es-MX',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
-          const rVal  = r.type==='bloodPressure' ? `${r.value}/${r.value2}` : `${r.value}`
-          pdf.text(rDate,  colsT[0].x+2, y+4.5)
-          pdf.text(rVal,   colsT[1].x+2, y+4.5)
-          pdf.text(t.unit, colsT[2].x+2, y+4.5)
-          pdf.text(pdf.splitTextToSize(r.notes||'—', colsT[3].w-4)[0], colsT[3].x+2, y+4.5)
+          addPageIfNeeded(rowH + 2)
+          pdf.setFillColor(i % 2 === 0 ? 248 : 255, i % 2 === 0 ? 250 : 255, i % 2 === 0 ? 252 : 255)
+          pdf.rect(margin, y, pageW - margin * 2, rowH, 'F')
+          pdf.setTextColor(71, 85, 105); pdf.setFontSize(8)
+          const rDate = new Date(r.recordedAt).toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+          const rVal = r.type === 'bloodPressure' ? `${r.value}/${r.value2}` : `${r.value}`
+          pdf.text(rDate, colsT[0].x + 2, y + 4.5)
+          pdf.text(rVal, colsT[1].x + 2, y + 4.5)
+          pdf.text(t.unit, colsT[2].x + 2, y + 4.5)
+          pdf.text(pdf.splitTextToSize(r.notes || '—', colsT[3].w - 4)[0], colsT[3].x + 2, y + 4.5)
           y += rowH
         })
         // Chart
         y += 3
-        drawLineChart(recs.map(r=>({ v: parseFloat(r.value), label: new Date(r.recordedAt).toLocaleDateString('es-MX',{day:'2-digit',month:'short'}) })), t.color)
+        drawLineChart(recs.map(r => ({ v: parseFloat(r.value), label: new Date(r.recordedAt).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) })), t.color)
         y += 2
       })
 
@@ -493,7 +495,7 @@ export default function Dashboard() {
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000)
     } catch (e) {
       console.error('Error exportando PDF:', e)
-      alert(`Error al generar el PDF:\n${e.message}\n\nStack: ${e.stack?.split('\n').slice(0,3).join('\n')}`)
+      alert(`Error al generar el PDF:\n${e.message}\n\nStack: ${e.stack?.split('\n').slice(0, 3).join('\n')}`)
     } finally {
       setExporting(false)
     }
@@ -678,123 +680,123 @@ export default function Dashboard() {
             <button
               onClick={() => { if (!exporting) { setPdfMenuOpen(p => !p); setShowCustomPicker(false) } }}
               disabled={exporting}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.6rem 1.25rem', borderRadius: '10px',
-              border: '1.5px solid var(--color-surface-200)', background: 'white',
-              color: 'var(--color-surface-600)', fontSize: '0.85rem', fontWeight: '600',
-              cursor: exporting ? 'not-allowed' : 'pointer', boxShadow: 'var(--shadow-sm)',
-              transition: 'all 0.2s',
-            }}
-          >
-            <FaFilePdf style={{ color: '#ef4444' }} />
-            {exporting ? 'Generando PDF...' : 'Descargar Reporte'}
-            <span style={{ fontSize: '0.65rem', marginLeft: '0.1rem', transition: 'transform 0.2s', display: 'inline-block', transform: pdfMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
-          </button>
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.6rem 1.25rem', borderRadius: '10px',
+                border: '1.5px solid var(--color-surface-200)', background: 'white',
+                color: 'var(--color-surface-600)', fontSize: '0.85rem', fontWeight: '600',
+                cursor: exporting ? 'not-allowed' : 'pointer', boxShadow: 'var(--shadow-sm)',
+                transition: 'all 0.2s',
+              }}
+            >
+              <FaFilePdf style={{ color: '#ef4444' }} />
+              {exporting ? 'Generando PDF...' : 'Descargar Reporte'}
+              <span style={{ fontSize: '0.65rem', marginLeft: '0.1rem', transition: 'transform 0.2s', display: 'inline-block', transform: pdfMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+            </button>
 
-          {pdfMenuOpen && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 500,
-              background: 'var(--color-surface-100)', borderRadius: '14px', minWidth: '240px',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.25)', border: '1px solid var(--color-surface-200)',
-              overflow: 'hidden',
-              animation: 'fadeIn 0.15s ease',
-            }}>
-              {/* Quick options */}
-              <div style={{ padding: '0.6rem 0.5rem', borderBottom: '1px solid var(--color-surface-200)' }}>
-                <p style={{ fontSize: '0.68rem', fontWeight: '700', color: 'var(--color-surface-500)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0.2rem 0.75rem 0.5rem' }}>Rango rápido</p>
-                {[
-                  { label: '📅  Último mes',       months: 1  },
-                  { label: '📅  Últimos 3 meses',  months: 3  },
-                  { label: '📅  Últimos 6 meses',  months: 6  },
-                ].map(({ label, months }) => {
-                  const from = new Date()
-                  from.setMonth(from.getMonth() - months)
-                  return (
-                    <button
-                       key={months}
-                      onClick={() => handleExportPDF({ fromDate: from })}
-                      style={{
-                        width: '100%', textAlign: 'left', padding: '0.6rem 1rem',
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        fontSize: '0.875rem', color: 'var(--color-surface-800)', fontWeight: '500',
-                        borderRadius: '8px', transition: 'background 0.15s',
-                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-200)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
+            {pdfMenuOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 500,
+                background: 'var(--color-surface-100)', borderRadius: '14px', minWidth: '240px',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.25)', border: '1px solid var(--color-surface-200)',
+                overflow: 'hidden',
+                animation: 'fadeIn 0.15s ease',
+              }}>
+                {/* Quick options */}
+                <div style={{ padding: '0.6rem 0.5rem', borderBottom: '1px solid var(--color-surface-200)' }}>
+                  <p style={{ fontSize: '0.68rem', fontWeight: '700', color: 'var(--color-surface-500)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0.2rem 0.75rem 0.5rem' }}>Rango rápido</p>
+                  {[
+                    { label: '📅  Último mes', months: 1 },
+                    { label: '📅  Últimos 3 meses', months: 3 },
+                    { label: '📅  Últimos 6 meses', months: 6 },
+                  ].map(({ label, months }) => {
+                    const from = new Date()
+                    from.setMonth(from.getMonth() - months)
+                    return (
+                      <button
+                        key={months}
+                        onClick={() => handleExportPDF({ fromDate: from })}
+                        style={{
+                          width: '100%', textAlign: 'left', padding: '0.6rem 1rem',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          fontSize: '0.875rem', color: 'var(--color-surface-800)', fontWeight: '500',
+                          borderRadius: '8px', transition: 'background 0.15s',
+                          display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-200)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
 
-              {/* Custom range toggle */}
-              <div style={{ padding: '0.5rem' }}>
-                <button
-                  onClick={() => setShowCustomPicker(p => !p)}
-                  style={{
-                    width: '100%', textAlign: 'left', padding: '0.6rem 1rem',
-                    background: showCustomPicker ? 'var(--color-primary-100)' : 'none',
-                    border: showCustomPicker ? '1px solid var(--color-primary-300)' : '1px solid transparent',
-                    cursor: 'pointer', fontSize: '0.875rem', color: showCustomPicker ? 'var(--color-primary-600)' : 'var(--color-surface-800)',
-                    fontWeight: '600', borderRadius: '8px', transition: 'all 0.15s',
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  }}
-                >
-                  🗓️  Rango personalizado
-                  <span style={{ marginLeft: 'auto', fontSize: '0.7rem' }}>{showCustomPicker ? '▲' : '▼'}</span>
-                </button>
+                {/* Custom range toggle */}
+                <div style={{ padding: '0.5rem' }}>
+                  <button
+                    onClick={() => setShowCustomPicker(p => !p)}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '0.6rem 1rem',
+                      background: showCustomPicker ? 'var(--color-primary-100)' : 'none',
+                      border: showCustomPicker ? '1px solid var(--color-primary-300)' : '1px solid transparent',
+                      cursor: 'pointer', fontSize: '0.875rem', color: showCustomPicker ? 'var(--color-primary-600)' : 'var(--color-surface-800)',
+                      fontWeight: '600', borderRadius: '8px', transition: 'all 0.15s',
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    }}
+                  >
+                    🗓️  Rango personalizado
+                    <span style={{ marginLeft: 'auto', fontSize: '0.7rem' }}>{showCustomPicker ? '▲' : '▼'}</span>
+                  </button>
 
-                {showCustomPicker && (
-                  <div style={{ padding: '0.75rem 0.5rem 0.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                    <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-surface-500)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.3rem' }}>Desde</label>
-                      <input
-                        type="date"
-                        value={customFrom}
-                        max={customTo || new Date().toISOString().slice(0,10)}
-                        onChange={e => setCustomFrom(e.target.value)}
-                        style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1.5px solid var(--color-surface-300)', background: 'var(--color-surface-50)', color: 'var(--color-surface-800)', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box' }}
-                      />
+                  {showCustomPicker && (
+                    <div style={{ padding: '0.75rem 0.5rem 0.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-surface-500)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.3rem' }}>Desde</label>
+                        <input
+                          type="date"
+                          value={customFrom}
+                          max={customTo || new Date().toISOString().slice(0, 10)}
+                          onChange={e => setCustomFrom(e.target.value)}
+                          style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1.5px solid var(--color-surface-300)', background: 'var(--color-surface-50)', color: 'var(--color-surface-800)', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-surface-500)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.3rem' }}>Hasta</label>
+                        <input
+                          type="date"
+                          value={customTo}
+                          min={customFrom}
+                          max={new Date().toISOString().slice(0, 10)}
+                          onChange={e => setCustomTo(e.target.value)}
+                          style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1.5px solid var(--color-surface-300)', background: 'var(--color-surface-50)', color: 'var(--color-surface-800)', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (!customFrom || !customTo) return alert('Selecciona ambas fechas.')
+                          handleExportPDF({ fromDate: customFrom, toDate: customTo })
+                        }}
+                        style={{
+                          marginTop: '0.25rem', padding: '0.55rem 1rem', borderRadius: '8px',
+                          border: 'none', background: 'var(--color-primary-500)', color: 'white',
+                          fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                          transition: 'opacity 0.2s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                      >
+                        <FaFilePdf size={12} /> Generar PDF
+                      </button>
                     </div>
-                    <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--color-surface-500)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.3rem' }}>Hasta</label>
-                      <input
-                        type="date"
-                        value={customTo}
-                        min={customFrom}
-                        max={new Date().toISOString().slice(0,10)}
-                        onChange={e => setCustomTo(e.target.value)}
-                        style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '8px', border: '1.5px solid var(--color-surface-300)', background: 'var(--color-surface-50)', color: 'var(--color-surface-800)', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box' }}
-                      />
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (!customFrom || !customTo) return alert('Selecciona ambas fechas.')
-                        handleExportPDF({ fromDate: customFrom, toDate: customTo })
-                      }}
-                      style={{
-                        marginTop: '0.25rem', padding: '0.55rem 1rem', borderRadius: '8px',
-                        border: 'none', background: 'var(--color-primary-500)', color: 'white',
-                        fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                        transition: 'opacity 0.2s',
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                    >
-                      <FaFilePdf size={12} /> Generar PDF
-                    </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
       {/* ── Family Profile Selector Bar ─────────────────────── */}
       <div style={{
@@ -992,14 +994,14 @@ export default function Dashboard() {
             const bmiCat = getBMICategory(bmi)
 
             // ── Indicator badge for other metrics ────────
-            const glucoseCat       = t.key === 'glucose'       ? getGlucoseCategory(latest?.value)                            : null
-            const heartRateCat     = t.key === 'heartRate'     ? getHeartRateCategory(latest?.value)                         : null
-            const bpCat            = t.key === 'bloodPressure' ? getBloodPressureCategory(latest?.value, latest?.value2)     : null
-            const cholesterolCat   = t.key === 'cholesterol'   ? getCholesterolCategory(latest?.value)                       : null
-            const triglyceridesCat = t.key === 'triglycerides' ? getTriglyceridesCategory(latest?.value)                   : null
+            const glucoseCat = t.key === 'glucose' ? getGlucoseCategory(latest?.value) : null
+            const heartRateCat = t.key === 'heartRate' ? getHeartRateCategory(latest?.value) : null
+            const bpCat = t.key === 'bloodPressure' ? getBloodPressureCategory(latest?.value, latest?.value2) : null
+            const cholesterolCat = t.key === 'cholesterol' ? getCholesterolCategory(latest?.value) : null
+            const triglyceridesCat = t.key === 'triglycerides' ? getTriglyceridesCategory(latest?.value) : null
 
             // The active indicator badge for this card (whichever applies)
-            const indicatorCat  = bmiCat || glucoseCat || heartRateCat || bpCat || cholesterolCat || triglyceridesCat
+            const indicatorCat = bmiCat || glucoseCat || heartRateCat || bpCat || cholesterolCat || triglyceridesCat
             const indicatorLabel = bmiCat
               ? `IMC ${bmi} — ${bmiCat.label}`
               : glucoseCat
@@ -1162,16 +1164,16 @@ export default function Dashboard() {
               fontSize: '0.82rem', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s',
               boxShadow: showDateFilter ? '0 4px 12px rgba(135,18,51,0.15)' : 'none',
             }}
-            onMouseEnter={e => {
-              if (!showDateFilter) {
-                e.currentTarget.style.background = 'var(--color-primary-50)'
-              }
-            }}
-            onMouseLeave={e => {
-              if (!showDateFilter) {
-                e.currentTarget.style.background = 'white'
-              }
-            }}
+              onMouseEnter={e => {
+                if (!showDateFilter) {
+                  e.currentTarget.style.background = 'var(--color-primary-50)'
+                }
+              }}
+              onMouseLeave={e => {
+                if (!showDateFilter) {
+                  e.currentTarget.style.background = 'white'
+                }
+              }}
             >
               <FaFilter size={11} /> Filtrar fechas
             </button>
@@ -1248,16 +1250,23 @@ export default function Dashboard() {
                     <stop offset="95%" stopColor={activeTypeInfo.color} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={dark ? 'var(--color-surface-200)' : '#e2e8f0'} />
+                <XAxis dataKey="date" tick={{ fontSize: 12, fill: dark ? 'var(--color-surface-600)' : '#94a3b8' }} />
+                <YAxis tick={{ fontSize: 12, fill: dark ? 'var(--color-surface-600)' : '#94a3b8' }} />
                 <Tooltip
                   contentStyle={{
-                    background: 'white',
-                    border: '1px solid #e2e8f0',
+                    background: dark ? 'var(--color-surface-100)' : 'white',
+                    border: dark ? '1px solid var(--color-surface-300)' : '1px solid #e2e8f0',
                     borderRadius: '12px',
-                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                    boxShadow: 'var(--shadow-card)',
                     fontSize: '0.85rem',
+                    color: dark ? 'var(--color-surface-900)' : 'inherit',
+                  }}
+                  itemStyle={{
+                    color: dark ? 'var(--color-surface-900)' : 'inherit'
+                  }}
+                  labelStyle={{
+                    color: dark ? 'var(--color-surface-800)' : 'inherit'
                   }}
                 />
                 <Area
@@ -1644,3 +1653,5 @@ export default function Dashboard() {
     </div>
   )
 }
+
+

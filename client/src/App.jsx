@@ -17,6 +17,11 @@ import News from './pages/News'
 import NewsDetail from './pages/NewsDetail'
 import Nutraceuticals from './pages/Nutraceuticals'
 import NutraceuticalDetail from './pages/NutraceuticalDetail'
+import AdminPanel from './pages/AdminPanel'
+import AdminRoute from './components/AdminRoute'
+import DoctorPanel from './pages/DoctorPanel'
+import DoctorRoute from './components/DoctorRoute'
+import ChatBubble from './components/chat/ChatBubble'
 
 export default function App() {
   return (
@@ -49,7 +54,20 @@ export default function App() {
           {/* Auth pages without layout (full-screen) */}
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Register />} />
+          {/* Admin panel (full-screen, own layout) */}
+          <Route path="/admin" element={
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
+          } />
+          {/* Doctor panel (full-screen, own layout) */}
+          <Route path="/doctor" element={
+            <DoctorRoute>
+              <DoctorPanel />
+            </DoctorRoute>
+          } />
         </Routes>
+        <ChatBubble />
       </AuthProvider>
     </BrowserRouter>
   )

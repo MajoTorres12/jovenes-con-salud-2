@@ -120,26 +120,25 @@ function FullGallery({ images, productName }) {
   )
 }
 
-// ── Accordion section ─────────────────────────────────────────
 function AccordionSection({ title, icon, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div style={{ border: '1px solid #e8e0d8', borderRadius: '12px', overflow: 'hidden', marginBottom: '10px' }}>
+    <div style={{ border: '1px solid var(--color-surface-200)', borderRadius: '12px', overflow: 'hidden', marginBottom: '10px' }}>
       <button
         onClick={() => setOpen(!open)}
         style={{
           width: '100%', padding: '1rem 1.25rem', border: 'none', cursor: 'pointer',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: open ? '#fdf9f7' : 'white', transition: 'background 0.2s',
+          background: open ? 'var(--color-surface-200)' : 'var(--color-surface-100)', transition: 'background 0.2s',
         }}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '700', color: 'var(--color-surface-900)', fontSize: '0.95rem' }}>
           {icon} {title}
         </span>
-        <span style={{ color: '#871233', fontSize: '1rem', transition: 'transform 0.25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', display: 'flex' }}>▾</span>
+        <span style={{ color: 'var(--color-primary-500)', fontSize: '1rem', transition: 'transform 0.25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', display: 'flex' }}>▾</span>
       </button>
       {open && (
-        <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid #e8e0d8', background: '#fdf9f7', animation: 'fadeIn 0.2s' }}>
+        <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid var(--color-surface-200)', background: 'var(--color-surface-200)', animation: 'fadeIn 0.2s' }}>
           {children}
         </div>
       )}
@@ -185,10 +184,10 @@ export default function NutraceuticalDetail() {
   )
 
   return (
-    <div style={{ background: '#faf8f6', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--color-surface-50)', minHeight: '100vh' }}>
 
       {/* Breadcrumb */}
-      <div style={{ background: 'white', borderBottom: '1px solid #e8e0d8', padding: '0.75rem 1.5rem' }}>
+      <div style={{ background: 'var(--color-surface-100)', borderBottom: '1px solid var(--color-surface-200)', padding: '0.75rem 1.5rem' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#94a3b8' }}>
           <Link to="/" style={{ color: '#94a3b8', textDecoration: 'none' }}>Inicio</Link>
           <span>›</span>
@@ -239,17 +238,17 @@ export default function NutraceuticalDetail() {
             )}
 
             {/* Product name */}
-            <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: '900', color: '#1e293b', margin: '0 0 0.6rem', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: '900', color: 'var(--color-surface-900)', margin: '0 0 0.6rem', lineHeight: 1.2 }}>
               {product.name}
             </h1>
 
             {/* Price box */}
-            <div style={{ background: 'white', border: '1px solid #e8e0d8', borderRadius: '14px', padding: '1.1rem 1.25rem', margin: '1rem 0 1.4rem', boxShadow: '0 2px 8px rgba(135,18,51,0.06)' }}>
-              <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: '800', color: '#871233', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Precio</p>
-              <p style={{ margin: '0 0 0.15rem', fontSize: '2.1rem', fontWeight: '900', color: '#871233', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+            <div style={{ background: 'var(--color-surface-100)', border: '1px solid var(--color-surface-200)', borderRadius: '14px', padding: '1.1rem 1.25rem', margin: '1rem 0 1.4rem', boxShadow: 'var(--shadow-card)' }}>
+              <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: '800', color: 'var(--color-primary-500)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Precio</p>
+              <p style={{ margin: '0 0 0.15rem', fontSize: '2.1rem', fontWeight: '900', color: 'var(--color-primary-500)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
                 {formatPrice(product.price)}
               </p>
-              {product.price && <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>Precio en pesos mexicanos (MXN)</p>}
+              {product.price && <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-surface-500)' }}>Precio en pesos mexicanos (MXN)</p>}
             </div>
 
             {/* Buy button */}
@@ -258,14 +257,14 @@ export default function NutraceuticalDetail() {
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   width: '100%', padding: '1rem', borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #871233, #5e0c23)',
+                  background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700))',
                   color: 'white', fontWeight: '800', fontSize: '1rem',
                   textDecoration: 'none', letterSpacing: '0.01em',
-                  boxShadow: '0 4px 20px rgba(135,18,51,0.3)',
+                  boxShadow: 'var(--shadow-glow)',
                   transition: 'all 0.2s', marginBottom: '0.85rem',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(135,18,51,0.4)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(135,18,51,0.3)' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
               >
                 🛒 Compra Aquí
               </a>
@@ -276,12 +275,12 @@ export default function NutraceuticalDetail() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 width: '100%', padding: '0.8rem', borderRadius: '10px',
-                border: '1.5px solid #e8e0d8', color: '#64748b', background: 'white',
+                border: '1.5px solid var(--color-surface-200)', color: 'var(--color-surface-600)', background: 'var(--color-surface-100)',
                 fontWeight: '600', fontSize: '0.875rem', textDecoration: 'none',
                 marginBottom: '1.75rem', transition: 'all 0.2s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#871233'; e.currentTarget.style.color = '#871233' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = '#e8e0d8'; e.currentTarget.style.color = '#64748b' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-primary-500)'; e.currentTarget.style.color = 'var(--color-primary-500)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-surface-200)'; e.currentTarget.style.color = 'var(--color-surface-600)' }}
             >
               ← Volver al catálogo
             </Link>

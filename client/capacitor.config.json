@@ -1,0 +1,10 @@
+{
+  "appId": "com.ijt.jovenesconsalud",
+  "appName": "Jovenes con Salud",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true,
+    "allowNavigation": ["172.20.10.6", "192.168.1.128", "10.0.2.2", "localhost"]
+  }
+}

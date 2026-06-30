@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Jovenes con Salud</string>
+    <string name="title_activity_main">Jovenes con Salud</string>
+    <string name="package_name">com.ijt.jovenesconsalud</string>
+    <string name="custom_url_scheme">com.ijt.jovenesconsalud</string>
+</resources>

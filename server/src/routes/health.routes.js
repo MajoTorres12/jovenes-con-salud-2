@@ -6,6 +6,7 @@ import User from '../models/User.js'
 import MedicalAlert from '../models/MedicalAlert.js'
 import { checkHealthLimits } from '../utils/healthLimits.js'
 import { calculateStreaks } from '../utils/streakUtils.js'
+import FamilyMember from '../models/FamilyMember.js'
 
 const router = Router()
 
@@ -90,6 +91,95 @@ router.post('/records', async (req, res) => {
   }
 })
 
+// PUT /api/health-tracking/records/:id — update a health record
+router.put('/records/:id', async (req, res) => {
+  try {
+    const { type, value, value2, notes, recordedAt } = req.body
+    const record = await HealthRecord.findOne({
+      where: { id: req.params.id, userId: req.user.id }
+    })
+
+    if (!record) {
+      return res.status(404).json({ error: 'Registro no encontrado' })
+    }
+
+    if (type) {
+      if (!['weight', 'glucose', 'bloodPressure', 'heartRate', 'cholesterol', 'triglycerides'].includes(type)) {
+        return res.status(400).json({ error: 'Tipo inválido' })
+      }
+      record.type = type
+    }
+
+    if (value != null) record.value = parseFloat(value)
+    if (value2 !== undefined) record.value2 = value2 != null ? parseFloat(value2) : null
+    if (type) record.unit = UNITS[type]
+    if (notes !== undefined) record.notes = notes || null
+    if (recordedAt) record.recordedAt = new Date(recordedAt)
+
+    await record.save()
+
+    // Update alert status
+    try {
+      await MedicalAlert.destroy({ where: { healthRecordId: record.id } })
+      const user = await User.findByPk(req.user.id)
+      if (user && user.doctorId) {
+        const checkResult = checkHealthLimits(record.type, record.value, record.value2)
+        if (checkResult && checkResult.isAbnormal) {
+          let displayValue = `${record.value} ${UNITS[record.type] || ''}`
+          if (record.type === 'bloodPressure' && record.value2 != null) {
+            displayValue = `${record.value}/${record.value2} ${UNITS[record.type] || ''}`
+          } else if (record.type === 'weight' && record.value2 != null) {
+            const heightM = record.value2 / 100
+            const bmi = record.value / (heightM * heightM)
+            displayValue = `${record.value} kg (IMC: ${bmi.toFixed(1)})`
+          }
+
+          await MedicalAlert.create({
+            userId: user.id,
+            doctorId: user.doctorId,
+            healthRecordId: record.id,
+            severity: checkResult.severity,
+            type: record.type,
+            message: checkResult.message,
+            value: displayValue,
+            description: checkResult.description,
+            status: 'pending',
+            recordedAt: record.recordedAt,
+          })
+        }
+      }
+    } catch (alertErr) {
+      console.error('Error updating medical alert:', alertErr)
+    }
+
+    res.json({ message: 'Registro actualizado exitosamente', record })
+  } catch (error) {
+    console.error('Error actualizando registro de salud:', error)
+    res.status(500).json({ error: 'Error al actualizar el registro' })
+  }
+})
+
+// DELETE /api/health-tracking/records/:id — delete a health record
+router.delete('/records/:id', async (req, res) => {
+  try {
+    const record = await HealthRecord.findOne({
+      where: { id: req.params.id, userId: req.user.id }
+    })
+
+    if (!record) {
+      return res.status(404).json({ error: 'Registro no encontrado' })
+    }
+
+    await MedicalAlert.destroy({ where: { healthRecordId: record.id } })
+    await record.destroy()
+
+    res.json({ message: 'Registro eliminado exitosamente' })
+  } catch (error) {
+    console.error('Error eliminando registro de salud:', error)
+    res.status(500).json({ error: 'Error al eliminar el registro' })
+  }
+})
+
 // GET /api/health-tracking/records — list user's records
 router.get('/records', async (req, res) => {
   try {
@@ -168,9 +258,63 @@ router.get('/alerts', async (req, res) => {
   try {
     const alerts = await MedicalAlert.findAll({
       where: { userId: req.user.id },
+      include: [
+        {
+          model: User,
+          as: 'patient',
+          attributes: ['name']
+        },
+        {
+          model: HealthRecord,
+          as: 'healthRecord',
+          include: [
+            {
+              model: FamilyMember,
+              as: 'familyMember',
+              attributes: ['name', 'relationship']
+            }
+          ]
+        }
+      ],
       order: [['recordedAt', 'DESC']]
     })
-    res.json({ alerts })
+
+    const METRIC_LABELS = {
+      weight: 'Peso',
+      glucose: 'Glucosa',
+      bloodPressure: 'Presión Arterial',
+      heartRate: 'Frec. Cardíaca',
+      cholesterol: 'Colesterol',
+      triglycerides: 'Triglicéridos',
+    }
+
+    const RELATIONSHIP_LABELS = {
+      abuelo: 'Abuelo', abuela: 'Abuela', padre: 'Padre', madre: 'Madre',
+      tio: 'Tío', tia: 'Tía', hermano: 'Hermano', hermana: 'Hermana',
+      hijo: 'Hijo', hija: 'Hija', otro: 'Otro',
+    }
+
+    const formattedAlerts = alerts.map(alert => {
+      const plainAlert = alert.get({ plain: true })
+      
+      let memberName = plainAlert.patient?.name || 'Usuario'
+      let relationLabel = ''
+
+      const fMember = plainAlert.healthRecord?.familyMember
+      if (fMember) {
+        memberName = fMember.name
+        relationLabel = RELATIONSHIP_LABELS[fMember.relationship] || fMember.relationship
+      }
+
+      return {
+        ...plainAlert,
+        memberName,
+        relationLabel,
+        metricLabel: METRIC_LABELS[plainAlert.type] || plainAlert.type
+      }
+    })
+
+    res.json({ alerts: formattedAlerts })
   } catch (error) {
     console.error('Error obteniendo alertas:', error)
     res.status(500).json({ error: 'Error al obtener alertas' })

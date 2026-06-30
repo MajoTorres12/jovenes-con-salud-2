@@ -883,6 +883,42 @@ function CrudSection({ dark, entity, title }) {
     }
   }
 
+  const handleFormat = (fieldKey, formatType) => {
+    const textarea = document.getElementById(`textarea-${fieldKey}`)
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const text = textarea.value
+    const selectedText = text.substring(start, end)
+
+    let prefix = ''
+    let suffix = ''
+
+    if (formatType === 'bold') {
+      prefix = '**'
+      suffix = '**'
+    } else if (formatType === 'italic') {
+      prefix = '*'
+      suffix = '*'
+    } else if (formatType === 'underline') {
+      prefix = '<u>'
+      suffix = '</u>'
+    }
+
+    const replacement = prefix + selectedText + suffix
+    const newValue = text.substring(0, start) + replacement + text.substring(end)
+
+    setFormData(prev => ({ ...prev, [fieldKey]: newValue }))
+
+    setTimeout(() => {
+      textarea.focus()
+      const newCursorPosStart = start + prefix.length
+      const newCursorPosEnd = end + prefix.length
+      textarea.setSelectionRange(newCursorPosStart, newCursorPosEnd)
+    }, 0)
+  }
+
   const formatCell = (item, col) => {
     const val = item[col]
     if (col === 'coverImage' || col === 'images') {
@@ -967,13 +1003,101 @@ function CrudSection({ dark, entity, title }) {
           {cfg.fields.map(f => (
             <FormField key={f.key} label={f.label} dark={dark}>
               {f.type === 'textarea' || f.type === 'jsonarray' ? (
-                <textarea
-                  rows={f.type === 'jsonarray' ? 4 : 5}
-                  value={formData[f.key] || ''}
-                  onChange={e => setFormData(prev => ({ ...prev, [f.key]: e.target.value }))}
-                  style={{ ...inputStyle(dark), resize: 'vertical' }}
-                  placeholder={f.type === 'jsonarray' ? 'Un elemento por línea' : ''}
-                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {f.type === 'textarea' && (
+                    <div style={{
+                      display: 'flex',
+                      gap: '0.3rem',
+                      marginBottom: '0.2rem',
+                      background: dark ? '#1e1c25' : '#faf8f5',
+                      border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`,
+                      borderRadius: '8px',
+                      padding: '0.25rem 0.4rem',
+                      alignItems: 'center',
+                      width: 'fit-content'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => handleFormat(f.key, 'bold')}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: dark ? '#fff' : '#1a1715',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                        title="Negrita"
+                      >
+                        B
+                      </button>
+                      <span style={{ height: '14px', width: '1px', background: dark ? '#272530' : '#e8ddd0' }} />
+                      <button
+                        type="button"
+                        onClick={() => handleFormat(f.key, 'italic')}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: dark ? '#fff' : '#1a1715',
+                          fontStyle: 'italic',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                        title="Cursiva"
+                      >
+                        I
+                      </button>
+                      <span style={{ height: '14px', width: '1px', background: dark ? '#272530' : '#e8ddd0' }} />
+                      <button
+                        type="button"
+                        onClick={() => handleFormat(f.key, 'underline')}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: dark ? '#fff' : '#1a1715',
+                          textDecoration: 'underline',
+                          cursor: 'pointer',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                        title="Subrayado"
+                      >
+                        U
+                      </button>
+                    </div>
+                  )}
+                  <textarea
+                    id={`textarea-${f.key}`}
+                    rows={f.type === 'jsonarray' ? 4 : 5}
+                    value={formData[f.key] || ''}
+                    onChange={e => setFormData(prev => ({ ...prev, [f.key]: e.target.value }))}
+                    style={{ ...inputStyle(dark), resize: 'vertical' }}
+                    placeholder={f.type === 'jsonarray' ? 'Un elemento por línea' : ''}
+                  />
+                </div>
               ) : f.type === 'checkbox' ? (
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.88rem', color: dark ? '#c5bfae' : '#5c5248' }}>
                   <input

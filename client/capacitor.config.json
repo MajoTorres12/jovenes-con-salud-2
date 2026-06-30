@@ -5,6 +5,6 @@
   "server": {
     "androidScheme": "http",
     "cleartext": true,
-    "allowNavigation": ["192.168.1.128", "10.0.2.2", "localhost"]
+    "allowNavigation": ["172.20.10.6", "192.168.1.128", "10.0.2.2", "localhost"]
   }
 }

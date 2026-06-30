@@ -375,7 +375,7 @@ export default function AdvancedAnalytics({ propUserId, propFamilyMemberId, fami
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-            {['glucose', 'weight'].map(type => {
+            {Object.keys(METRIC_CONFIGS).map(type => {
               const pred = projected?.[type]
               const config = METRIC_CONFIGS[type]
               if (!pred) return null

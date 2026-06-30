@@ -7,13 +7,14 @@ const API_BASE = getApiBaseUrl()
 const imgSrc = (p) => !p ? null : p.startsWith('http') ? p : `/${p}`
 const fmt = (d) => d ? new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
 
-// Local markdown parser to avoid compilation and external dependency issues
 function parseMarkdown(text) {
   if (!text) return ''
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+    .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>')
+    .replace(/__(.*?)__/g, '<u>$1</u>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/^### (.*?)$/gm, '<h4 style="font-size:1.15rem;font-weight:700;margin-top:1.5rem;margin-bottom:0.75rem;">$1</h4>')
@@ -24,7 +25,7 @@ function parseMarkdown(text) {
       const trimmed = para.trim()
       if (!trimmed) return ''
       if (trimmed.startsWith('<h')) return trimmed
-      return `<p style="margin-bottom:1.25rem;line-height:1.85;color:var(--color-surface-700);">${trimmed.replace(/\n/g, '<br/>')}</p>`
+      return `<p style="margin-bottom:1.25rem;line-height:1.85;color:var(--color-surface-900);">${trimmed.replace(/\n/g, '<br/>')}</p>`
     })
     .join('\n')
 }
@@ -59,7 +60,7 @@ export default function NewsDetail() {
   const cover = imgSrc(post.coverImage)
 
   return (
-    <div style={{ background: 'white', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--color-surface-50)', minHeight: '100vh' }}>
       <article style={{ maxWidth: '800px', margin: '0 auto', padding: '3rem 1.5rem' }}>
         
         {/* Meta / Date & Author */}
@@ -101,7 +102,7 @@ export default function NewsDetail() {
             overflow: 'hidden',
             marginBottom: '2.5rem',
             boxShadow: 'var(--shadow-card)',
-            border: '1px solid var(--color-surface-200)'
+            border: '1px solid var(--color-surface-300)'
           }}>
             <img src={cover} alt={post.title} style={{ width: '100%', maxHeight: '480px', objectFit: 'cover', display: 'block' }} />
           </div>
@@ -112,11 +113,11 @@ export default function NewsDetail() {
           <div style={{
             fontSize: '1.05rem',
             fontWeight: '600',
-            color: 'var(--color-surface-700)',
+            color: 'var(--color-surface-800)',
             lineHeight: 1.7,
             marginBottom: '2rem',
             padding: '1.25rem 1.5rem',
-            background: 'var(--color-surface-50)',
+            background: 'var(--color-surface-100)',
             borderLeft: '4px solid var(--color-primary-500)',
             borderRadius: '0 var(--radius-lg) var(--radius-lg) 0',
           }}>
@@ -127,7 +128,7 @@ export default function NewsDetail() {
         {/* Content */}
         <div
           style={{
-            color: 'var(--color-surface-800)',
+            color: 'var(--color-surface-900)',
             fontSize: '1.025rem',
             lineHeight: 1.85,
             marginBottom: '3rem'
@@ -143,7 +144,7 @@ export default function NewsDetail() {
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
               {post.images.map((img, i) => (
-                <div key={i} style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', aspectRatio: '4/3', border: '1px solid var(--color-surface-200)', boxShadow: 'var(--shadow-card)' }}>
+                <div key={i} style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', aspectRatio: '4/3', border: '1px solid var(--color-surface-300)', boxShadow: 'var(--shadow-card)' }}>
                   <img src={imgSrc(img)} alt={`Foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               ))}
@@ -155,7 +156,7 @@ export default function NewsDetail() {
         <div style={{
           marginTop: '3rem',
           paddingTop: '2rem',
-          borderTop: '1px solid var(--color-surface-200)',
+          borderTop: '1px solid var(--color-surface-300)',
           display: 'flex',
           justifyContent: 'flex-start'
         }}>
@@ -168,23 +169,23 @@ export default function NewsDetail() {
               padding: '0.75rem 2rem',
               borderRadius: '2rem',
               border: '1.5px solid var(--color-surface-300)',
-              color: 'var(--color-surface-600)',
+              color: 'var(--color-surface-800)',
               fontWeight: '600',
               textDecoration: 'none',
               fontSize: '0.875rem',
               transition: 'all 0.2s ease',
-              background: 'white',
+              background: 'var(--color-surface-100)',
               cursor: 'pointer'
             }}
             onMouseEnter={e => {
               e.currentTarget.style.borderColor = 'var(--color-primary-500)'
               e.currentTarget.style.color = 'var(--color-primary-500)'
-              e.currentTarget.style.background = 'var(--color-primary-50)10'
+              e.currentTarget.style.background = 'var(--color-surface-200)'
             }}
             onMouseLeave={e => {
               e.currentTarget.style.borderColor = 'var(--color-surface-300)'
-              e.currentTarget.style.color = 'var(--color-surface-600)'
-              e.currentTarget.style.background = 'white'
+              e.currentTarget.style.color = 'var(--color-surface-800)'
+              e.currentTarget.style.background = 'var(--color-surface-100)'
             }}
           >
             ← Volver a noticias

@@ -38,6 +38,18 @@ const cardStyle = (dark) => ({
   boxShadow: dark ? '0 4px 20px rgba(0,0,0,0.55)' : '0 1px 4px rgba(0,0,0,0.04)',
 })
 
+const formatTimeTo12h = (timeStr) => {
+  if (!timeStr) return ''
+  const parts = timeStr.split(':')
+  if (parts.length < 2) return timeStr
+  const hours = parseInt(parts[0], 10)
+  const minutes = parts[1]
+  const ampm = hours >= 12 ? 'p.m.' : 'a.m.'
+  const displayHours = hours % 12 || 12
+  const formattedHours = String(displayHours).padStart(2, '0')
+  return `${formattedHours}:${minutes} ${ampm}`
+}
+
 export default function DoctorPanel() {
   const { user, logout } = useAuth()
   const { dark } = useTheme()
@@ -691,7 +703,7 @@ export default function DoctorPanel() {
                                       <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: '700' }}>Dosis: {m.dose}</span>
                                     </div>
                                     <p style={{ fontSize: '0.72rem', color: dark ? '#7e7a8c' : '#a89580', margin: '4px 0 0' }}>
-                                      Frecuencia: {m.frequency} • Horarios: {Array.isArray(m.schedules) ? m.schedules.join(', ') : m.schedules || 'N/A'}
+                                      Frecuencia: {m.frequency} • Horarios: {Array.isArray(m.schedules) ? m.schedules.map(formatTimeTo12h).join(', ') : (typeof m.schedules === 'string' ? m.schedules.split(',').map(s => formatTimeTo12h(s.trim())).join(', ') : 'N/A')}
                                     </p>
                                     {m.instructions && (
                                       <p style={{ fontSize: '0.68rem', color: dark ? '#9ea4b0' : '#7d6e5e', fontStyle: 'italic', margin: '4px 0 0' }}>

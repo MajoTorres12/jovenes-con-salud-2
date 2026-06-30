@@ -15,10 +15,10 @@ function NewsCard({ post }) {
       style={{
         display: 'block',
         textDecoration: 'none',
-        background: 'white',
+        background: 'var(--color-surface-100)',
         borderRadius: 'var(--radius-xl)',
         overflow: 'hidden',
-        border: '1px solid var(--color-surface-200)',
+        border: '1px solid var(--color-surface-300)',
         boxShadow: 'var(--shadow-card)',
         transition: 'all 0.25s ease',
       }}
@@ -30,7 +30,7 @@ function NewsCard({ post }) {
       onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0)'
         e.currentTarget.style.boxShadow = 'var(--shadow-card)'
-        e.currentTarget.style.borderColor = 'var(--color-surface-200)'
+        e.currentTarget.style.borderColor = 'var(--color-surface-300)'
       }}
     >
       {/* Cover image */}
@@ -54,7 +54,7 @@ function NewsCard({ post }) {
       </div>
 
       <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <p style={{ fontSize: '0.78rem', color: 'var(--color-surface-400)', fontWeight: '600', margin: 0 }}>{fmt(post.publishedAt)}</p>
+        <p style={{ fontSize: '0.78rem', color: 'var(--color-surface-500)', fontWeight: '600', margin: 0 }}>{fmt(post.publishedAt)}</p>
         
         <h3 style={{
           fontSize: '1.05rem',
@@ -74,7 +74,7 @@ function NewsCard({ post }) {
         {post.excerpt && (
           <p style={{
             fontSize: '0.85rem',
-            color: 'var(--color-surface-500)',
+            color: 'var(--color-surface-600)',
             lineHeight: 1.6,
             margin: 0,
             display: '-webkit-box',
@@ -199,9 +199,9 @@ export default function News() {
             ))}
           </div>
         ) : posts.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '5rem 2rem', background: 'white', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)' }}>
-            <FaNewspaper size={48} style={{ marginBottom: '1.25rem', color: 'var(--color-surface-300)' }} />
-            <p style={{ fontWeight: '600', color: 'var(--color-surface-500)', margin: 0 }}>No hay noticias publicadas aún</p>
+          <div style={{ textAlign: 'center', padding: '5rem 2rem', background: 'var(--color-surface-100)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-300)' }}>
+            <FaNewspaper size={48} style={{ marginBottom: '1.25rem', color: 'var(--color-surface-400)' }} />
+            <p style={{ fontWeight: '600', color: 'var(--color-surface-800)', margin: 0 }}>No hay noticias publicadas aún</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -218,9 +218,9 @@ export default function News() {
               style={{
                 padding: '0.6rem 1.25rem',
                 borderRadius: '10px',
-                border: '1.5px solid var(--color-surface-200)',
-                background: 'white',
-                color: page === 1 ? 'var(--color-surface-400)' : 'var(--color-surface-600)',
+                border: '1.5px solid var(--color-surface-300)',
+                background: 'var(--color-surface-100)',
+                color: page === 1 ? 'var(--color-surface-400)' : 'var(--color-surface-800)',
                 fontWeight: '600',
                 cursor: page === 1 ? 'default' : 'pointer',
                 fontSize: '0.85rem',
@@ -237,9 +237,9 @@ export default function News() {
                   width: '38px',
                   height: '38px',
                   borderRadius: '10px',
-                  border: n === page ? 'none' : '1.5px solid var(--color-surface-200)',
-                  background: n === page ? 'var(--color-primary-500)' : 'white',
-                  color: n === page ? 'white' : 'var(--color-surface-600)',
+                  border: n === page ? 'none' : '1.5px solid var(--color-surface-300)',
+                  background: n === page ? 'var(--color-primary-500)' : 'var(--color-surface-100)',
+                  color: n === page ? 'white' : 'var(--color-surface-800)',
                   fontWeight: '700',
                   cursor: 'pointer',
                   fontSize: '0.875rem',
@@ -255,9 +255,9 @@ export default function News() {
               style={{
                 padding: '0.6rem 1.25rem',
                 borderRadius: '10px',
-                border: '1.5px solid var(--color-surface-200)',
-                background: 'white',
-                color: page === totalPages ? 'var(--color-surface-400)' : 'var(--color-surface-600)',
+                border: '1.5px solid var(--color-surface-300)',
+                background: 'var(--color-surface-100)',
+                color: page === totalPages ? 'var(--color-surface-400)' : 'var(--color-surface-800)',
                 fontWeight: '600',
                 cursor: page === totalPages ? 'default' : 'pointer',
                 fontSize: '0.85rem',

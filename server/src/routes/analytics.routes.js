@@ -150,9 +150,8 @@ router.get('/predictions', async (req, res, next) => {
       where.familyMemberId = null
     }
 
-    // A. Trend Projections (Glucose and Weight)
     const predictions = {}
-    const predictionTypes = ['glucose', 'weight']
+    const predictionTypes = ['weight', 'glucose', 'bloodPressure', 'heartRate', 'cholesterol', 'triglycerides']
     const sixMonthsAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000)
 
     for (const type of predictionTypes) {

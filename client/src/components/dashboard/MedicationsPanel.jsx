@@ -2,6 +2,47 @@ import { useState, useEffect, useCallback } from 'react'
 import { FaPills, FaPlus, FaTimes, FaTrash, FaEdit, FaCheck, FaInfoCircle } from 'react-icons/fa'
 import api from '../../services/api'
 
+const formatTimeTo12h = (timeStr) => {
+  if (!timeStr) return ''
+  const parts = timeStr.split(':')
+  if (parts.length < 2) return timeStr
+  const hours = parseInt(parts[0], 10)
+  const minutes = parts[1]
+  const ampm = hours >= 12 ? 'p.m.' : 'a.m.'
+  const displayHours = hours % 12 || 12
+  const formattedHours = String(displayHours).padStart(2, '0')
+  return `${formattedHours}:${minutes} ${ampm}`
+}
+
+const parse24hTo12hList = (timeString) => {
+  if (!timeString) return [{ hour: '08', minute: '00', period: 'AM' }]
+  const times = Array.isArray(timeString) 
+    ? timeString 
+    : timeString.split(',').map(s => s.trim()).filter(Boolean)
+  
+  return times.map(timeStr => {
+    const parts = timeStr.split(':')
+    if (parts.length < 2) return { hour: '08', minute: '00', period: 'AM' }
+    const rawHours = parseInt(parts[0], 10)
+    const minutes = parts[1]
+    const period = rawHours >= 12 ? 'PM' : 'AM'
+    const displayHours = rawHours % 12 || 12
+    const hour = String(displayHours).padStart(2, '0')
+    return { hour, minute: minutes, period }
+  })
+}
+
+const serialize12hListTo24h = (list) => {
+  if (!list || !Array.isArray(list)) return []
+  return list.map(item => {
+    let hours = parseInt(item.hour, 10)
+    if (item.period === 'PM' && hours < 12) hours += 12
+    if (item.period === 'AM' && hours === 12) hours = 0
+    const formattedHours = String(hours).padStart(2, '0')
+    return `${formattedHours}:${item.minute}`
+  })
+}
+
 const PREDEFINED_MEDICATIONS = [
   {
     name: 'Metformina',
@@ -143,7 +184,7 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   
-  const emptyForm = { name: '', dose: '', frequency: '', instructions: '', schedules: '' }
+  const emptyForm = { name: '', dose: '', frequency: '', instructions: '', schedules: [{ hour: '08', minute: '00', period: 'AM' }] }
   const [form, setForm] = useState(emptyForm)
   const [editId, setEditId] = useState(null)
   const [selectedPredefinedIndex, setSelectedPredefinedIndex] = useState('-1')
@@ -177,7 +218,7 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
     try {
       const payload = {
         ...form,
-        schedules: form.schedules.split(',').map(s => s.trim()).filter(Boolean),
+        schedules: serialize12hListTo24h(form.schedules),
       }
 
       // Include familyMemberId when creating/updating for a family member
@@ -223,7 +264,7 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
       dose: med.dose,
       frequency: med.frequency,
       instructions: med.instructions || '',
-      schedules: Array.isArray(med.schedules) ? med.schedules.join(', ') : '',
+      schedules: parse24hTo12hList(med.schedules),
     })
     setEditId(med.id)
     setShowModal(true)
@@ -238,7 +279,7 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
         name: med.name,
         dose: med.dose,
         frequency: med.frequency,
-        schedules: med.schedules,
+        schedules: parse24hTo12hList(med.schedules),
         instructions: med.instructions
       })
     } else {
@@ -335,10 +376,10 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
               }}>
                 {/* Status active pip */}
                 <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', display: 'flex', gap: '0.35rem' }}>
-                  <button onClick={() => openEdit(med)} style={{ background: 'white', border: '1px solid var(--color-surface-200)', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: 'var(--color-surface-500)' }} title="Editar">
+                  <button onClick={() => openEdit(med)} style={{ background: 'var(--color-surface-100)', border: '1px solid var(--color-surface-200)', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: 'var(--color-surface-500)' }} title="Editar">
                     <FaEdit size={12} />
                   </button>
-                  <button onClick={() => handleDelete(med.id, med.name)} style={{ background: 'white', border: '1px solid #fecaca', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: '#ef4444' }} title="Eliminar">
+                  <button onClick={() => handleDelete(med.id, med.name)} style={{ background: 'var(--color-surface-100)', border: '1px solid #fecaca', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: '#ef4444' }} title="Eliminar">
                     <FaTrash size={12} />
                   </button>
                 </div>
@@ -354,14 +395,14 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
                     {med.schedules.map((s, i) => (
                       <span key={i} style={{ padding: '0.2rem 0.5rem', background: '#10b98120', color: '#047857', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '700' }}>
-                        {s}
+                        {formatTimeTo12h(s)}
                       </span>
                     ))}
                   </div>
                 )}
 
                 {med.instructions && (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--color-surface-500)', fontStyle: 'italic', background: 'white', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--color-surface-200)' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-surface-600)', fontStyle: 'italic', background: 'var(--color-surface-100)', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--color-surface-300)' }}>
                     "{med.instructions}"
                   </p>
                 )}
@@ -392,8 +433,8 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
                         marginTop: '0.5rem',
                         padding: '0.75rem',
                         borderRadius: '8px',
-                        background: 'white',
-                        border: '1px solid var(--color-surface-200)',
+                        background: 'var(--color-surface-100)',
+                        border: '1px solid var(--color-surface-300)',
                         fontSize: '0.75rem',
                         display: 'flex',
                         flexDirection: 'column',
@@ -549,13 +590,146 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--color-surface-700)', marginBottom: '0.4rem' }}>
-                  Horarios (separados por coma) <span style={{ color: 'var(--color-surface-400)', fontWeight: '400' }}>(Opcional)</span>
+                  Horarios de toma
                 </label>
-                <input
-                  type="text" placeholder="Ej: 08:00, 20:00" value={form.schedules}
-                  onChange={e => setForm(f => ({ ...f, schedules: e.target.value }))}
-                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 'var(--radius-lg)', border: '2px solid var(--color-surface-200)', fontSize: '0.9rem', outline: 'none' }}
-                />
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                  {form.schedules.map((sch, index) => (
+                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {/* Hour dropdown */}
+                      <select
+                        value={sch.hour}
+                        onChange={e => {
+                          const updated = [...form.schedules]
+                          updated[index].hour = e.target.value
+                          setForm(f => ({ ...f, schedules: updated }))
+                        }}
+                        style={{
+                          padding: '0.6rem 0.75rem',
+                          borderRadius: '8px',
+                          border: '2px solid var(--color-surface-200)',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                          background: 'white',
+                          color: 'black'
+                        }}
+                      >
+                        {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(h => (
+                          <option key={h} value={h}>{h}</option>
+                        ))}
+                      </select>
+
+                      <span style={{ fontWeight: '700', color: 'var(--color-surface-600)' }}>:</span>
+
+                      {/* Minute dropdown */}
+                      <select
+                        value={sch.minute}
+                        onChange={e => {
+                          const updated = [...form.schedules]
+                          updated[index].minute = e.target.value
+                          setForm(f => ({ ...f, schedules: updated }))
+                        }}
+                        style={{
+                          padding: '0.6rem 0.75rem',
+                          borderRadius: '8px',
+                          border: '2px solid var(--color-surface-200)',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                          background: 'white',
+                          color: 'black'
+                        }}
+                      >
+                        {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+
+                      {/* AM / PM select dropdown */}
+                      <select
+                        value={sch.period}
+                        onChange={e => {
+                          const updated = [...form.schedules]
+                          updated[index].period = e.target.value
+                          setForm(f => ({ ...f, schedules: updated }))
+                        }}
+                        style={{
+                          padding: '0.6rem 0.75rem',
+                          borderRadius: '8px',
+                          border: '2px solid var(--color-surface-200)',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                          background: 'white',
+                          color: 'black',
+                          fontWeight: '700'
+                        }}
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+
+                      {/* Remove button */}
+                      {form.schedules.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = form.schedules.filter((_, idx) => idx !== index)
+                            setForm(f => ({ ...f, schedules: updated }))
+                          }}
+                          style={{
+                            padding: '0.5rem 0.75rem',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            color: '#ef4444',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = '#ef4444'
+                            e.currentTarget.style.color = 'white'
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+                            e.currentTarget.style.color = '#ef4444'
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm(f => ({
+                      ...f,
+                      schedules: [...f.schedules, { hour: '08', minute: '00', period: 'AM' }]
+                    }))
+                  }}
+                  style={{
+                    padding: '0.4rem 0.8rem',
+                    background: 'var(--color-surface-100)',
+                    color: 'var(--color-surface-700)',
+                    border: '1px solid var(--color-surface-300)',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'var(--color-surface-200)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'var(--color-surface-100)'
+                  }}
+                >
+                  + Agregar horario
+                </button>
               </div>
 
               <div>

@@ -9,6 +9,18 @@ import WearableSection from '../dashboard/WearableSection'
 import { useTheme } from '../../context/ThemeContext'
 import api from '../../services/api'
 
+const formatTimeTo12h = (timeStr) => {
+  if (!timeStr) return ''
+  const parts = timeStr.split(':')
+  if (parts.length < 2) return timeStr
+  const hours = parseInt(parts[0], 10)
+  const minutes = parts[1]
+  const ampm = hours >= 12 ? 'p.m.' : 'a.m.'
+  const displayHours = hours % 12 || 12
+  const formattedHours = String(displayHours).padStart(2, '0')
+  return `${formattedHours}:${minutes} ${ampm}`
+}
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -93,21 +105,11 @@ export default function Navbar() {
             const fetchedAlerts = res.data.alerts
             setAlerts(fetchedAlerts)
             
-            const fetchedIds = fetchedAlerts.map(a => a.id)
-            
-            if (notificationsOpen) {
-              setReadAlertIds(fetchedIds)
-              localStorage.setItem('jcs_alerts_read_ids', JSON.stringify(fetchedIds))
-              setUnreadCount(0)
-            } else {
-              setReadAlertIds(prev => {
-                const updated = prev.filter(id => fetchedIds.includes(id))
-                localStorage.setItem('jcs_alerts_read_ids', JSON.stringify(updated))
-                const unread = fetchedAlerts.filter(a => !updated.includes(a.id)).length
-                setUnreadCount(unread)
-                return updated
-              })
-            }
+            setReadAlertIds(prev => {
+              const unread = fetchedAlerts.filter(a => !prev.includes(a.id)).length
+              setUnreadCount(unread)
+              return prev
+            })
           }
         })
         .catch(err => console.error('Error fetching navbar alerts:', err))
@@ -116,7 +118,7 @@ export default function Navbar() {
     fetchAlerts()
     const interval = setInterval(fetchAlerts, 60000) // update every minute
     return () => clearInterval(interval)
-  }, [isAuthenticated, notificationsOpen])
+  }, [isAuthenticated])
 
   // Cleanup old keys and fetch medications
   useEffect(() => {
@@ -157,6 +159,16 @@ export default function Navbar() {
     })
   }
 
+  const markAlertAsRead = (alertId) => {
+    setReadAlertIds(prev => {
+      const updated = [...prev, alertId]
+      localStorage.setItem('jcs_alerts_read_ids', JSON.stringify(updated))
+      const unread = alerts.filter(a => !updated.includes(a.id)).length
+      setUnreadCount(unread)
+      return updated
+    })
+  }
+
   const getTodayDoses = () => {
     const list = []
     medications.forEach(med => {
@@ -170,7 +182,11 @@ export default function Navbar() {
         const scheduledDate = new Date()
         scheduledDate.setHours(hours, minutes, 0, 0)
         
+        const isReached = now >= scheduledDate
+        if (!isReached) return
+
         const isPast = now > scheduledDate
+        const isWithinOneHour = now <= new Date(scheduledDate.getTime() + 60 * 60 * 1000)
         
         list.push({
           medId: med.id,
@@ -181,6 +197,7 @@ export default function Navbar() {
           key,
           isTaken,
           isPast,
+          isWithinOneHour,
           scheduledDate
         })
       })
@@ -189,7 +206,7 @@ export default function Navbar() {
   }
 
   const todayDoses = getTodayDoses()
-  const pendingMedsCount = todayDoses.filter(d => !d.isTaken).length
+  const pendingMedsCount = todayDoses.filter(d => !d.isTaken && d.isWithinOneHour).length
 
   const links = [
     { to: '/', label: 'Inicio' },
@@ -481,7 +498,7 @@ export default function Navbar() {
                                       background: doseItem.isPast && !doseItem.isTaken ? '#dc2626' : '#3b82f6',
                                       whiteSpace: 'nowrap'
                                     }}>
-                                      {doseItem.time}
+                                      {formatTimeTo12h(doseItem.time)}
                                     </span>
                                   </div>
                                   
@@ -504,7 +521,7 @@ export default function Navbar() {
                                     }}>
                                       <FaCheck size={10} />
                                     </span>
-                                  ) : (
+                                  ) : doseItem.isWithinOneHour ? (
                                     <button
                                       onClick={() => markDoseAsTaken(doseItem.medId, doseItem.time)}
                                       style={{
@@ -523,6 +540,17 @@ export default function Navbar() {
                                     >
                                       Tomar
                                     </button>
+                                  ) : (
+                                    <span style={{
+                                      fontSize: '0.7rem',
+                                      fontWeight: '700',
+                                      color: '#ef4444',
+                                      padding: '0.2rem 0.4rem',
+                                      background: 'rgba(239, 68, 68, 0.12)',
+                                      borderRadius: '4px',
+                                    }}>
+                                      Vencido
+                                    </span>
                                   )}
                                 </div>
                               </div>
@@ -549,14 +577,7 @@ export default function Navbar() {
                 <div ref={notificationsRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <button
                     onClick={() => {
-                      const nextOpen = !notificationsOpen
-                      setNotificationsOpen(nextOpen)
-                      if (nextOpen) {
-                        const fetchedIds = alerts.map(a => a.id)
-                        setReadAlertIds(fetchedIds)
-                        localStorage.setItem('jcs_alerts_read_ids', JSON.stringify(fetchedIds))
-                        setUnreadCount(0)
-                      }
+                      setNotificationsOpen(!notificationsOpen)
                     }}
                     style={{
                       position: 'relative',
@@ -626,6 +647,8 @@ export default function Navbar() {
                             }
                             const icon = TYPE_ICONS[alert.type] || '❓'
 
+                            const isRead = readAlertIds.includes(alert.id)
+
                             return (
                               <div 
                                 key={alert.id}
@@ -635,6 +658,8 @@ export default function Navbar() {
                                   display: 'flex',
                                   gap: '0.6rem',
                                   alignItems: 'flex-start',
+                                  opacity: isRead ? 0.6 : 1,
+                                  transition: 'opacity 0.2s',
                                 }}
                                 className="notification-item"
                               >
@@ -644,18 +669,20 @@ export default function Navbar() {
                                     <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--color-surface-800)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                       {alert.memberName} {alert.relationLabel ? `(${alert.relationLabel})` : ''}
                                     </span>
-                                    <span style={{
-                                      padding: '1px 5px',
-                                      borderRadius: '4px',
-                                      fontSize: '0.58rem',
-                                      fontWeight: '700',
-                                      color: alertColor,
-                                      background: alertBg,
-                                      border: `1px solid ${alertBorder}`,
-                                      whiteSpace: 'nowrap'
-                                    }}>
-                                      {isCritical ? 'Crítica' : 'Alerta'}
-                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                      <span style={{
+                                        padding: '1px 5px',
+                                        borderRadius: '4px',
+                                        fontSize: '0.58rem',
+                                        fontWeight: '700',
+                                        color: alertColor,
+                                        background: alertBg,
+                                        border: `1px solid ${alertBorder}`,
+                                        whiteSpace: 'nowrap'
+                                      }}>
+                                        {isCritical ? 'Crítica' : 'Alerta'}
+                                      </span>
+                                    </div>
                                   </div>
                                   
                                   <p style={{ fontSize: '0.75rem', color: 'var(--color-surface-700)', margin: '3px 0 1px', lineHeight: 1.35 }}>
@@ -664,9 +691,49 @@ export default function Navbar() {
                                   <p style={{ fontSize: '0.7rem', color: 'var(--color-surface-500)', margin: 0, fontStyle: 'italic' }}>
                                     {alert.description}
                                   </p>
-                                  <span style={{ fontSize: '0.62rem', color: 'var(--color-surface-400)', display: 'block', marginTop: '3px' }}>
-                                    {new Date(alert.recordedAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                  </span>
+                                  
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                                    <span style={{ fontSize: '0.62rem', color: 'var(--color-surface-400)' }}>
+                                      {new Date(alert.recordedAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    {!isRead ? (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          markAlertAsRead(alert.id)
+                                        }}
+                                        title="Confirmar leída"
+                                        style={{
+                                          background: 'rgba(16, 185, 129, 0.1)',
+                                          border: '1px solid rgba(16, 185, 129, 0.2)',
+                                          borderRadius: '4px',
+                                          padding: '0.2rem 0.5rem',
+                                          fontSize: '0.65rem',
+                                          fontWeight: '700',
+                                          color: '#10b981',
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '0.25rem',
+                                          transition: 'all 0.2s',
+                                        }}
+                                        onMouseEnter={e => {
+                                          e.currentTarget.style.background = '#10b981'
+                                          e.currentTarget.style.color = 'white'
+                                        }}
+                                        onMouseLeave={e => {
+                                          e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'
+                                          e.currentTarget.style.color = '#10b981'
+                                        }}
+                                      >
+                                        <FaCheck size={8} /> Marcar leída
+                                      </button>
+                                    ) : (
+                                      <span style={{ fontSize: '0.65rem', fontWeight: '600', color: 'var(--color-surface-400)' }}>
+                                        ✓ Leída
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             )

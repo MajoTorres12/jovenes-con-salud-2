@@ -135,28 +135,15 @@ function ProductCard({ product }) {
       {/* Image carousel */}
       <CardCarousel images={product.images} productName={product.name} />
 
-      {/* Social program badges */}
-      {product.socialPrograms?.length > 0 && (
-        <div style={{ padding: '10px 14px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {product.socialPrograms.filter(p => p.isActive).map((prog, idx) => {
-            const c = PROGRAM_COLORS[prog.type] || { bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' }
-            return (
-              <span key={idx} style={{
-                padding: '3px 10px', borderRadius: '6px',
-                background: c.bg, color: c.color,
-                border: `1px solid ${c.border}`,
-                fontSize: '0.68rem', fontWeight: '600',
-                display: 'flex', alignItems: 'center', gap: '5px',
-              }}>
-                📋 {prog.name}
-              </span>
-            )
-          })}
-        </div>
-      )}
+      {/* Product Name */}
+      <div style={{ padding: '14px 14px 0' }}>
+        <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0, lineHeight: 1.35 }}>
+          {product.name}
+        </h3>
+      </div>
 
       {/* Card body */}
-      <div style={{ padding: '12px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column', gap: '7px' }}>
+      <div style={{ padding: '10px 14px 14px', flex: 1, display: 'flex', flexDirection: 'column', gap: '7px' }}>
         {/* Price row */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
           <span style={{ fontSize: '1.3rem', fontWeight: '800', color: '#871233', letterSpacing: '-0.01em' }}>
@@ -164,11 +151,6 @@ function ProductCard({ product }) {
           </span>
           {product.price && <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: '600' }}>MXN</span>}
         </div>
-
-        {/* Name */}
-        <h3 style={{ fontSize: '0.98rem', fontWeight: '700', color: '#1e293b', margin: 0, lineHeight: 1.35 }}>
-          {product.name}
-        </h3>
 
         {/* Description */}
         {product.description && (

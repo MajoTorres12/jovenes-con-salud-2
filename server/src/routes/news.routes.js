@@ -44,7 +44,7 @@ router.get('/featured', async (req, res, next) => {
         ['publishedAt', 'DESC'],
         ['createdAt', 'DESC']
       ],
-      limit: 3,
+      limit: 4,
     })
     res.json({ posts })
   } catch (err) {

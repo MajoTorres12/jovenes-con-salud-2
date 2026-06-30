@@ -65,6 +65,7 @@ export default function Dashboard() {
 
   const [showModal, setShowModal] = useState(false)
   const [editRecord, setEditRecord] = useState(null) // null = create mode, record = edit mode
+  const [recordToDelete, setRecordToDelete] = useState(null)
   const [formData, setFormData] = useState({ type: 'weight', value: '', value2: '', heightCm: '', notes: '', recordedAt: new Date().toISOString().slice(0, 16) })
   const [saving, setSaving] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
@@ -612,16 +613,23 @@ export default function Dashboard() {
           : `bmi_height_user_${user?.id}`
         localStorage.setItem(lsKey, formData.heightCm)
       }
-      if (editRecord && !isViewingFamily) {
-        // Edit mode — own record
-        await api.put(`/health-tracking/records/${editRecord.id}`, payload)
+      if (editRecord) {
+        if (isViewingFamily) {
+          // Edit mode — family member record
+          await api.put(`/family/${selectedFamilyId}/health/${editRecord.id}`, payload)
+        } else {
+          // Edit mode — own record
+          await api.put(`/health-tracking/records/${editRecord.id}`, payload)
+        }
         setEditRecord(null)
-      } else if (isViewingFamily) {
-        // Family member record
-        await api.post(`/family/${selectedFamilyId}/health`, payload)
       } else {
-        // Create mode — own record
-        await api.post('/health-tracking/records', payload)
+        if (isViewingFamily) {
+          // Create mode — family member record
+          await api.post(`/family/${selectedFamilyId}/health`, payload)
+        } else {
+          // Create mode — own record
+          await api.post('/health-tracking/records', payload)
+        }
       }
       setShowModal(false)
       setFormData({ type: 'weight', value: '', value2: '', heightCm: '', notes: '', recordedAt: new Date().toISOString().slice(0, 16) })
@@ -1472,18 +1480,7 @@ export default function Dashboard() {
                       onMouseLeave={e => { e.currentTarget.style.borderColor = dark ? 'var(--color-surface-300)' : 'var(--color-surface-200)'; e.currentTarget.style.color = dark ? '#ffffff' : 'var(--color-surface-500)' }}
                     >✏️</button>
                     <button title="Eliminar"
-                      onClick={async () => {
-                        if (!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) return
-                        try {
-                          if (isViewingFamily) {
-                            await api.delete(`/family/${selectedFamilyId}/health/${r.id}`)
-                          } else {
-                            await api.delete(`/health-tracking/records/${r.id}`)
-                          }
-                          fetchData()
-                        }
-                        catch { alert('Error al eliminar el registro') }
-                      }}
+                      onClick={() => setRecordToDelete(r)}
                       style={{ padding: '0.35rem 0.6rem', borderRadius: '8px', border: dark ? '1.5px solid #5c0817' : '1.5px solid #fecaca', background: dark ? 'var(--color-surface-200)' : 'white', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', transition: 'all 0.15s' }}
                       onMouseEnter={e => { e.currentTarget.style.background = dark ? '#29030a' : '#fef2f2' }}
                       onMouseLeave={e => { e.currentTarget.style.background = dark ? 'var(--color-surface-200)' : 'white' }}
@@ -1968,6 +1965,72 @@ export default function Dashboard() {
         onSave={handleFamilySave}
         member={null}
       />
+
+      {/* Delete Confirmation Modal */}
+      {recordToDelete && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 99999,
+          background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+          animation: 'fadeIn 0.2s',
+        }}>
+          <div style={{
+            background: dark ? 'var(--color-surface-100)' : 'white',
+            width: '100%', maxWidth: '400px',
+            padding: '1.5rem', borderRadius: '20px',
+            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+            border: dark ? '1px solid var(--color-surface-300)' : '1px solid var(--color-surface-200)',
+            textAlign: 'center',
+          }}>
+            <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.75rem' }}>🗑️</span>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-surface-900)', marginBottom: '0.5rem' }}>
+              ¿Eliminar registro?
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-surface-500)', marginBottom: '1.5rem' }}>
+              Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este registro de salud?
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                onClick={() => setRecordToDelete(null)}
+                style={{
+                  padding: '0.6rem 1.25rem', borderRadius: '10px',
+                  border: '1.5px solid var(--color-surface-200)', background: 'none',
+                  color: 'var(--color-surface-600)', fontSize: '0.85rem', fontWeight: '600',
+                  cursor: 'pointer', transition: 'all 0.2s',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  const r = recordToDelete
+                  setRecordToDelete(null)
+                  try {
+                    if (isViewingFamily) {
+                      await api.delete(`/family/${selectedFamilyId}/health/${r.id}`)
+                    } else {
+                      await api.delete(`/health-tracking/records/${r.id}`)
+                    }
+                    fetchData()
+                  } catch (err) {
+                    console.error('Error al eliminar:', err)
+                    alert('Error al eliminar el registro')
+                  }
+                }}
+                style={{
+                  padding: '0.6rem 1.25rem', borderRadius: '10px',
+                  border: 'none', background: '#ef4444',
+                  color: 'white', fontSize: '0.85rem', fontWeight: '600',
+                  cursor: 'pointer', transition: 'all 0.2s',
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)',
+                }}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

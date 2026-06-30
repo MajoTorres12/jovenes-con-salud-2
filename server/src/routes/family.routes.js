@@ -331,8 +331,88 @@ router.delete('/:memberId/health/:recordId', async (req, res, next) => {
       return res.status(404).json({ error: 'Registro no encontrado' })
     }
 
+    await MedicalAlert.destroy({ where: { healthRecordId: record.id } })
     await record.destroy()
     res.json({ message: 'Registro eliminado exitosamente' })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// PUT /api/family/:memberId/health/:recordId — Update a health record
+router.put('/:memberId/health/:recordId', async (req, res, next) => {
+  try {
+    const { memberId, recordId } = req.params
+    const { type, value, value2, notes, recordedAt } = req.body
+
+    const member = await FamilyMember.findOne({
+      where: { id: memberId, userId: req.user.id }
+    })
+    if (!member) {
+      return res.status(404).json({ error: 'Familiar no encontrado' })
+    }
+
+    const record = await HealthRecord.findOne({
+      where: { id: recordId, familyMemberId: memberId }
+    })
+
+    if (!record) {
+      return res.status(404).json({ error: 'Registro no encontrado' })
+    }
+
+    if (type) {
+      if (!['weight', 'glucose', 'bloodPressure', 'heartRate', 'cholesterol', 'triglycerides'].includes(type)) {
+        return res.status(400).json({ error: 'Tipo inválido' })
+      }
+      record.type = type
+    }
+
+    if (value != null) record.value = parseFloat(value)
+    if (value2 !== undefined) record.value2 = value2 != null ? parseFloat(value2) : null
+    if (type) record.unit = UNITS[type]
+    if (notes !== undefined) record.notes = notes || null
+    if (recordedAt) record.recordedAt = new Date(recordedAt)
+
+    await record.save()
+
+    // Update alert status
+    try {
+      await MedicalAlert.destroy({ where: { healthRecordId: record.id } })
+      const user = await User.findByPk(req.user.id)
+      if (user && user.doctorId) {
+        const checkResult = checkHealthLimits(record.type, record.value, record.value2)
+        if (checkResult && checkResult.isAbnormal) {
+          let displayValue = `${record.value} ${UNITS[record.type] || ''}`
+          if (record.type === 'bloodPressure' && record.value2 != null) {
+            displayValue = `${record.value}/${record.value2} ${UNITS[record.type] || ''}`
+          } else if (record.type === 'weight' && record.value2 != null) {
+            const heightM = record.value2 / 100
+            const bmi = record.value / (heightM * heightM)
+            displayValue = `${record.value} kg (IMC: ${bmi.toFixed(1)})`
+          }
+
+          const relLabel = RELATIONSHIP_LABELS[member.relationship] || member.relationship
+          const familyName = `${member.name} (${relLabel})`
+
+          await MedicalAlert.create({
+            userId: user.id,
+            doctorId: user.doctorId,
+            healthRecordId: record.id,
+            severity: checkResult.severity,
+            type: record.type,
+            message: `${checkResult.message} - ${familyName}`,
+            value: displayValue,
+            description: `Familiar de ${user.name}: ${checkResult.description}`,
+            status: 'pending',
+            recordedAt: record.recordedAt,
+          })
+        }
+      }
+    } catch (alertErr) {
+      console.error('Error updating medical alert for family member:', alertErr)
+    }
+
+    res.json({ message: 'Registro actualizado exitosamente', record })
   } catch (err) {
     next(err)
   }

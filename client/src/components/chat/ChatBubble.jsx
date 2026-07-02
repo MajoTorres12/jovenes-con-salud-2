@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { FaComments, FaTimes, FaPaperPlane, FaUserCircle, FaArrowLeft, FaCircle } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
-import api from '../../services/api'
+import api, { getApiBaseUrl } from '../../services/api'
+
+const API_BASE = getApiBaseUrl()
 
 export default function ChatBubble() {
   const { user, isAuthenticated } = useAuth()
@@ -345,7 +347,7 @@ export default function ChatBubble() {
                           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '700', color: '#0369a1', overflow: 'hidden'
                         }}>
                           {p.avatar ? (
-                            <img src={p.avatar.startsWith('http') ? p.avatar : `/${p.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={p.avatar.startsWith('http') ? p.avatar : `${API_BASE}/${p.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ) : (
                             p.name.charAt(0).toUpperCase()
                           )}

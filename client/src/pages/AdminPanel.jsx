@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import api from '../services/api'
+import api, { getApiBaseUrl } from '../services/api'
+
+const API_BASE = getApiBaseUrl()
 import {
   FaChartBar, FaUsers, FaHeartbeat, FaCapsules, FaNewspaper,
   FaEnvelope, FaCog, FaSignOutAlt, FaExternalLinkAlt,
@@ -354,7 +356,7 @@ function ImageUploader({ value, onChange, dark }) {
         {value ? (
           <div style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '12px', overflow: 'hidden', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}` }}>
             <img 
-              src={value.startsWith('http') ? value : `/${value}`} 
+              src={value.startsWith('http') ? value : `${API_BASE}/${value}`} 
               alt="Previsualización" 
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             />
@@ -496,7 +498,7 @@ function MultiImageUploader({ value = [], onChange, dark }) {
             border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`
           }}>
             <img
-              src={imgUrl.startsWith('http') ? imgUrl : `/${imgUrl}`}
+              src={imgUrl.startsWith('http') ? imgUrl : `${API_BASE}/${imgUrl}`}
               alt={`Imagen ${index + 1}`}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
@@ -929,7 +931,7 @@ function CrudSection({ dark, entity, title }) {
 
       return src ? (
         <div style={{ width: '48px', height: '32px', borderRadius: '6px', overflow: 'hidden', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}` }}>
-          <img src={src.startsWith('http') ? src : `/${src}`} alt="Thumbnail" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={src.startsWith('http') ? src : `${API_BASE}/${src}`} alt="Thumbnail" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       ) : (
         <div style={{ width: '48px', height: '32px', borderRadius: '6px', background: dark ? '#1e1c25' : '#faf8f5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: dark ? '#7e7a8c' : '#a89580', fontSize: '0.65rem' }}>

@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext'
 import api, { getApiBaseUrl } from '../services/api'
 
 const API_BASE = getApiBaseUrl()
-const newsImgSrc = (p) => !p ? null : p.startsWith('http') ? p : `/${p}`
+const newsImgSrc = (p) => !p ? null : p.startsWith('http') ? p : `${API_BASE}/${p}`
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 
 const features = [

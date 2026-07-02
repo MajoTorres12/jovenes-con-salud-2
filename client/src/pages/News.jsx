@@ -4,7 +4,7 @@ import { FaNewspaper, FaThumbtack } from 'react-icons/fa'
 import api, { getApiBaseUrl } from '../services/api'
 
 const API_BASE = getApiBaseUrl()
-const imgSrc = (p) => !p ? null : p.startsWith('http') ? p : `/${p}`
+const imgSrc = (p) => !p ? null : p.startsWith('http') ? p : `${API_BASE}/${p}`
 
 const fmt = (d) => d ? new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
 

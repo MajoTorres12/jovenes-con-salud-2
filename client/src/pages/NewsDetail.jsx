@@ -4,7 +4,7 @@ import api, { getApiBaseUrl } from '../services/api'
 import { FaCalendarAlt, FaPen, FaCamera } from 'react-icons/fa'
 
 const API_BASE = getApiBaseUrl()
-const imgSrc = (p) => !p ? null : p.startsWith('http') ? p : `/${p}`
+const imgSrc = (p) => !p ? null : p.startsWith('http') ? p : `${API_BASE}/${p}`
 const fmt = (d) => d ? new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
 
 function parseMarkdown(text, images = []) {
@@ -25,7 +25,7 @@ function parseMarkdown(text, images = []) {
   if (Array.isArray(images) && images.length > 0) {
     images.forEach((imgUrl, index) => {
       const imgNum = index + 1
-      const src = !imgUrl ? null : imgUrl.startsWith('http') ? imgUrl : `/${imgUrl}`
+      const src = !imgUrl ? null : imgUrl.startsWith('http') ? imgUrl : `${API_BASE}/${imgUrl}`
       if (src) {
         const imgHtml = `
           <div class="inline-news-image-wrapper" style="

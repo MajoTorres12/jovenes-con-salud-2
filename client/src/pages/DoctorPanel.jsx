@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import api from '../services/api'
+import api, { getApiBaseUrl } from '../services/api'
+
+const API_BASE = getApiBaseUrl()
 import AdvancedAnalytics from './AdvancedAnalytics'
 import {
   FaHeartbeat, FaUsers, FaChartLine, FaArrowLeft, FaTimes, FaBell,
@@ -510,7 +512,7 @@ export default function DoctorPanel() {
                       fontSize: '1.5rem', color: '#0369a1', overflow: 'hidden'
                     }}>
                       {patientDetail.patient.avatar ? (
-                        <img src={patientDetail.patient.avatar.startsWith('http') ? patientDetail.patient.avatar : `/${patientDetail.patient.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={patientDetail.patient.avatar.startsWith('http') ? patientDetail.patient.avatar : `${API_BASE}/${patientDetail.patient.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         patientDetail.patient.name.charAt(0).toUpperCase()
                       )}
@@ -1050,7 +1052,7 @@ export default function DoctorPanel() {
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: '700', color: '#0369a1', overflow: 'hidden'
                                   }}>
                                     {p.avatar ? (
-                                      <img src={p.avatar.startsWith('http') ? p.avatar : `/${p.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                      <img src={p.avatar.startsWith('http') ? p.avatar : `${API_BASE}/${p.avatar}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     ) : (
                                       p.name.charAt(0).toUpperCase()
                                     )}

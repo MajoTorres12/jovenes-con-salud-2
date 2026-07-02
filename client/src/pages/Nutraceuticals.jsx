@@ -48,9 +48,9 @@ function CardCarousel({ images, productName }) {
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
     >
       {/* Slides */}
-      <div style={{ display: 'flex', height: '100%', transition: 'transform 0.35s cubic-bezier(0.25,0.1,0.25,1)', transform: `translateX(-${current * 100}%)`, width: `${len * 100}%` }}>
+      <div style={{ display: 'flex', height: '100%', transition: 'transform 0.35s cubic-bezier(0.25,0.1,0.25,1)', transform: `translateX(-${current * 100}%)`, width: '100%' }}>
         {images.map((img, i) => (
-          <div key={i} style={{ width: `${100 / len}%`, height: '100%', flexShrink: 0 }}>
+          <div key={i} style={{ flex: '0 0 100%', height: '100%' }}>
             <img src={imgSrc(img)} alt={`${productName} ${i + 1}`}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={e => { e.target.src = `https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=400&q=70` }}

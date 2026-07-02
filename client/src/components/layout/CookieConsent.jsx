@@ -131,7 +131,7 @@ export default function CookieConsent() {
       <p style={{ fontSize: '0.82rem', lineHeight: '1.5', margin: 0, color: dark ? '#9ca3af' : '#4b5563' }}>
         Utilizamos cookies y almacenamiento local técnico indispensable para optimizar tu experiencia, gestionar el inicio de sesión seguro y mantener tus preferencias de idioma. Al continuar navegando, aceptas nuestro{' '}
         <Link 
-          to="/faq" 
+          to="/aviso-de-privacidad" 
           style={{ color: dark ? '#c2a378' : '#871233', textDecoration: 'underline', fontWeight: '600' }}
           onClick={() => {
             // Smoothly dismiss banner on navigation to policy to avoid obstruction

@@ -24,6 +24,7 @@ import DoctorPanel from './pages/DoctorPanel'
 import DoctorRoute from './components/DoctorRoute'
 import ChatBubble from './components/chat/ChatBubble'
 import CookieConsent from './components/layout/CookieConsent'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
             <Route path="/nutraceuticos/:slug" element={<NutraceuticalDetail />} />
             <Route path="/contacto" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/aviso-de-privacidad" element={<PrivacyPolicy />} />
             <Route path="/herramientas/imc" element={<BMICalculator />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>

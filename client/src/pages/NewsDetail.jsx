@@ -7,9 +7,9 @@ const API_BASE = getApiBaseUrl()
 const imgSrc = (p) => !p ? null : p.startsWith('http') ? p : `/${p}`
 const fmt = (d) => d ? new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
 
-function parseMarkdown(text) {
+function parseMarkdown(text, images = []) {
   if (!text) return ''
-  return text
+  let html = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -20,11 +20,42 @@ function parseMarkdown(text) {
     .replace(/^### (.*?)$/gm, '<h4 style="font-size:1.15rem;font-weight:700;margin-top:1.5rem;margin-bottom:0.75rem;">$1</h4>')
     .replace(/^## (.*?)$/gm, '<h3 style="font-size:1.3rem;font-weight:800;margin-top:1.75rem;margin-bottom:1rem;color:var(--color-surface-900);">$1</h3>')
     .replace(/^# (.*?)$/gm, '<h2 style="font-size:1.5rem;font-weight:900;margin-top:2rem;margin-bottom:1.25rem;color:var(--color-surface-900);">$1</h2>')
+
+  // Process inline image placeholders: {IMAGEN_1}, {IMAGE_1}, [imagen1] etc.
+  if (Array.isArray(images) && images.length > 0) {
+    images.forEach((imgUrl, index) => {
+      const imgNum = index + 1
+      const src = !imgUrl ? null : imgUrl.startsWith('http') ? imgUrl : `/${imgUrl}`
+      if (src) {
+        const imgHtml = `
+          <div class="inline-news-image-wrapper" style="
+            margin: 2.5rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          ">
+            <img src="${src}" alt="Imagen ${imgNum}" style="width:100%; max-height:480px; object-fit:cover; border-radius:var(--radius-xl); border:1px solid var(--color-surface-300); box-shadow:var(--shadow-card);" />
+          </div>
+        `
+        const placeholders = [
+          `{IMAGEN_${imgNum}}`, `{imagen_${imgNum}}`, `{IMAGEN${imgNum}}`, `{imagen${imgNum}}`,
+          `{IMAGE_${imgNum}}`, `{image_${imgNum}}`, `{IMAGE${imgNum}}`, `{image${imgNum}}`,
+          `[imagen_${imgNum}]`, `[imagen${imgNum}]`, `[image_${imgNum}]`, `[image${imgNum}]`,
+          `[IMAGEN_${imgNum}]`, `[IMAGEN${imgNum}]`, `[IMAGE_${imgNum}]`, `[IMAGE${imgNum}]`
+        ]
+        placeholders.forEach(pl => {
+          html = html.split(pl).join(imgHtml)
+        })
+      }
+    })
+  }
+
+  return html
     .split('\n\n')
     .map(para => {
       const trimmed = para.trim()
       if (!trimmed) return ''
-      if (trimmed.startsWith('<h')) return trimmed
+      if (trimmed.startsWith('<h') || trimmed.startsWith('\n          <div class="inline-news-image-wrapper"') || trimmed.startsWith('<div class="inline-news-image-wrapper"')) return trimmed
       return `<p style="margin-bottom:1.25rem;line-height:1.85;color:var(--color-surface-900);">${trimmed.replace(/\n/g, '<br/>')}</p>`
     })
     .join('\n')
@@ -58,6 +89,20 @@ export default function NewsDetail() {
   )
 
   const cover = imgSrc(post.coverImage)
+
+  const contentHasPlaceholder = (index) => {
+    if (!post || !post.content) return false
+    const imgNum = index + 1
+    const placeholders = [
+      `{IMAGEN_${imgNum}}`, `{imagen_${imgNum}}`, `{IMAGEN${imgNum}}`, `{imagen${imgNum}}`,
+      `{IMAGE_${imgNum}}`, `{image_${imgNum}}`, `{IMAGE${imgNum}}`, `{image${imgNum}}`,
+      `[imagen_${imgNum}]`, `[imagen${imgNum}]`, `[image_${imgNum}]`, `[image${imgNum}]`,
+      `[IMAGEN_${imgNum}]`, `[IMAGEN${imgNum}]`, `[IMAGE_${imgNum}]`, `[IMAGE${imgNum}]`
+    ]
+    return placeholders.some(pl => post.content.includes(pl))
+  }
+
+  const galleryImages = post && post.images ? post.images.filter((_, idx) => !contentHasPlaceholder(idx)) : []
 
   return (
     <div style={{ background: 'var(--color-surface-50)', minHeight: '100vh' }}>
@@ -133,17 +178,17 @@ export default function NewsDetail() {
             lineHeight: 1.85,
             marginBottom: '3rem'
           }}
-          dangerouslySetInnerHTML={{ __html: parseMarkdown(post.content) }}
+          dangerouslySetInnerHTML={{ __html: parseMarkdown(post.content, post.images) }}
         />
 
         {/* Gallery */}
-        {post.images?.length > 0 && (
+        {galleryImages.length > 0 && (
           <div style={{ marginTop: '3rem', marginBottom: '3rem' }}>
             <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-surface-900)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <FaCamera /> Galería
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
-              {post.images.map((img, i) => (
+              {galleryImages.map((img, i) => (
                 <div key={i} style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', aspectRatio: '4/3', border: '1px solid var(--color-surface-300)', boxShadow: 'var(--shadow-card)' }}>
                   <img src={imgSrc(img)} alt={`Foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>

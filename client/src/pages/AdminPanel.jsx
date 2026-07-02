@@ -764,6 +764,7 @@ const ENTITY_CONFIG = {
       { key: 'content', label: 'Contenido', type: 'textarea', required: true },
       { key: 'author', label: 'Autor', type: 'text' },
       { key: 'coverImage', label: 'Imagen de Portada', type: 'image' },
+      { key: 'images', label: 'Imágenes Adicionales (para galería o insertar en texto)', type: 'multi_image' },
       { key: 'publishedAt', label: 'Fecha de Publicación', type: 'date' },
       { key: 'isPinned', label: 'Fijada (Pin)', type: 'checkbox' },
       { key: 'isPublished', label: 'Publicada', type: 'checkbox' },

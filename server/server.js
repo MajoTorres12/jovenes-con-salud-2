@@ -27,10 +27,8 @@ async function startServer() {
     await sequelize.authenticate()
     console.log('✅ Conexión a PostgreSQL establecida correctamente')
 
-    if (process.env.NODE_ENV !== 'production') {
-      await sequelize.sync({ alter: true })
-      console.log('✅ Modelos sincronizados con la base de datos')
-    }
+    await sequelize.sync({ alter: true })
+    console.log('✅ Modelos sincronizados con la base de datos')
   } catch (dbError) {
     console.warn('⚠️  No se pudo conectar a PostgreSQL:', dbError.message)
     console.warn('   El servidor arrancará sin base de datos.')

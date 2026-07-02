@@ -23,6 +23,7 @@ import AdminRoute from './components/AdminRoute'
 import DoctorPanel from './pages/DoctorPanel'
 import DoctorRoute from './components/DoctorRoute'
 import ChatBubble from './components/chat/ChatBubble'
+import CookieConsent from './components/layout/CookieConsent'
 
 export default function App() {
   return (
@@ -74,6 +75,7 @@ export default function App() {
           } />
         </Routes>
         <ChatBubble />
+        <CookieConsent />
       </AuthProvider>
     </BrowserRouter>
   )

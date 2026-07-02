@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { FaUser, FaLock, FaEnvelope, FaCalendar, FaCheck, FaExclamationCircle } from 'react-icons/fa'
+import { Link } from 'react-router-dom'
+import { FaUser, FaLock, FaEnvelope, FaCalendar, FaCheck, FaExclamationCircle, FaShieldAlt, FaChevronRight } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import api from '../services/api'
@@ -167,6 +168,57 @@ export default function Profile() {
             transition: 'left 0.25s',
           }} />
         </button>
+      </div>
+
+      {/* Privacy Policy Card */}
+      <div className="animate-fade-in" style={{
+        background: 'white',
+        borderRadius: 'var(--radius-xl)',
+        padding: '1.25rem 2rem',
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--color-surface-200)',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        transition: 'all 0.2s'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', color: 'var(--color-primary-500)' }}>
+            <FaShieldAlt size={20} />
+          </span>
+          <div>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>Aviso de Privacidad</h3>
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-surface-500)', margin: 0 }}>Consulta las políticas de protección y seguridad de tus datos</p>
+          </div>
+        </div>
+        <Link
+          to="/aviso-de-privacidad"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            background: 'var(--color-surface-100)',
+            color: 'var(--color-primary-500)',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            textDecoration: 'none'
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'var(--color-primary-50)'
+            e.currentTarget.style.transform = 'translateX(2px)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'var(--color-surface-100)'
+            e.currentTarget.style.transform = 'translateX(0)'
+          }}
+        >
+          <FaChevronRight size={12} />
+        </Link>
       </div>
 
       {/* Info Tab */}

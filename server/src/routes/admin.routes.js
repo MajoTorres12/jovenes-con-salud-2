@@ -311,6 +311,9 @@ router.post('/diseases/:diseaseId/variants', async (req, res, next) => {
     if (!data.name || !data.description) {
       return res.status(400).json({ error: 'Nombre y descripción son requeridos' })
     }
+
+    const resources = data.externalResources || data.external_resources
+    const videos = data.youtubeVideos || data.youtube_videos
     
     const payload = {
       diseaseId,
@@ -320,8 +323,8 @@ router.post('/diseases/:diseaseId/variants', async (req, res, next) => {
       validatedBy: data.validatedBy || 'Secretaría de Salud de Tamaulipas',
       symptoms: Array.isArray(data.symptoms) ? data.symptoms : [],
       riskFactors: Array.isArray(data.riskFactors) ? data.riskFactors : [],
-      externalResources: Array.isArray(data.externalResources) ? data.externalResources : [],
-      youtubeVideos: Array.isArray(data.youtubeVideos) ? data.youtubeVideos : [],
+      externalResources: Array.isArray(resources) ? resources : [],
+      youtubeVideos: Array.isArray(videos) ? videos : [],
     }
 
     const variant = await DiseaseVariant.create(payload)
@@ -338,6 +341,9 @@ router.put('/diseases/variants/:id', async (req, res, next) => {
     if (!variant) return res.status(404).json({ error: 'Variante no encontrada' })
 
     const data = req.body
+    const resources = data.externalResources || data.external_resources
+    const videos = data.youtubeVideos || data.youtube_videos
+
     const payload = {
       name: data.name ?? variant.name,
       description: data.description ?? variant.description,
@@ -345,8 +351,8 @@ router.put('/diseases/variants/:id', async (req, res, next) => {
       validatedBy: data.validatedBy ?? variant.validatedBy,
       symptoms: Array.isArray(data.symptoms) ? data.symptoms : variant.symptoms,
       riskFactors: Array.isArray(data.riskFactors) ? data.riskFactors : variant.riskFactors,
-      externalResources: Array.isArray(data.externalResources) ? data.externalResources : variant.externalResources,
-      youtubeVideos: Array.isArray(data.youtubeVideos) ? data.youtubeVideos : variant.youtubeVideos,
+      externalResources: Array.isArray(resources) ? resources : variant.externalResources,
+      youtubeVideos: Array.isArray(videos) ? videos : variant.youtubeVideos,
     }
 
     await variant.update(payload)

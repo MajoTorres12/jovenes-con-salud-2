@@ -735,6 +735,8 @@ const ENTITY_CONFIG = {
       { key: 'colorHex', label: 'Color Hex', type: 'text' },
       { key: 'coverImage', label: 'Imagen de Portada', type: 'image' },
       { key: 'validatedBy', label: 'Validado por', type: 'text' },
+      { key: 'externalResources', label: 'Recursos Externos (Formato: Etiqueta|URL - uno por línea)', type: 'textarea' },
+      { key: 'youtubeVideos', label: 'Videos de YouTube (Formato: Título|youtubeId - uno por línea)', type: 'textarea' },
       { key: 'isPublished', label: 'Publicada', type: 'checkbox' },
     ],
   },
@@ -870,8 +872,14 @@ function CrudSection({ dark, entity, title }) {
     const d = {}
     cfg.fields.forEach(f => {
       if (f.type === 'jsonarray') {
-        const arr = item[f.key]
+        const arr = item[f.key] || item[f.key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)]
         d[f.key] = Array.isArray(arr) ? arr.join('\n') : ''
+      } else if (f.key === 'externalResources') {
+        const arr = item.externalResources || item.external_resources
+        d[f.key] = Array.isArray(arr) ? arr.map(r => `${r.label || ''}|${r.url || ''}`).join('\n') : ''
+      } else if (f.key === 'youtubeVideos') {
+        const arr = item.youtubeVideos || item.youtube_videos
+        d[f.key] = Array.isArray(arr) ? arr.map(vid => `${vid.title || ''}|${vid.youtubeId || vid.youtube_id || ''}`).join('\n') : ''
       } else if (f.type === 'date') {
         d[f.key] = item[f.key] ? new Date(item[f.key]).toISOString().slice(0, 10) : ''
       } else if (f.type === 'checkbox') {
@@ -908,17 +916,19 @@ function CrudSection({ dark, entity, title }) {
     setVName(v.name || '')
     setVDescription(v.description || '')
     setVTreatment(v.treatment || '')
-    setVValidatedBy(v.validatedBy || 'Secretaría de Salud de Tamaulipas')
+    setVValidatedBy(v.validatedBy || v.validated_by || 'Secretaría de Salud de Tamaulipas')
     setVSymptoms(Array.isArray(v.symptoms) ? v.symptoms.join('\n') : '')
     setVRiskFactors(Array.isArray(v.riskFactors) ? v.riskFactors.join('\n') : '')
 
-    const resLines = Array.isArray(v.externalResources) 
-      ? v.externalResources.map(r => `${r.label || ''}|${r.url || ''}`).join('\n')
+    const res = v.externalResources || v.external_resources
+    const resLines = Array.isArray(res) 
+      ? res.map(r => `${r.label || ''}|${r.url || ''}`).join('\n')
       : ''
     setVExternalResources(resLines)
 
-    const vidLines = Array.isArray(v.youtubeVideos)
-      ? v.youtubeVideos.map(vid => `${vid.title || ''}|${vid.youtubeId || ''}`).join('\n')
+    const vids = v.youtubeVideos || v.youtube_videos
+    const vidLines = Array.isArray(vids)
+      ? vids.map(vid => `${vid.title || ''}|${vid.youtubeId || vid.youtube_id || ''}`).join('\n')
       : ''
     setVYoutubeVideos(vidLines)
 
@@ -932,6 +942,16 @@ function CrudSection({ dark, entity, title }) {
       return
     }
     setSavingVariant(true)
+    const resourcesParsed = vExternalResources.split('\n').map(line => {
+      const parts = line.split('|')
+      return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
+    }).filter(r => r.label && r.url)
+
+    const videosParsed = vYoutubeVideos.split('\n').map(line => {
+      const parts = line.split('|')
+      return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
+    }).filter(vid => vid.title && vid.youtubeId)
+
     const payload = {
       name: vName,
       description: vDescription,
@@ -939,14 +959,10 @@ function CrudSection({ dark, entity, title }) {
       validatedBy: vValidatedBy,
       symptoms: vSymptoms.split('\n').map(s => s.trim()).filter(Boolean),
       riskFactors: vRiskFactors.split('\n').map(r => r.trim()).filter(Boolean),
-      externalResources: vExternalResources.split('\n').map(line => {
-        const parts = line.split('|')
-        return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
-      }).filter(r => r.label && r.url),
-      youtubeVideos: vYoutubeVideos.split('\n').map(line => {
-        const parts = line.split('|')
-        return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
-      }).filter(vid => vid.title && vid.youtubeId),
+      externalResources: resourcesParsed,
+      external_resources: resourcesParsed,
+      youtubeVideos: videosParsed,
+      youtube_videos: videosParsed,
     }
 
     try {
@@ -984,6 +1000,24 @@ function CrudSection({ dark, entity, title }) {
           payload[f.key] = payload[f.key]
             ? payload[f.key].split('\n').map(s => s.trim()).filter(Boolean)
             : []
+        } else if (f.key === 'externalResources') {
+          const parsed = payload[f.key]
+            ? payload[f.key].split('\n').map(line => {
+                const parts = line.split('|')
+                return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
+              }).filter(r => r.label && r.url)
+            : []
+          payload.externalResources = parsed
+          payload.external_resources = parsed
+        } else if (f.key === 'youtubeVideos') {
+          const parsed = payload[f.key]
+            ? payload[f.key].split('\n').map(line => {
+                const parts = line.split('|')
+                return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
+              }).filter(v => v.title && v.youtubeId)
+            : []
+          payload.youtubeVideos = parsed
+          payload.youtube_videos = parsed
         }
         if (f.type === 'number' && payload[f.key] !== '' && payload[f.key] !== undefined) {
           payload[f.key] = Number(payload[f.key])

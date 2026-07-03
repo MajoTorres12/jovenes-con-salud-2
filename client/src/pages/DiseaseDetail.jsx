@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { FaArrowLeft, FaExternalLinkAlt, FaCheckCircle, FaExclamationTriangle, FaHeartbeat, FaBandAid, FaShieldAlt, FaYoutube, FaBookOpen } from 'react-icons/fa'
+import { FaArrowLeft, FaExternalLinkAlt, FaCheckCircle, FaExclamationTriangle, FaHeartbeat, FaBandAid, FaShieldAlt, FaYoutube, FaBookOpen, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import { useTheme } from '../context/ThemeContext'
 import api from '../services/api'
 
@@ -12,6 +12,7 @@ export default function DiseaseDetail() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [activeTab, setActiveTab] = useState('main')
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,72 +81,121 @@ export default function DiseaseDetail() {
     { id: 'videos', label: 'Videos Informativos', icon: FaYoutube },
     { id: 'resources', label: 'Recursos y Artículos', icon: FaExternalLinkAlt }
   ]
-
   return (
-    <div style={{ padding: '2.5rem 1.5rem', maxWidth: '1100px', margin: '0 auto', minHeight: '80vh' }}>
+    <div style={{ padding: '2.5rem 2rem', maxWidth: '1350px', margin: '0 auto', minHeight: '80vh' }}>
       <div className="disease-detail-container">
         
         {/* Sidebar */}
         <aside className="disease-sidebar">
-          {/* Back button */}
-          <Link to="/enfermedades" style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-            color: 'var(--color-surface-500)', textDecoration: 'none', fontSize: '0.85rem',
-            fontWeight: '600', transition: 'all 0.2s ease',
-            background: 'var(--color-surface-100)',
-            padding: '0.55rem 1rem',
-            borderRadius: '10px',
-            border: '1.5px solid var(--color-surface-200)',
-            width: 'fit-content'
-          }}
-            onMouseEnter={e => {
-              e.currentTarget.style.color = color
-              e.currentTarget.style.borderColor = color + '40'
-              e.currentTarget.style.background = color + '05'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.color = 'var(--color-surface-500)'
-              e.currentTarget.style.borderColor = 'var(--color-surface-200)'
-              e.currentTarget.style.background = 'var(--color-surface-100)'
-            }}
-          >
-            <FaArrowLeft size={10} /> Volver al catálogo
-          </Link>
+          {/* Back & Collapse Toggle Row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'space-between', gap: '0.5rem', width: '100%' }}>
+            {isCollapsed ? (
+              <Link to="/enfermedades" title="Volver al catálogo" style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: 'var(--color-surface-100)', color: 'var(--color-surface-500)',
+                border: '1px solid var(--color-surface-200)', transition: 'all 0.2s ease'
+              }}
+                onMouseEnter={e => { e.currentTarget.style.color = color; e.currentTarget.style.borderColor = color + '40' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-surface-500)'; e.currentTarget.style.borderColor = 'var(--color-surface-200)' }}
+              >
+                <FaArrowLeft size={12} />
+              </Link>
+            ) : (
+              <Link to="/enfermedades" style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                color: 'var(--color-surface-500)', textDecoration: 'none', fontSize: '0.82rem',
+                fontWeight: '600', transition: 'all 0.2s ease',
+                background: 'var(--color-surface-100)',
+                padding: '0.45rem 0.85rem',
+                borderRadius: '8px',
+                border: '1px solid var(--color-surface-200)'
+              }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = color
+                  e.currentTarget.style.borderColor = color + '40'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = 'var(--color-surface-500)'
+                  e.currentTarget.style.borderColor = 'var(--color-surface-200)'
+                }}
+              >
+                <FaArrowLeft size={10} /> Volver
+              </Link>
+            )}
+
+            <button 
+              onClick={() => setIsCollapsed(!isCollapsed)} 
+              className="collapse-toggle-btn"
+              title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: '32px', height: '32px', borderRadius: '8px',
+                border: '1px solid var(--color-surface-200)',
+                background: 'var(--color-surface-100)',
+                color: 'var(--color-surface-500)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = color
+                e.currentTarget.style.borderColor = color + '40'
+                e.currentTarget.style.background = color + '05'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--color-surface-500)'
+                e.currentTarget.style.borderColor = 'var(--color-surface-200)'
+                e.currentTarget.style.background = 'var(--color-surface-100)'
+              }}
+            >
+              {isCollapsed ? <FaChevronRight size={12} /> : <FaChevronLeft size={12} />}
+            </button>
+          </div>
 
           {/* Brand/Disease Header inside Sidebar */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.75rem',
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
+            gap: '0.75rem',
             padding: '0.5rem 0.25rem',
             borderBottom: '1px solid var(--color-surface-200)',
             paddingBottom: '1rem',
-            marginTop: '0.5rem'
+            marginTop: '0.25rem',
+            width: '100%',
           }}>
-            <span style={{ fontSize: '2.25rem' }}>{disease.iconEmoji || '🏥'}</span>
-            <div style={{ minWidth: 0 }}>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {disease.name}
-              </h2>
-              <div style={{
-                display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: '4px',
-                background: color + '15', color, fontSize: '0.65rem', fontWeight: '700',
-                textTransform: 'uppercase', letterSpacing: '0.02em', marginTop: '0.2rem'
-              }}>
-                {disease.category}
+            <span style={{ fontSize: isCollapsed ? '2.5rem' : '2.25rem', transition: 'font-size 0.3s' }}>
+              {disease.iconEmoji || '🏥'}
+            </span>
+            {!isCollapsed && (
+              <div style={{ minWidth: 0, animation: 'fadeIn 0.2s' }}>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {disease.name}
+                </h2>
+                <div style={{
+                  display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: '4px',
+                  background: color + '15', color, fontSize: '0.65rem', fontWeight: '700',
+                  textTransform: 'uppercase', letterSpacing: '0.02em', marginTop: '0.2rem'
+                }}>
+                  {disease.category}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Vertical Menu */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }} className="disease-tabs-nav">
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }} className="disease-tabs-nav">
             {tabs.map(t => (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
+                title={isCollapsed ? t.label : undefined}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.75rem 1rem',
+                  justifyContent: isCollapsed ? 'center' : 'flex-start',
+                  gap: isCollapsed ? '0' : '0.75rem',
+                  padding: isCollapsed ? '0.75rem 0' : '0.75rem 1rem',
                   borderRadius: '10px',
                   border: 'none',
                   background: activeTab === t.id ? (dark ? 'rgba(255,255,255,0.06)' : color + '12') : 'transparent',
@@ -155,7 +205,8 @@ export default function DiseaseDetail() {
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.2s ease',
-                  outline: 'none'
+                  outline: 'none',
+                  width: '100%',
                 }}
                 onMouseEnter={e => {
                   if (activeTab !== t.id) {
@@ -171,7 +222,7 @@ export default function DiseaseDetail() {
                 }}
               >
                 <t.icon size={14} style={{ flexShrink: 0, opacity: activeTab === t.id ? 1 : 0.7 }} />
-                <span>{t.label}</span>
+                {!isCollapsed && <span style={{ animation: 'fadeIn 0.2s', whiteSpace: 'nowrap' }}>{t.label}</span>}
               </button>
             ))}
           </nav>
@@ -421,15 +472,18 @@ export default function DiseaseDetail() {
           display: flex;
           gap: 2.5rem;
           align-items: flex-start;
+          width: 100%;
         }
         .disease-sidebar {
-          width: 250px;
+          width: ${isCollapsed ? '70px' : '250px'};
           flex-shrink: 0;
           display: flex;
           flex-direction: column;
           gap: 1.25rem;
           position: sticky;
           top: 6.5rem;
+          transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow: hidden;
         }
         .disease-content-area {
           flex: 1;
@@ -441,12 +495,15 @@ export default function DiseaseDetail() {
             gap: 1.5rem;
           }
           .disease-sidebar {
-            width: 100%;
+            width: 100% !important;
             position: relative;
             top: 0;
             gap: 1rem;
             border-bottom: 1.5px solid var(--color-surface-200);
             padding-bottom: 1rem;
+          }
+          .collapse-toggle-btn {
+            display: none !important;
           }
           .disease-tabs-nav {
             flex-direction: row !important;

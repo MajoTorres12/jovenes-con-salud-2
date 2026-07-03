@@ -790,244 +790,6 @@ const ENTITY_CONFIG = {
   },
 }
 
-// ═══════════════════════════════════════════════════════
-// DISEASE VARIANTS MANAGER (FOR ADMIN DISEASE EDIT FORM)
-// ═══════════════════════════════════════════════════════
-
-function VariantsManager({ disease, dark }) {
-  const [variants, setVariants] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [showSubForm, setShowSubForm] = useState(false)
-  const [editingVariant, setEditingVariant] = useState(null)
-  
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [treatment, setTreatment] = useState('')
-  const [validatedBy, setValidatedBy] = useState('Secretaría de Salud de Tamaulipas')
-  const [symptoms, setSymptoms] = useState('')
-  const [riskFactors, setRiskFactors] = useState('')
-  const [externalResources, setExternalResources] = useState('')
-  const [youtubeVideos, setYoutubeVideos] = useState('')
-
-  const loadVariants = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await api.get(`/admin/diseases/${disease.id}/variants`)
-      setVariants(res.data.variants || [])
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [disease.id])
-
-  useEffect(() => {
-    loadVariants()
-  }, [loadVariants])
-
-  const openCreate = () => {
-    setName('')
-    setDescription('')
-    setTreatment('')
-    setValidatedBy('Secretaría de Salud de Tamaulipas')
-    setSymptoms('')
-    setRiskFactors('')
-    setExternalResources('')
-    setYoutubeVideos('')
-    setEditingVariant(null)
-    setShowSubForm(true)
-  }
-
-  const openEdit = (v) => {
-    setName(v.name || '')
-    setDescription(v.description || '')
-    setTreatment(v.treatment || '')
-    setValidatedBy(v.validatedBy || 'Secretaría de Salud de Tamaulipas')
-    setSymptoms(Array.isArray(v.symptoms) ? v.symptoms.join('\n') : '')
-    setRiskFactors(Array.isArray(v.riskFactors) ? v.riskFactors.join('\n') : '')
-    
-    const resLines = Array.isArray(v.externalResources) 
-      ? v.externalResources.map(r => `${r.label || ''}|${r.url || ''}`).join('\n')
-      : ''
-    setExternalResources(resLines)
-
-    const vidLines = Array.isArray(v.youtubeVideos)
-      ? v.youtubeVideos.map(vid => `${vid.title || ''}|${vid.youtubeId || ''}`).join('\n')
-      : ''
-    setYoutubeVideos(vidLines)
-
-    setEditingVariant(v)
-    setShowSubForm(true)
-  }
-
-  const handleSaveVariant = async () => {
-    if (!name || !description) {
-      alert('El nombre y la descripción son requeridos')
-      return
-    }
-
-    const payload = {
-      name,
-      description,
-      treatment,
-      validatedBy,
-      symptoms: symptoms.split('\n').map(s => s.trim()).filter(Boolean),
-      riskFactors: riskFactors.split('\n').map(r => r.trim()).filter(Boolean),
-      externalResources: externalResources.split('\n').map(line => {
-        const parts = line.split('|')
-        return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
-      }).filter(r => r.label && r.url),
-      youtubeVideos: youtubeVideos.split('\n').map(line => {
-        const parts = line.split('|')
-        return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
-      }).filter(vid => vid.title && vid.youtubeId),
-    }
-
-    try {
-      if (editingVariant) {
-        await api.put(`/admin/diseases/variants/${editingVariant.id}`, payload)
-      } else {
-        await api.post(`/admin/diseases/${disease.id}/variants`, payload)
-      }
-      setShowSubForm(false)
-      loadVariants()
-    } catch (err) {
-      alert(err.response?.data?.error || 'Error al guardar variante')
-    }
-  }
-
-  const handleDeleteVariant = async (id) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar esta variante?')) return
-    try {
-      await api.delete(`/admin/diseases/variants/${id}`)
-      loadVariants()
-    } catch (err) {
-      alert(err.response?.data?.error || 'Error al eliminar variante')
-    }
-  }
-
-  return (
-    <div style={{ marginTop: '2rem', borderTop: `2px solid ${dark ? '#272530' : '#e8ddd0'}`, paddingTop: '1.5rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', margin: 0 }}>
-          🧬 Variantes de la Enfermedad ({variants.length})
-        </h3>
-        {!showSubForm && (
-          <button type="button" onClick={openCreate} style={{
-            background: '#871233', color: '#white', border: 'none', borderRadius: '8px',
-            padding: '0.4rem 0.85rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
-          }}>
-            Agregar Variante
-          </button>
-        )}
-      </div>
-
-      {showSubForm ? (
-        <div style={{
-          background: dark ? '#1e1c25' : '#faf8f5',
-          border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`,
-          borderRadius: '12px',
-          padding: '1.25rem',
-          marginBottom: '1.5rem',
-        }}>
-          <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', marginBottom: '1rem', marginTop: 0 }}>
-            {editingVariant ? 'Editar Variante' : 'Nueva Variante'}
-          </h4>
-
-          <FormField label="Nombre de la Variante" dark={dark}>
-            <input type="text" value={name} onChange={e => setName(e.target.value)} style={inputStyle(dark)} required />
-          </FormField>
-
-          <FormField label="Descripción" dark={dark}>
-            <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} required />
-          </FormField>
-
-          <FormField label="Tratamiento" dark={dark}>
-            <textarea rows={3} value={treatment} onChange={e => setTreatment(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
-          </FormField>
-
-          <FormField label="Síntomas (uno por línea)" dark={dark}>
-            <textarea rows={3} value={symptoms} onChange={e => setSymptoms(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
-          </FormField>
-
-          <FormField label="Factores de Riesgo (uno por línea)" dark={dark}>
-            <textarea rows={3} value={riskFactors} onChange={e => setRiskFactors(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
-          </FormField>
-
-          <FormField label="Recursos Externos (Formato: Etiqueta|URL - uno por línea)" dark={dark}>
-            <textarea rows={3} value={externalResources} onChange={e => setExternalResources(e.target.value)} placeholder="Ej: Guía Oficial IMSS|https://imss.gob.mx/guia" style={{ ...inputStyle(dark), resize: 'vertical' }} />
-          </FormField>
-
-          <FormField label="Videos de YouTube (Formato: Título|youtubeId - uno por línea)" dark={dark}>
-            <textarea rows={3} value={youtubeVideos} onChange={e => setYoutubeVideos(e.target.value)} placeholder="Ej: Prevención Cáncer de Tiroides|dQw4w9WgXcQ" style={{ ...inputStyle(dark), resize: 'vertical' }} />
-          </FormField>
-
-          <FormField label="Validado por" dark={dark}>
-            <input type="text" value={validatedBy} onChange={e => setValidatedBy(e.target.value)} style={inputStyle(dark)} />
-          </FormField>
-
-          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <button type="button" onClick={() => setShowSubForm(false)} style={{
-              background: 'transparent', border: '1.5px solid #871233', color: '#871233',
-              borderRadius: '8px', padding: '0.4rem 0.85rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
-            }}>Cancelar</button>
-            <button type="button" onClick={handleSaveVariant} style={{
-              background: '#871233', border: 'none', color: '#white',
-              borderRadius: '8px', padding: '0.4rem 0.85rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
-            }}>Guardar Variante</button>
-          </div>
-        </div>
-      ) : (
-        <div className="variants-list">
-          {loading ? (
-            <p style={{ fontSize: '0.85rem', color: dark ? '#7e7a8c' : '#a89580' }}>Cargando variantes...</p>
-          ) : variants.length === 0 ? (
-            <p style={{ fontSize: '0.85rem', color: dark ? '#7e7a8c' : '#a89580', fontStyle: 'italic' }}>
-              Esta enfermedad no tiene variantes registradas. Las variantes son útiles para subdividir patologías en tipos o subtipos específicos.
-            </p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {variants.map(v => (
-                <div key={v.id} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '10px',
-                  background: dark ? '#1b1a20' : '#fcfbf9',
-                  border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`,
-                }}>
-                  <div style={{ minWidth: 0, flex: 1, marginRight: '1rem' }}>
-                    <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: '700', color: dark ? '#fff' : '#1a1715' }}>
-                      {v.name}
-                    </h5>
-                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: dark ? '#7e7a8c' : '#a89580', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {v.description}
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                    <button type="button" onClick={() => openEdit(v)} style={{
-                      background: 'none', border: 'none', color: '#c2a378', cursor: 'pointer', padding: '4px',
-                      fontSize: '0.8rem', fontWeight: '600'
-                    }}>
-                      Editar
-                    </button>
-                    <button type="button" onClick={() => handleDeleteVariant(v.id)} style={{
-                      background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '4px',
-                      fontSize: '0.8rem', fontWeight: '600'
-                    }}>
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function CrudSection({ dark, entity, title }) {
   const cfg = ENTITY_CONFIG[entity]
@@ -1039,6 +801,45 @@ function CrudSection({ dark, entity, title }) {
   const [deleting, setDeleting] = useState(null)
   const [formData, setFormData] = useState({})
   const [saving, setSaving] = useState(false)
+
+  // Spanish singularization helper
+  const getSingular = (plural) => {
+    if (plural === 'Enfermedades') return 'Enfermedad'
+    if (plural === 'Nutracéuticos') return 'Nutracéutico'
+    if (plural === 'Noticias') return 'Noticia'
+    if (plural === 'Artículos') return 'Artículo'
+    if (plural === 'Usuarios') return 'Usuario'
+    return plural.slice(0, -1)
+  }
+
+  // Variant management state
+  const [variantSubMode, setVariantSubMode] = useState(null) // null, 'create', 'edit'
+  const [activeVariantId, setActiveVariantId] = useState(null)
+  const [variantsList, setVariantsList] = useState([])
+  const [loadingVariants, setLoadingVariants] = useState(false)
+  const [savingVariant, setSavingVariant] = useState(false)
+
+  // Variant form fields
+  const [vName, setVName] = useState('')
+  const [vDescription, setVDescription] = useState('')
+  const [vTreatment, setVTreatment] = useState('')
+  const [vValidatedBy, setVValidatedBy] = useState('Secretaría de Salud de Tamaulipas')
+  const [vSymptoms, setVSymptoms] = useState('')
+  const [vRiskFactors, setVRiskFactors] = useState('')
+  const [vExternalResources, setVExternalResources] = useState('')
+  const [vYoutubeVideos, setVYoutubeVideos] = useState('')
+
+  const loadVariants = useCallback(async (diseaseId) => {
+    setLoadingVariants(true)
+    try {
+      const res = await api.get(`/admin/diseases/${diseaseId}/variants`)
+      setVariantsList(res.data.variants || [])
+    } catch {
+      setVariantsList([])
+    } finally {
+      setLoadingVariants(false)
+    }
+  }, [])
 
   const load = useCallback(() => {
     setLoading(true)
@@ -1061,6 +862,7 @@ function CrudSection({ dark, entity, title }) {
     })
     setFormData(defaults)
     setEditing(null)
+    setVariantSubMode(null)
     setShowForm(true)
   }
 
@@ -1082,7 +884,94 @@ function CrudSection({ dark, entity, title }) {
     })
     setFormData(d)
     setEditing(item)
+    setVariantSubMode(null)
+    if (entity === 'diseases') {
+      loadVariants(item.id)
+    }
     setShowForm(true)
+  }
+
+  const openCreateVariant = () => {
+    setVName('')
+    setVDescription('')
+    setVTreatment('')
+    setVValidatedBy('Secretaría de Salud de Tamaulipas')
+    setVSymptoms('')
+    setVRiskFactors('')
+    setVExternalResources('')
+    setVYoutubeVideos('')
+    setActiveVariantId(null)
+    setVariantSubMode('create')
+  }
+
+  const openEditVariant = (v) => {
+    setVName(v.name || '')
+    setVDescription(v.description || '')
+    setVTreatment(v.treatment || '')
+    setVValidatedBy(v.validatedBy || 'Secretaría de Salud de Tamaulipas')
+    setVSymptoms(Array.isArray(v.symptoms) ? v.symptoms.join('\n') : '')
+    setVRiskFactors(Array.isArray(v.riskFactors) ? v.riskFactors.join('\n') : '')
+
+    const resLines = Array.isArray(v.externalResources) 
+      ? v.externalResources.map(r => `${r.label || ''}|${r.url || ''}`).join('\n')
+      : ''
+    setVExternalResources(resLines)
+
+    const vidLines = Array.isArray(v.youtubeVideos)
+      ? v.youtubeVideos.map(vid => `${vid.title || ''}|${vid.youtubeId || ''}`).join('\n')
+      : ''
+    setVYoutubeVideos(vidLines)
+
+    setActiveVariantId(v.id)
+    setVariantSubMode('edit')
+  }
+
+  const handleSaveVariant = async () => {
+    if (!vName || !vDescription) {
+      alert('El nombre y la descripción de la variante son requeridos')
+      return
+    }
+    setSavingVariant(true)
+    const payload = {
+      name: vName,
+      description: vDescription,
+      treatment: vTreatment,
+      validatedBy: vValidatedBy,
+      symptoms: vSymptoms.split('\n').map(s => s.trim()).filter(Boolean),
+      riskFactors: vRiskFactors.split('\n').map(r => r.trim()).filter(Boolean),
+      externalResources: vExternalResources.split('\n').map(line => {
+        const parts = line.split('|')
+        return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
+      }).filter(r => r.label && r.url),
+      youtubeVideos: vYoutubeVideos.split('\n').map(line => {
+        const parts = line.split('|')
+        return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
+      }).filter(vid => vid.title && vid.youtubeId),
+    }
+
+    try {
+      if (variantSubMode === 'edit') {
+        await api.put(`/admin/diseases/variants/${activeVariantId}`, payload)
+      } else {
+        await api.post(`/admin/diseases/${editing.id}/variants`, payload)
+      }
+      setVariantSubMode(null)
+      loadVariants(editing.id)
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al guardar variante')
+    } finally {
+      setSavingVariant(false)
+    }
+  }
+
+  const handleDeleteVariant = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta variante?')) return
+    try {
+      await api.delete(`/admin/diseases/variants/${id}`)
+      loadVariants(editing.id)
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al eliminar variante')
+    }
   }
 
   const handleSave = async () => {
@@ -1241,154 +1130,255 @@ function CrudSection({ dark, entity, title }) {
 
       {/* Create / Edit Modal */}
       {showForm && (
-        <Modal title={editing ? `Editar ${title.slice(0, -1)}` : `Crear ${title.slice(0, -1)}`} onClose={() => setShowForm(false)} dark={dark} wide>
-          {cfg.fields.map(f => (
-            <FormField key={f.key} label={f.label} dark={dark}>
-              {f.type === 'textarea' || f.type === 'jsonarray' ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  {f.type === 'textarea' && (
-                    <div style={{
-                      display: 'flex',
-                      gap: '0.3rem',
-                      marginBottom: '0.2rem',
-                      background: dark ? '#1e1c25' : '#faf8f5',
-                      border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`,
-                      borderRadius: '8px',
-                      padding: '0.25rem 0.4rem',
-                      alignItems: 'center',
-                      width: 'fit-content'
-                    }}>
-                      <button
-                        type="button"
-                        onClick={() => handleFormat(f.key, 'bold')}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: dark ? '#fff' : '#1a1715',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '0.85rem',
+        <Modal 
+          title={
+            variantSubMode === 'create' ? `Nueva Variante de ${editing?.name}` :
+            variantSubMode === 'edit' ? `Editar Variante de ${editing?.name}` :
+            editing ? `Editar ${getSingular(title)}` : `Crear ${getSingular(title)}`
+          } 
+          onClose={() => setShowForm(false)} 
+          dark={dark} 
+          wide
+        >
+          {variantSubMode ? (
+            <div>
+              <FormField label="Nombre de la Variante" dark={dark}>
+                <input type="text" value={vName} onChange={e => setVName(e.target.value)} style={inputStyle(dark)} required />
+              </FormField>
+
+              <FormField label="Descripción" dark={dark}>
+                <textarea rows={3} value={vDescription} onChange={e => setVDescription(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} required />
+              </FormField>
+
+              <FormField label="Tratamiento" dark={dark}>
+                <textarea rows={3} value={vTreatment} onChange={e => setVTreatment(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+              </FormField>
+
+              <FormField label="Síntomas (uno por línea)" dark={dark}>
+                <textarea rows={3} value={vSymptoms} onChange={e => setVSymptoms(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+              </FormField>
+
+              <FormField label="Factores de Riesgo (uno por línea)" dark={dark}>
+                <textarea rows={3} value={vRiskFactors} onChange={e => setVRiskFactors(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+              </FormField>
+
+              <FormField label="Recursos Externos (Formato: Etiqueta|URL - uno por línea)" dark={dark}>
+                <textarea rows={3} value={vExternalResources} onChange={e => setVExternalResources(e.target.value)} placeholder="Ej: Guía Oficial IMSS|https://imss.gob.mx/guia" style={{ ...inputStyle(dark), resize: 'vertical' }} />
+              </FormField>
+
+              <FormField label="Videos de YouTube (Formato: Título|youtubeId - uno por línea)" dark={dark}>
+                <textarea rows={3} value={vYoutubeVideos} onChange={e => setVYoutubeVideos(e.target.value)} placeholder="Ej: Prevención Cáncer de Tiroides|dQw4w9WgXcQ" style={{ ...inputStyle(dark), resize: 'vertical' }} />
+              </FormField>
+
+              <FormField label="Validado por" dark={dark}>
+                <input type="text" value={vValidatedBy} onChange={e => setVValidatedBy(e.target.value)} style={inputStyle(dark)} />
+              </FormField>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                <Btn variant="ghost" onClick={() => setVariantSubMode(null)}>Volver a la Enfermedad</Btn>
+                <Btn onClick={handleSaveVariant} disabled={savingVariant}>
+                  <FaSave size={13} /> {savingVariant ? 'Guardando...' : 'Guardar Variante'}
+                </Btn>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {cfg.fields.map(f => (
+                <FormField key={f.key} label={f.label} dark={dark}>
+                  {f.type === 'textarea' || f.type === 'jsonarray' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      {f.type === 'textarea' && (
+                        <div style={{
                           display: 'flex',
+                          gap: '0.3rem',
+                          marginBottom: '0.2rem',
+                          background: dark ? '#1e1c25' : '#faf8f5',
+                          border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`,
+                          borderRadius: '8px',
+                          padding: '0.25rem 0.4rem',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'background 0.2s',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-                        title="Negrita"
-                      >
-                        B
-                      </button>
-                      <span style={{ height: '14px', width: '1px', background: dark ? '#272530' : '#e8ddd0' }} />
-                      <button
-                        type="button"
-                        onClick={() => handleFormat(f.key, 'italic')}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: dark ? '#fff' : '#1a1715',
-                          fontStyle: 'italic',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '0.85rem',
+                          width: 'fit-content'
+                        }}>
+                          <button
+                            type="button"
+                            onClick={() => handleFormat(f.key, 'bold')}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: dark ? '#fff' : '#1a1715',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.85rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'background 0.2s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                            title="Negrita"
+                          >
+                            B
+                          </button>
+                          <span style={{ height: '14px', width: '1px', background: dark ? '#272530' : '#e8ddd0' }} />
+                          <button
+                            type="button"
+                            onClick={() => handleFormat(f.key, 'italic')}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: dark ? '#fff' : '#1a1715',
+                              fontStyle: 'italic',
+                              cursor: 'pointer',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.85rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'background 0.2s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                            title="Cursiva"
+                          >
+                            I
+                          </button>
+                          <span style={{ height: '14px', width: '1px', background: dark ? '#272530' : '#e8ddd0' }} />
+                          <button
+                            type="button"
+                            onClick={() => handleFormat(f.key, 'underline')}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: dark ? '#fff' : '#1a1715',
+                              textDecoration: 'underline',
+                              cursor: 'pointer',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.85rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'background 0.2s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                            title="Subrayado"
+                          >
+                            U
+                          </button>
+                        </div>
+                      )}
+                      <textarea
+                        id={`textarea-${f.key}`}
+                        rows={f.type === 'jsonarray' ? 4 : 5}
+                        value={formData[f.key] || ''}
+                        onChange={e => setFormData(prev => ({ ...prev, [f.key]: e.target.value }))}
+                        style={{ ...inputStyle(dark), resize: 'vertical' }}
+                        placeholder={f.type === 'jsonarray' ? 'Un elemento por línea' : ''}
+                      />
+                    </div>
+                  ) : f.type === 'checkbox' ? (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.88rem', color: dark ? '#c5bfae' : '#5c5248' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!formData[f.key]}
+                        onChange={e => setFormData(prev => ({ ...prev, [f.key]: e.target.checked }))}
+                        style={{ width: '18px', height: '18px', accentColor: '#871233' }}
+                      />
+                      {formData[f.key] ? 'Sí' : 'No'}
+                    </label>
+                  ) : f.type === 'image' ? (
+                    <ImageUploader
+                      value={formData[f.key]}
+                      onChange={val => setFormData(prev => ({ ...prev, [f.key]: val }))}
+                      dark={dark}
+                    />
+                  ) : f.type === 'multi_image' ? (
+                    <MultiImageUploader
+                      value={formData[f.key]}
+                      onChange={val => setFormData(prev => ({ ...prev, [f.key]: val }))}
+                      dark={dark}
+                    />
+                  ) : (
+                    <input
+                      type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
+                      value={formData[f.key] || ''}
+                      onChange={e => setFormData(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      style={inputStyle(dark)}
+                      required={f.required}
+                      step={f.type === 'number' ? '0.01' : undefined}
+                    />
+                  )}
+                </FormField>
+              ))}
+
+              {/* List of existing variants */}
+              {editing && entity === 'diseases' && (
+                <div style={{ marginTop: '2rem', borderTop: `2px solid ${dark ? '#272530' : '#e8ddd0'}`, paddingTop: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    🧬 Variantes Registradas ({variantsList.length})
+                  </h3>
+                  {loadingVariants ? (
+                    <p style={{ fontSize: '0.85rem', color: dark ? '#7e7a8c' : '#a89580' }}>Cargando variantes...</p>
+                  ) : variantsList.length === 0 ? (
+                    <p style={{ fontSize: '0.85rem', color: dark ? '#7e7a8c' : '#a89580', fontStyle: 'italic', margin: 0 }}>
+                      No hay variantes registradas para esta enfermedad.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {variantsList.map(v => (
+                        <div key={v.id} style={{
                           display: 'flex',
+                          justifyContent: 'space-between',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'background 0.2s',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-                        title="Cursiva"
-                      >
-                        I
-                      </button>
-                      <span style={{ height: '14px', width: '1px', background: dark ? '#272530' : '#e8ddd0' }} />
-                      <button
-                        type="button"
-                        onClick={() => handleFormat(f.key, 'underline')}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: dark ? '#fff' : '#1a1715',
-                          textDecoration: 'underline',
-                          cursor: 'pointer',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '0.85rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'background 0.2s',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-                        title="Subrayado"
-                      >
-                        U
-                      </button>
+                          padding: '0.65rem 0.85rem',
+                          borderRadius: '8px',
+                          background: dark ? '#1b1a20' : '#fcfbf9',
+                          border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`,
+                        }}>
+                          <div style={{ minWidth: 0, flex: 1, marginRight: '1rem' }}>
+                            <h5 style={{ margin: 0, fontSize: '0.85rem', fontWeight: '700', color: dark ? '#fff' : '#1a1715' }}>
+                              {v.name}
+                            </h5>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                            <button type="button" onClick={() => openEditVariant(v)} style={{
+                              background: 'none', border: 'none', color: '#c2a378', cursor: 'pointer', padding: '4px',
+                              fontSize: '0.78rem', fontWeight: '600'
+                            }}>
+                              Editar
+                            </button>
+                            <button type="button" onClick={() => handleDeleteVariant(v.id)} style={{
+                              background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '4px',
+                              fontSize: '0.78rem', fontWeight: '600'
+                            }}>
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
-                  <textarea
-                    id={`textarea-${f.key}`}
-                    rows={f.type === 'jsonarray' ? 4 : 5}
-                    value={formData[f.key] || ''}
-                    onChange={e => setFormData(prev => ({ ...prev, [f.key]: e.target.value }))}
-                    style={{ ...inputStyle(dark), resize: 'vertical' }}
-                    placeholder={f.type === 'jsonarray' ? 'Un elemento por línea' : ''}
-                  />
                 </div>
-              ) : f.type === 'checkbox' ? (
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.88rem', color: dark ? '#c5bfae' : '#5c5248' }}>
-                  <input
-                    type="checkbox"
-                    checked={!!formData[f.key]}
-                    onChange={e => setFormData(prev => ({ ...prev, [f.key]: e.target.checked }))}
-                    style={{ width: '18px', height: '18px', accentColor: '#871233' }}
-                  />
-                  {formData[f.key] ? 'Sí' : 'No'}
-                </label>
-              ) : f.type === 'image' ? (
-                <ImageUploader
-                  value={formData[f.key]}
-                  onChange={val => setFormData(prev => ({ ...prev, [f.key]: val }))}
-                  dark={dark}
-                />
-              ) : f.type === 'multi_image' ? (
-                <MultiImageUploader
-                  value={formData[f.key]}
-                  onChange={val => setFormData(prev => ({ ...prev, [f.key]: val }))}
-                  dark={dark}
-                />
-              ) : (
-                <input
-                  type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
-                  value={formData[f.key] || ''}
-                  onChange={e => setFormData(prev => ({ ...prev, [f.key]: e.target.value }))}
-                  style={inputStyle(dark)}
-                  required={f.required}
-                  step={f.type === 'number' ? '0.01' : undefined}
-                />
               )}
-            </FormField>
-          ))}
 
-          {/* Custom Variants Management for Diseases */}
-          {editing && entity === 'diseases' && (
-            <VariantsManager 
-              disease={editing} 
-              dark={dark} 
-            />
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem', alignItems: 'center' }}>
+                {editing && entity === 'diseases' && (
+                  <Btn variant="ghost" onClick={openCreateVariant} style={{ marginRight: 'auto' }}>
+                    <FaPlus size={11} /> Nueva Variante
+                  </Btn>
+                )}
+                <Btn variant="ghost" onClick={() => setShowForm(false)}>Cancelar</Btn>
+                <Btn onClick={handleSave} disabled={saving}>
+                  <FaSave size={13} /> {saving ? 'Guardando...' : editing ? 'Actualizar' : 'Crear'}
+                </Btn>
+              </div>
+            </div>
           )}
-
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-            <Btn variant="ghost" onClick={() => setShowForm(false)}>Cancelar</Btn>
-            <Btn onClick={handleSave} disabled={saving}>
-              <FaSave size={13} /> {saving ? 'Guardando...' : editing ? 'Actualizar' : 'Crear'}
-            </Btn>
-          </div>
         </Modal>
       )}
 

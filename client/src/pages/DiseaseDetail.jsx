@@ -250,50 +250,100 @@ export default function DiseaseDetail() {
 
         {/* Content Area */}
         <main className="disease-content-area animate-fade-in">
-          {/* Variant Selector Dropdown */}
+          {/* Variant Selector Pills */}
           {disease.variants && disease.variants.length > 0 && (
             <div style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              marginBottom: '1.5rem',
-              padding: '0.85rem 1.25rem',
-              borderRadius: '12px',
-              background: dark ? 'rgba(255,255,255,0.03)' : '#fdfcfb',
-              border: `1px solid ${dark ? 'rgba(255,255,255,0.08)' : 'var(--color-surface-200)'}`
+              flexDirection: 'column',
+              gap: '0.65rem',
+              marginBottom: '1.75rem',
+              background: dark ? 'rgba(255,255,255,0.02)' : '#faf8f6',
+              padding: '1rem 1.25rem',
+              borderRadius: '16px',
+              border: `1.5px dashed ${dark ? 'rgba(255,255,255,0.08)' : 'rgba(135,18,51,0.12)'}`,
             }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-surface-600)' }}>
-                Ver variante específica:
-              </label>
-              <select
-                value={selectedVariant ? selectedVariant.id : 'general'}
-                onChange={e => {
-                  const val = e.target.value
-                  if (val === 'general') {
-                    setSelectedVariant(null)
-                  } else {
-                    const variant = disease.variants.find(v => v.id === val)
-                    setSelectedVariant(variant)
-                  }
-                }}
-                style={{
-                  padding: '0.45rem 1rem',
-                  borderRadius: '8px',
-                  border: `1.5px solid ${dark ? 'rgba(255,255,255,0.12)' : 'var(--color-surface-200)'}`,
-                  background: dark ? '#141319' : 'white',
-                  color: dark ? '#fff' : 'var(--color-surface-900)',
-                  outline: 'none',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="general">Ficha General ({disease.name})</option>
-                {disease.variants.map(v => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
-                ))}
-              </select>
+              <style>{`
+                .no-scrollbar::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.82rem',
+                fontWeight: '800',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: dark ? '#c2a378' : '#871233',
+              }}>
+                <span>🧬</span> Selección de Variante o Tipo:
+              </div>
+              <div style={{
+                display: 'flex',
+                gap: '0.6rem',
+                overflowX: 'auto',
+                paddingBottom: '0.1rem',
+                scrollbarWidth: 'none',
+                MsOverflowStyle: 'none',
+              }} className="no-scrollbar">
+                {/* General Option */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedVariant(null)}
+                  style={{
+                    flexShrink: 0,
+                    padding: '0.55rem 1.1rem',
+                    borderRadius: '30px',
+                    border: 'none',
+                    background: !selectedVariant 
+                      ? color 
+                      : (dark ? 'rgba(255,255,255,0.05)' : 'rgba(135,18,51,0.06)'),
+                    color: !selectedVariant
+                      ? '#fff'
+                      : (dark ? '#b8a690' : '#871233'),
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: !selectedVariant ? `0 4px 12px ${color}50` : 'none',
+                    transform: !selectedVariant ? 'scale(1.03)' : 'scale(1)',
+                  }}
+                >
+                  📋 Ficha General ({disease.name})
+                </button>
+                {/* Variants Options */}
+                {disease.variants.map(v => {
+                  const isSelected = selectedVariant?.id === v.id
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setSelectedVariant(v)}
+                      style={{
+                        flexShrink: 0,
+                        padding: '0.55rem 1.1rem',
+                        borderRadius: '30px',
+                        border: 'none',
+                        background: isSelected 
+                          ? color 
+                          : (dark ? 'rgba(255,255,255,0.05)' : 'rgba(135,18,51,0.06)'),
+                        color: isSelected
+                          ? '#fff'
+                          : (dark ? '#b8a690' : '#871233'),
+                        fontSize: '0.85rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: isSelected ? `0 4px 12px ${color}50` : 'none',
+                        transform: isSelected ? 'scale(1.03)' : 'scale(1)',
+                      }}
+                    >
+                      🧬 {v.name}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
 

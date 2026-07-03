@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { Op } from 'sequelize'
 import Disease from '../models/Disease.js'
+import DiseaseVariant from '../models/DiseaseVariant.js'
 
 const router = Router()
 
@@ -38,6 +39,7 @@ router.get('/:slug', async (req, res, next) => {
     const { slug } = req.params
     const disease = await Disease.findOne({
       where: { slug, isPublished: true },
+      include: [{ model: DiseaseVariant, as: 'variants' }],
     })
 
     if (!disease) {

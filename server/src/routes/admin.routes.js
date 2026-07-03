@@ -11,6 +11,7 @@ import ContactSettings from '../models/ContactSettings.js'
 import HealthRecord from '../models/HealthRecord.js'
 import Location from '../models/Location.js'
 import Article from '../models/Article.js'
+import DiseaseVariant from '../models/DiseaseVariant.js'
 
 import multer from 'multer'
 import path from 'path'
@@ -279,6 +280,89 @@ router.delete('/diseases/:id', async (req, res, next) => {
     if (!disease) return res.status(404).json({ error: 'Enfermedad no encontrada' })
     await disease.destroy()
     res.json({ message: 'Enfermedad eliminada' })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// DISEASE VARIANTS CRUD
+// ══════════════════════════════════════════════════════
+
+// Get all variants for a disease
+router.get('/diseases/:diseaseId/variants', async (req, res, next) => {
+  try {
+    const { diseaseId } = req.params
+    const variants = await DiseaseVariant.findAll({
+      where: { diseaseId },
+      order: [['name', 'ASC']]
+    })
+    res.json({ variants })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Create a variant for a disease
+router.post('/diseases/:diseaseId/variants', async (req, res, next) => {
+  try {
+    const { diseaseId } = req.params
+    const data = req.body
+    if (!data.name || !data.description) {
+      return res.status(400).json({ error: 'Nombre y descripción son requeridos' })
+    }
+    
+    const payload = {
+      diseaseId,
+      name: data.name,
+      description: data.description,
+      treatment: data.treatment || '',
+      validatedBy: data.validatedBy || 'Secretaría de Salud de Tamaulipas',
+      symptoms: Array.isArray(data.symptoms) ? data.symptoms : [],
+      riskFactors: Array.isArray(data.riskFactors) ? data.riskFactors : [],
+      externalResources: Array.isArray(data.externalResources) ? data.externalResources : [],
+      youtubeVideos: Array.isArray(data.youtubeVideos) ? data.youtubeVideos : [],
+    }
+
+    const variant = await DiseaseVariant.create(payload)
+    res.status(201).json({ message: 'Variante creada', variant })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Update a variant
+router.put('/diseases/variants/:id', async (req, res, next) => {
+  try {
+    const variant = await DiseaseVariant.findByPk(req.params.id)
+    if (!variant) return res.status(404).json({ error: 'Variante no encontrada' })
+
+    const data = req.body
+    const payload = {
+      name: data.name ?? variant.name,
+      description: data.description ?? variant.description,
+      treatment: data.treatment ?? variant.treatment,
+      validatedBy: data.validatedBy ?? variant.validatedBy,
+      symptoms: Array.isArray(data.symptoms) ? data.symptoms : variant.symptoms,
+      riskFactors: Array.isArray(data.riskFactors) ? data.riskFactors : variant.riskFactors,
+      externalResources: Array.isArray(data.externalResources) ? data.externalResources : variant.externalResources,
+      youtubeVideos: Array.isArray(data.youtubeVideos) ? data.youtubeVideos : variant.youtubeVideos,
+    }
+
+    await variant.update(payload)
+    res.json({ message: 'Variante actualizada', variant })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Delete a variant
+router.delete('/diseases/variants/:id', async (req, res, next) => {
+  try {
+    const variant = await DiseaseVariant.findByPk(req.params.id)
+    if (!variant) return res.status(404).json({ error: 'Variante no encontrada' })
+    await variant.destroy()
+    res.json({ message: 'Variante eliminada' })
   } catch (err) {
     next(err)
   }

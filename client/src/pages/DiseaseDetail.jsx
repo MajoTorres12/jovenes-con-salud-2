@@ -13,10 +13,12 @@ export default function DiseaseDetail() {
   const [notFound, setNotFound] = useState(false)
   const [activeTab, setActiveTab] = useState('main')
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [selectedVariant, setSelectedVariant] = useState(null)
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
+      setSelectedVariant(null)
       try {
         const [diseaseRes, articlesRes] = await Promise.allSettled([
           api.get(`/diseases/${slug}`),
@@ -69,9 +71,27 @@ export default function DiseaseDetail() {
     )
   }
 
-  const symptoms = Array.isArray(disease.symptoms) ? disease.symptoms : (disease.symptoms ? JSON.parse(disease.symptoms) : [])
-  const riskFactors = Array.isArray(disease.riskFactors) ? disease.riskFactors : (disease.riskFactors ? JSON.parse(disease.riskFactors) : [])
-  const resources = Array.isArray(disease.externalResources) ? disease.externalResources : (disease.externalResources ? JSON.parse(disease.externalResources) : [])
+  const activeName = selectedVariant ? selectedVariant.name : disease.name
+  const activeDesc = selectedVariant ? selectedVariant.description : disease.description
+  const activeTreatment = selectedVariant ? selectedVariant.treatment : disease.treatment
+  const activeValidated = selectedVariant ? selectedVariant.validatedBy : disease.validatedBy
+
+  const symptoms = selectedVariant 
+    ? (Array.isArray(selectedVariant.symptoms) ? selectedVariant.symptoms : [])
+    : (Array.isArray(disease.symptoms) ? disease.symptoms : (disease.symptoms ? JSON.parse(disease.symptoms) : []))
+
+  const riskFactors = selectedVariant
+    ? (Array.isArray(selectedVariant.riskFactors) ? selectedVariant.riskFactors : [])
+    : (Array.isArray(disease.riskFactors) ? disease.riskFactors : (disease.riskFactors ? JSON.parse(disease.riskFactors) : []))
+
+  const resources = selectedVariant
+    ? (Array.isArray(selectedVariant.externalResources) ? selectedVariant.externalResources : [])
+    : (Array.isArray(disease.externalResources) ? disease.externalResources : (disease.externalResources ? JSON.parse(disease.externalResources) : []))
+
+  const youtubeVideos = selectedVariant
+    ? (Array.isArray(selectedVariant.youtubeVideos) ? selectedVariant.youtubeVideos : [])
+    : (disease.youtubeVideos || [])
+
   const color = disease.colorHex || '#871233'
 
   const tabs = [
@@ -230,6 +250,53 @@ export default function DiseaseDetail() {
 
         {/* Content Area */}
         <main className="disease-content-area animate-fade-in">
+          {/* Variant Selector Dropdown */}
+          {disease.variants && disease.variants.length > 0 && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              marginBottom: '1.5rem',
+              padding: '0.85rem 1.25rem',
+              borderRadius: '12px',
+              background: dark ? 'rgba(255,255,255,0.03)' : '#fdfcfb',
+              border: `1px solid ${dark ? 'rgba(255,255,255,0.08)' : 'var(--color-surface-200)'}`
+            }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-surface-600)' }}>
+                Ver variante específica:
+              </label>
+              <select
+                value={selectedVariant ? selectedVariant.id : 'general'}
+                onChange={e => {
+                  const val = e.target.value
+                  if (val === 'general') {
+                    setSelectedVariant(null)
+                  } else {
+                    const variant = disease.variants.find(v => v.id === val)
+                    setSelectedVariant(variant)
+                  }
+                }}
+                style={{
+                  padding: '0.45rem 1rem',
+                  borderRadius: '8px',
+                  border: `1.5px solid ${dark ? 'rgba(255,255,255,0.12)' : 'var(--color-surface-200)'}`,
+                  background: dark ? '#141319' : 'white',
+                  color: dark ? '#fff' : 'var(--color-surface-900)',
+                  outline: 'none',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="general">Ficha General ({disease.name})</option>
+                {disease.variants.map(v => (
+                  <option key={v.id} value={v.id}>{v.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Ficha Principal Tab */}
           {activeTab === 'main' && (
             <div style={{
@@ -255,12 +322,12 @@ export default function DiseaseDetail() {
                     {disease.category}
                   </div>
                   <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--color-surface-900)', lineHeight: 1.2 }}>
-                    {disease.name}
+                    {activeName}
                   </h1>
                 </div>
               </div>
               <p style={{ paddingLeft: '0.75rem', fontSize: '0.98rem', color: 'var(--color-surface-700)', lineHeight: 1.8, maxWidth: '720px', margin: '0 0 1.5rem 0' }}>
-                {disease.description}
+                {activeDesc}
               </p>
               <div style={{ paddingLeft: '0.75rem' }}>
                 <div style={{
@@ -271,7 +338,7 @@ export default function DiseaseDetail() {
                   fontSize: '0.75rem', fontWeight: '700',
                 }}>
                   <FaShieldAlt size={12} />
-                  Ficha Médica Validada por: {disease.validatedBy || 'Secretaría de Salud de Tamaulipas'}
+                  Ficha Médica Validada por: {activeValidated || 'Secretaría de Salud de Tamaulipas'}
                 </div>
               </div>
             </div>
@@ -280,7 +347,7 @@ export default function DiseaseDetail() {
           {/* General y Tratamiento Tab */}
           {activeTab === 'general' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {disease.treatment ? (
+              {activeTreatment ? (
                 <div style={{
                   padding: '1.75rem', borderRadius: 'var(--radius-xl)',
                   background: 'white', boxShadow: 'var(--shadow-card)',
@@ -290,7 +357,7 @@ export default function DiseaseDetail() {
                     <FaBandAid style={{ color: '#10b981' }} /> Recomendaciones de Tratamiento
                   </h2>
                   <p style={{ fontSize: '0.95rem', color: 'var(--color-surface-700)', lineHeight: 1.8, whiteSpace: 'pre-wrap', margin: 0 }}>
-                    {disease.treatment}
+                    {activeTreatment}
                   </p>
                 </div>
               ) : (
@@ -357,9 +424,9 @@ export default function DiseaseDetail() {
           {/* Videos Informativos Tab */}
           {activeTab === 'videos' && (
             <div>
-              {disease.youtubeVideos && disease.youtubeVideos.length > 0 ? (
+              {youtubeVideos && youtubeVideos.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-                  {disease.youtubeVideos.map((v, i) => (
+                  {youtubeVideos.map((v, i) => (
                     <div key={i} style={{
                       background: 'white', borderRadius: '16px', border: '1px solid var(--color-surface-200)',
                       overflow: 'hidden', boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column'

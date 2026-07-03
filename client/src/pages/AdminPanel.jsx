@@ -790,6 +790,245 @@ const ENTITY_CONFIG = {
   },
 }
 
+// ═══════════════════════════════════════════════════════
+// DISEASE VARIANTS MANAGER (FOR ADMIN DISEASE EDIT FORM)
+// ═══════════════════════════════════════════════════════
+
+function VariantsManager({ disease, dark }) {
+  const [variants, setVariants] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [showSubForm, setShowSubForm] = useState(false)
+  const [editingVariant, setEditingVariant] = useState(null)
+  
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [treatment, setTreatment] = useState('')
+  const [validatedBy, setValidatedBy] = useState('Secretaría de Salud de Tamaulipas')
+  const [symptoms, setSymptoms] = useState('')
+  const [riskFactors, setRiskFactors] = useState('')
+  const [externalResources, setExternalResources] = useState('')
+  const [youtubeVideos, setYoutubeVideos] = useState('')
+
+  const loadVariants = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await api.get(`/admin/diseases/${disease.id}/variants`)
+      setVariants(res.data.variants || [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [disease.id])
+
+  useEffect(() => {
+    loadVariants()
+  }, [loadVariants])
+
+  const openCreate = () => {
+    setName('')
+    setDescription('')
+    setTreatment('')
+    setValidatedBy('Secretaría de Salud de Tamaulipas')
+    setSymptoms('')
+    setRiskFactors('')
+    setExternalResources('')
+    setYoutubeVideos('')
+    setEditingVariant(null)
+    setShowSubForm(true)
+  }
+
+  const openEdit = (v) => {
+    setName(v.name || '')
+    setDescription(v.description || '')
+    setTreatment(v.treatment || '')
+    setValidatedBy(v.validatedBy || 'Secretaría de Salud de Tamaulipas')
+    setSymptoms(Array.isArray(v.symptoms) ? v.symptoms.join('\n') : '')
+    setRiskFactors(Array.isArray(v.riskFactors) ? v.riskFactors.join('\n') : '')
+    
+    const resLines = Array.isArray(v.externalResources) 
+      ? v.externalResources.map(r => `${r.label || ''}|${r.url || ''}`).join('\n')
+      : ''
+    setExternalResources(resLines)
+
+    const vidLines = Array.isArray(v.youtubeVideos)
+      ? v.youtubeVideos.map(vid => `${vid.title || ''}|${vid.youtubeId || ''}`).join('\n')
+      : ''
+    setYoutubeVideos(vidLines)
+
+    setEditingVariant(v)
+    setShowSubForm(true)
+  }
+
+  const handleSaveVariant = async () => {
+    if (!name || !description) {
+      alert('El nombre y la descripción son requeridos')
+      return
+    }
+
+    const payload = {
+      name,
+      description,
+      treatment,
+      validatedBy,
+      symptoms: symptoms.split('\n').map(s => s.trim()).filter(Boolean),
+      riskFactors: riskFactors.split('\n').map(r => r.trim()).filter(Boolean),
+      externalResources: externalResources.split('\n').map(line => {
+        const parts = line.split('|')
+        return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
+      }).filter(r => r.label && r.url),
+      youtubeVideos: youtubeVideos.split('\n').map(line => {
+        const parts = line.split('|')
+        return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
+      }).filter(vid => vid.title && vid.youtubeId),
+    }
+
+    try {
+      if (editingVariant) {
+        await api.put(`/admin/diseases/variants/${editingVariant.id}`, payload)
+      } else {
+        await api.post(`/admin/diseases/${disease.id}/variants`, payload)
+      }
+      setShowSubForm(false)
+      loadVariants()
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al guardar variante')
+    }
+  }
+
+  const handleDeleteVariant = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta variante?')) return
+    try {
+      await api.delete(`/admin/diseases/variants/${id}`)
+      loadVariants()
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al eliminar variante')
+    }
+  }
+
+  return (
+    <div style={{ marginTop: '2rem', borderTop: `2px solid ${dark ? '#272530' : '#e8ddd0'}`, paddingTop: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', margin: 0 }}>
+          🧬 Variantes de la Enfermedad ({variants.length})
+        </h3>
+        {!showSubForm && (
+          <button type="button" onClick={openCreate} style={{
+            background: '#871233', color: '#white', border: 'none', borderRadius: '8px',
+            padding: '0.4rem 0.85rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
+          }}>
+            Agregar Variante
+          </button>
+        )}
+      </div>
+
+      {showSubForm ? (
+        <div style={{
+          background: dark ? '#1e1c25' : '#faf8f5',
+          border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`,
+          borderRadius: '12px',
+          padding: '1.25rem',
+          marginBottom: '1.5rem',
+        }}>
+          <h4 style={{ fontSize: '0.9rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', marginBottom: '1rem', marginTop: 0 }}>
+            {editingVariant ? 'Editar Variante' : 'Nueva Variante'}
+          </h4>
+
+          <FormField label="Nombre de la Variante" dark={dark}>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} style={inputStyle(dark)} required />
+          </FormField>
+
+          <FormField label="Descripción" dark={dark}>
+            <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} required />
+          </FormField>
+
+          <FormField label="Tratamiento" dark={dark}>
+            <textarea rows={3} value={treatment} onChange={e => setTreatment(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+          </FormField>
+
+          <FormField label="Síntomas (uno por línea)" dark={dark}>
+            <textarea rows={3} value={symptoms} onChange={e => setSymptoms(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+          </FormField>
+
+          <FormField label="Factores de Riesgo (uno por línea)" dark={dark}>
+            <textarea rows={3} value={riskFactors} onChange={e => setRiskFactors(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+          </FormField>
+
+          <FormField label="Recursos Externos (Formato: Etiqueta|URL - uno por línea)" dark={dark}>
+            <textarea rows={3} value={externalResources} onChange={e => setExternalResources(e.target.value)} placeholder="Ej: Guía Oficial IMSS|https://imss.gob.mx/guia" style={{ ...inputStyle(dark), resize: 'vertical' }} />
+          </FormField>
+
+          <FormField label="Videos de YouTube (Formato: Título|youtubeId - uno por línea)" dark={dark}>
+            <textarea rows={3} value={youtubeVideos} onChange={e => setYoutubeVideos(e.target.value)} placeholder="Ej: Prevención Cáncer de Tiroides|dQw4w9WgXcQ" style={{ ...inputStyle(dark), resize: 'vertical' }} />
+          </FormField>
+
+          <FormField label="Validado por" dark={dark}>
+            <input type="text" value={validatedBy} onChange={e => setValidatedBy(e.target.value)} style={inputStyle(dark)} />
+          </FormField>
+
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+            <button type="button" onClick={() => setShowSubForm(false)} style={{
+              background: 'transparent', border: '1.5px solid #871233', color: '#871233',
+              borderRadius: '8px', padding: '0.4rem 0.85rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
+            }}>Cancelar</button>
+            <button type="button" onClick={handleSaveVariant} style={{
+              background: '#871233', border: 'none', color: '#white',
+              borderRadius: '8px', padding: '0.4rem 0.85rem', fontSize: '0.78rem', fontWeight: '700', cursor: 'pointer'
+            }}>Guardar Variante</button>
+          </div>
+        </div>
+      ) : (
+        <div className="variants-list">
+          {loading ? (
+            <p style={{ fontSize: '0.85rem', color: dark ? '#7e7a8c' : '#a89580' }}>Cargando variantes...</p>
+          ) : variants.length === 0 ? (
+            <p style={{ fontSize: '0.85rem', color: dark ? '#7e7a8c' : '#a89580', fontStyle: 'italic' }}>
+              Esta enfermedad no tiene variantes registradas. Las variantes son útiles para subdividir patologías en tipos o subtipos específicos.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {variants.map(v => (
+                <div key={v.id} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  background: dark ? '#1b1a20' : '#fcfbf9',
+                  border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`,
+                }}>
+                  <div style={{ minWidth: 0, flex: 1, marginRight: '1rem' }}>
+                    <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: '700', color: dark ? '#fff' : '#1a1715' }}>
+                      {v.name}
+                    </h5>
+                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: dark ? '#7e7a8c' : '#a89580', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {v.description}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                    <button type="button" onClick={() => openEdit(v)} style={{
+                      background: 'none', border: 'none', color: '#c2a378', cursor: 'pointer', padding: '4px',
+                      fontSize: '0.8rem', fontWeight: '600'
+                    }}>
+                      Editar
+                    </button>
+                    <button type="button" onClick={() => handleDeleteVariant(v.id)} style={{
+                      background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '4px',
+                      fontSize: '0.8rem', fontWeight: '600'
+                    }}>
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CrudSection({ dark, entity, title }) {
   const cfg = ENTITY_CONFIG[entity]
   const [items, setItems] = useState([])
@@ -1135,7 +1374,16 @@ function CrudSection({ dark, entity, title }) {
               )}
             </FormField>
           ))}
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+
+          {/* Custom Variants Management for Diseases */}
+          {editing && entity === 'diseases' && (
+            <VariantsManager 
+              disease={editing} 
+              dark={dark} 
+            />
+          )}
+
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
             <Btn variant="ghost" onClick={() => setShowForm(false)}>Cancelar</Btn>
             <Btn onClick={handleSave} disabled={saving}>
               <FaSave size={13} /> {saving ? 'Guardando...' : editing ? 'Actualizar' : 'Crear'}

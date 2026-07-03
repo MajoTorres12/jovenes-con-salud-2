@@ -85,12 +85,18 @@ export default function DiseaseDetail() {
     : (Array.isArray(disease.riskFactors) ? disease.riskFactors : (disease.riskFactors ? JSON.parse(disease.riskFactors) : []))
 
   const resources = selectedVariant
-    ? (Array.isArray(selectedVariant.externalResources) ? selectedVariant.externalResources : [])
-    : (Array.isArray(disease.externalResources) ? disease.externalResources : (disease.externalResources ? JSON.parse(disease.externalResources) : []))
+    ? (Array.isArray(selectedVariant.externalResources || selectedVariant.external_resources) 
+        ? (selectedVariant.externalResources || selectedVariant.external_resources) 
+        : [])
+    : (Array.isArray(disease.externalResources || disease.external_resources) 
+        ? (disease.externalResources || disease.external_resources) 
+        : (disease.externalResources ? JSON.parse(disease.externalResources) : (disease.external_resources ? JSON.parse(disease.external_resources) : [])))
 
   const youtubeVideos = selectedVariant
-    ? (Array.isArray(selectedVariant.youtubeVideos) ? selectedVariant.youtubeVideos : [])
-    : (disease.youtubeVideos || [])
+    ? (Array.isArray(selectedVariant.youtubeVideos || selectedVariant.youtube_videos) 
+        ? (selectedVariant.youtubeVideos || selectedVariant.youtube_videos) 
+        : [])
+    : (disease.youtubeVideos || disease.youtube_videos || [])
 
   const color = disease.colorHex || '#871233'
 

@@ -943,14 +943,26 @@ function CrudSection({ dark, entity, title }) {
     }
     setSavingVariant(true)
     const resourcesParsed = vExternalResources.split('\n').map(line => {
-      const parts = line.split('|')
-      return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
-    }).filter(r => r.label && r.url)
+      const trimmed = line.trim()
+      if (!trimmed) return null
+      if (trimmed.includes('|')) {
+        const parts = trimmed.split('|')
+        return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
+      } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        return { label: trimmed, url: trimmed }
+      }
+      return null
+    }).filter(Boolean).filter(r => r.label && r.url)
 
     const videosParsed = vYoutubeVideos.split('\n').map(line => {
-      const parts = line.split('|')
-      return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
-    }).filter(vid => vid.title && vid.youtubeId)
+      const trimmed = line.trim()
+      if (!trimmed) return null
+      if (trimmed.includes('|')) {
+        const parts = trimmed.split('|')
+        return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
+      }
+      return null
+    }).filter(Boolean).filter(vid => vid.title && vid.youtubeId)
 
     const payload = {
       name: vName,
@@ -1003,18 +1015,30 @@ function CrudSection({ dark, entity, title }) {
         } else if (f.key === 'externalResources') {
           const parsed = payload[f.key]
             ? payload[f.key].split('\n').map(line => {
-                const parts = line.split('|')
-                return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
-              }).filter(r => r.label && r.url)
+                const trimmed = line.trim()
+                if (!trimmed) return null
+                if (trimmed.includes('|')) {
+                  const parts = trimmed.split('|')
+                  return { label: parts[0]?.trim() || '', url: parts[1]?.trim() || '' }
+                } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+                  return { label: trimmed, url: trimmed }
+                }
+                return null
+              }).filter(Boolean).filter(r => r.label && r.url)
             : []
           payload.externalResources = parsed
           payload.external_resources = parsed
         } else if (f.key === 'youtubeVideos') {
           const parsed = payload[f.key]
             ? payload[f.key].split('\n').map(line => {
-                const parts = line.split('|')
-                return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
-              }).filter(v => v.title && v.youtubeId)
+                const trimmed = line.trim()
+                if (!trimmed) return null
+                if (trimmed.includes('|')) {
+                  const parts = trimmed.split('|')
+                  return { title: parts[0]?.trim() || '', youtubeId: parts[1]?.trim() || '' }
+                }
+                return null
+              }).filter(Boolean).filter(v => v.title && v.youtubeId)
             : []
           payload.youtubeVideos = parsed
           payload.youtube_videos = parsed

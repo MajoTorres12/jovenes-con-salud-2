@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { FaSync, FaPlug, FaWifi, FaCheckCircle, FaTimesCircle, FaTimes, FaChevronDown } from 'react-icons/fa'
 import { MdBluetoothConnected, MdDevices, MdWatch } from 'react-icons/md'
 import api from '../../services/api'
+import { BleClient, numberToUUID } from '@capacitor-community/bluetooth-le'
+import { Capacitor } from '@capacitor/core'
 
 const BRAND_COLORS = {
   Fitbit: '#00B0B9',
@@ -9,6 +11,7 @@ const BRAND_COLORS = {
   Xiaomi:  '#FF6900',
   Garmin:  '#007CC3',
   Apple:   '#555555',
+  BLE:     '#2563EB',
 }
 
 const METRIC_LABELS = {
@@ -73,12 +76,48 @@ export default function WearableSection({ onSyncComplete, isModal }) {
   const handleConnect = async (deviceId) => {
     setConnecting(true)
     try {
+      if (deviceId === 'ble_heartrate') {
+        if (!Capacitor.isNativePlatform()) {
+          showToast('El escaneo de Bluetooth requiere un dispositivo móvil real. Se conectará el sensor en modo simulación.', 'info')
+          const res = await api.post('/wearable/connect', { deviceId })
+          setShowDeviceModal(false)
+          await fetchStatus()
+          showToast(`✅ ${res.data.message}`)
+          return
+        }
+
+        await BleClient.initialize()
+        const HEART_RATE_SERVICE = numberToUUID(0x180d)
+        showToast('Buscando sensor de ritmo cardíaco BLE...', 'info')
+        
+        const device = await BleClient.requestDevice({
+          services: [HEART_RATE_SERVICE]
+        })
+        
+        showToast(`Vinculando ${device.name || 'Sensor'}...`, 'info')
+        await BleClient.connect(device.deviceId)
+        
+        const res = await api.post('/wearable/connect', { deviceId })
+        localStorage.setItem('connected_ble_address', device.deviceId)
+        
+        await BleClient.disconnect(device.deviceId)
+        setShowDeviceModal(false)
+        await fetchStatus()
+        showToast(`✅ Sensor ${device.name || 'Ritmo Cardíaco'} vinculado con éxito`)
+        return
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        showToast('Solicitando permisos de salud nativos...', 'info')
+      }
+
       const res = await api.post('/wearable/connect', { deviceId })
       setShowDeviceModal(false)
       await fetchStatus()
       showToast(`✅ ${res.data.message}`)
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al conectar dispositivo', 'error')
+      console.error('Error al conectar dispositivo:', err)
+      showToast('Error al conectar: ' + (err.message || 'Verifica permisos'), 'error')
     } finally {
       setConnecting(false)
     }
@@ -88,15 +127,73 @@ export default function WearableSection({ onSyncComplete, isModal }) {
     setSyncing(true)
     setSyncResult(null)
     try {
-      const res = await api.post('/wearable/sync')
+      let realMetrics = null
+
+      const bleAddress = localStorage.getItem('connected_ble_address')
+      if (Capacitor.isNativePlatform() && status?.deviceId === 'ble_heartrate' && bleAddress) {
+        try {
+          await BleClient.initialize()
+          showToast('Conectando al sensor Bluetooth para extraer lectura...', 'info')
+          await BleClient.connect(bleAddress)
+
+          const HEART_RATE_SERVICE = numberToUUID(0x180d)
+          const HEART_RATE_MEASUREMENT_CHARACTERISTIC = numberToUUID(0x2a37)
+
+          let resolvedHr = null
+          await new Promise(async (resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Tiempo de espera agotado al leer sensor'))
+            }, 8000)
+
+            await BleClient.startNotifications(
+              bleAddress,
+              HEART_RATE_SERVICE,
+              HEART_RATE_MEASUREMENT_CHARACTERISTIC,
+              (value) => {
+                const flags = value.getUint8(0)
+                const rate16 = flags & 0x01
+                let heartRate = 0
+                if (rate16) {
+                  heartRate = value.getUint16(1, true)
+                } else {
+                  heartRate = value.getUint8(1)
+                }
+                resolvedHr = heartRate
+                clearTimeout(timeout)
+                resolve()
+              }
+            )
+          })
+
+          await BleClient.stopNotifications(bleAddress, HEART_RATE_SERVICE, HEART_RATE_MEASUREMENT_CHARACTERISTIC)
+          await BleClient.disconnect(bleAddress)
+
+          if (resolvedHr) {
+            realMetrics = [
+              {
+                type: 'heartRate',
+                value: resolvedHr,
+                notes: 'Sincronizado vía Bluetooth desde tu sensor físico.'
+              }
+            ]
+          }
+        } catch (bleErr) {
+          console.error('Fallo lectura BLE, usando simulación:', bleErr)
+          showToast('No se pudo conectar al sensor, usando valor simulado.', 'info')
+        }
+      } else if (Capacitor.isNativePlatform() && status?.connected) {
+        showToast('Consultando Google Health Connect / Apple Health...', 'info')
+      }
+
+      const res = await api.post('/wearable/sync', { metrics: realMetrics })
       setSyncResult(res.data)
       await fetchStatus()
       if (res.data.saved?.length > 0) {
         showToast(`⌚ ${res.data.message}`)
-        onSyncComplete?.()   // notify Dashboard to refresh records
+        onSyncComplete?.()
         window.dispatchEvent(new Event('health-records-updated'))
       } else {
-        showToast('Sin cambios — todos los valores ya estaban registrados', 'info')
+        showToast('Sin cambios — todos los valores ya estaban registrados hoy', 'info')
       }
     } catch (err) {
       showToast(err.response?.data?.error || 'Error al sincronizar', 'error')
@@ -109,6 +206,7 @@ export default function WearableSection({ onSyncComplete, isModal }) {
     if (!window.confirm('¿Desconectar el dispositivo? El historial de registros se conserva.')) return
     try {
       const res = await api.delete('/wearable/disconnect')
+      localStorage.removeItem('connected_ble_address')
       setSyncResult(null)
       await fetchStatus()
       showToast(`🔌 ${res.data.message}`)

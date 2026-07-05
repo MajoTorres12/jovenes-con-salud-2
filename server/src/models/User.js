@@ -56,6 +56,31 @@ const User = sequelize.define('User', {
     allowNull: true,
     field: 'device_token',
   },
+  wearableConnected: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'wearable_connected',
+  },
+  wearableDeviceId: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'wearable_device_id',
+  },
+  wearableDeviceName: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'wearable_device_name',
+  },
+  wearableLastSync: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'wearable_last_sync',
+  },
+  wearableMetrics: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    field: 'wearable_metrics',
+  },
 }, {
   tableName: 'users',
   timestamps: true,

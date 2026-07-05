@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { FaHeartbeat, FaFacebookF, FaTwitter, FaInstagram } from 'react-icons/fa'
 import { HiMail, HiPhone, HiLocationMarker } from 'react-icons/hi'
+import logo from '../../assets/logo.png'
 
 export default function Footer() {
   return (
@@ -19,7 +20,7 @@ export default function Footer() {
           {/* About */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <FaHeartbeat style={{ fontSize: '1.5rem', color: '#c2a378' }} />
+              <img src={logo} alt="Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
               <span style={{ fontSize: '1.125rem', fontWeight: '700', color: 'white' }}>
                 Jóvenes con Salud
               </span>

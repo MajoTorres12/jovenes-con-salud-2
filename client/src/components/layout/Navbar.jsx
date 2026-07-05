@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext'
 import WearableSection from '../dashboard/WearableSection'
 import { useTheme } from '../../context/ThemeContext'
 import api from '../../services/api'
+import logo from '../../assets/logo.png'
 
 const formatTimeTo12h = (timeStr) => {
   if (!timeStr) return ''
@@ -255,7 +256,7 @@ export default function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '4rem' }}>
           {/* Logo */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', flexShrink: 0 }}>
-            <FaHeartbeat style={{ fontSize: '1.75rem', color: 'var(--color-accent-500)' }} />
+            <img src={logo} alt="Logo" style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover' }} />
             <span style={{
               fontSize: '1.25rem',
               fontWeight: '700',

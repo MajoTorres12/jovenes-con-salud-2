@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { FaHeartbeat, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
+import logo from '../assets/logo.png'
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
@@ -48,14 +49,13 @@ export default function Login() {
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            width: '56px', height: '56px', borderRadius: 'var(--radius-xl)',
-            background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          <img src={logo} alt="Jóvenes con Salud" style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: 'var(--radius-xl)',
             margin: '0 auto 1rem',
-          }}>
-            <FaHeartbeat style={{ fontSize: '1.5rem', color: 'white' }} />
-          </div>
+            objectFit: 'cover'
+          }} />
           <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-surface-900)' }}>
             Iniciar Sesión
           </h1>

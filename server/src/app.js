@@ -42,10 +42,23 @@ app.use(helmet({
 app.use('/images', express.static('public/images'))
 
 // CORS configuration
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost',
+  'capacitor://localhost'
+].filter(Boolean)
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? (process.env.CLIENT_URL || 'http://localhost:5173')
-    : true,
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origen (como herramientas de prueba o llamadas internas)
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   credentials: true,
 }))
 

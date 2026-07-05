@@ -5,15 +5,16 @@ import { Capacitor } from '@capacitor/core'
 // Obtener con: ipconfig (Windows) / ifconfig (Mac/Linux)
 const LOCAL_NETWORK_IP = '192.168.1.128'
 const LOCAL_SERVER_PORT = '3001'
+const PRODUCTION_GCP_URL = 'https://34-74-246-147.sslip.io'
 
 /**
  * Determina la URL base de la API automáticamente.
- * - En dispositivo nativo (Android/iOS): usa la IP de la red local.
+ * - En dispositivo nativo (Android/iOS): usa la base de datos de producción en Google Cloud.
  * - En navegador web: usa la variable de entorno o localhost.
  */
 function getApiUrl() {
   if (Capacitor.isNativePlatform()) {
-    return `http://${LOCAL_NETWORK_IP}:${LOCAL_SERVER_PORT}/api`
+    return `${PRODUCTION_GCP_URL}/api`
   }
   return import.meta.env.VITE_API_URL || `http://localhost:${LOCAL_SERVER_PORT}/api`
 }
@@ -23,7 +24,7 @@ function getApiUrl() {
  */
 export function getApiBaseUrl() {
   if (Capacitor.isNativePlatform()) {
-    return `http://${LOCAL_NETWORK_IP}:${LOCAL_SERVER_PORT}`
+    return PRODUCTION_GCP_URL
   }
   return import.meta.env.VITE_API_URL?.replace('/api', '') || `http://localhost:${LOCAL_SERVER_PORT}`
 }

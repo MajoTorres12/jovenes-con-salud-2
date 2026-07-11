@@ -1072,8 +1072,9 @@ function CrudSection({ dark, entity, title }) {
     }
   }
 
-  const handleFormat = (fieldKey, formatType) => {
-    const textarea = document.getElementById(`textarea-${fieldKey}`)
+  const handleFormat = (fieldKey, formatType, isVariant = false) => {
+    const elementId = isVariant ? `variant-textarea-${fieldKey}` : `textarea-${fieldKey}`
+    const textarea = document.getElementById(elementId)
     if (!textarea) return
 
     const start = textarea.selectionStart
@@ -1098,7 +1099,16 @@ function CrudSection({ dark, entity, title }) {
     const replacement = prefix + selectedText + suffix
     const newValue = text.substring(0, start) + replacement + text.substring(end)
 
-    setFormData(prev => ({ ...prev, [fieldKey]: newValue }))
+    if (isVariant) {
+      if (fieldKey === 'description') setVDescription(newValue)
+      if (fieldKey === 'treatment') setVTreatment(newValue)
+      if (fieldKey === 'symptoms') setVSymptoms(newValue)
+      if (fieldKey === 'riskFactors') setVRiskFactors(newValue)
+      if (fieldKey === 'externalResources') setVExternalResources(newValue)
+      if (fieldKey === 'youtubeVideos') setVYoutubeVideos(newValue)
+    } else {
+      setFormData(prev => ({ ...prev, [fieldKey]: newValue }))
+    }
 
     setTimeout(() => {
       textarea.focus()
@@ -1107,6 +1117,92 @@ function CrudSection({ dark, entity, title }) {
       textarea.setSelectionRange(newCursorPosStart, newCursorPosEnd)
     }, 0)
   }
+
+  const renderFormattingToolbar = (fieldKey) => (
+    <div style={{
+      display: 'flex',
+      gap: '0.3rem',
+      marginBottom: '0.2rem',
+      background: dark ? '#1e1c25' : '#faf8f5',
+      border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`,
+      borderRadius: '8px',
+      padding: '0.25rem 0.4rem',
+      alignItems: 'center',
+      width: 'fit-content'
+    }}>
+      <button
+        type="button"
+        onClick={() => handleFormat(fieldKey, 'bold', true)}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: dark ? '#fff' : '#1a1715',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          padding: '2px 8px',
+          borderRadius: '4px',
+          fontSize: '0.85rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'background 0.2s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+        title="Negrita"
+      >
+        B
+      </button>
+      <span style={{ height: '14px', width: '1px', background: dark ? '#272530' : '#e8ddd0' }} />
+      <button
+        type="button"
+        onClick={() => handleFormat(fieldKey, 'italic', true)}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: dark ? '#fff' : '#1a1715',
+          fontStyle: 'italic',
+          cursor: 'pointer',
+          padding: '2px 8px',
+          borderRadius: '4px',
+          fontSize: '0.85rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'background 0.2s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+        title="Cursiva"
+      >
+        I
+      </button>
+      <span style={{ height: '14px', width: '1px', background: dark ? '#272530' : '#e8ddd0' }} />
+      <button
+        type="button"
+        onClick={() => handleFormat(fieldKey, 'underline', true)}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: dark ? '#fff' : '#1a1715',
+          textDecoration: 'underline',
+          cursor: 'pointer',
+          padding: '2px 8px',
+          borderRadius: '4px',
+          fontSize: '0.85rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'background 0.2s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = dark ? '#272530' : '#e8ddd0' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+        title="Subrayado"
+      >
+        U
+      </button>
+    </div>
+  )
 
   const formatCell = (item, col) => {
     const val = item[col]
@@ -1205,27 +1301,45 @@ function CrudSection({ dark, entity, title }) {
               </FormField>
 
               <FormField label="Descripción" dark={dark}>
-                <textarea rows={3} value={vDescription} onChange={e => setVDescription(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} required />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {renderFormattingToolbar('description')}
+                  <textarea id="variant-textarea-description" rows={3} value={vDescription} onChange={e => setVDescription(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} required />
+                </div>
               </FormField>
 
               <FormField label="Tratamiento" dark={dark}>
-                <textarea rows={3} value={vTreatment} onChange={e => setVTreatment(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {renderFormattingToolbar('treatment')}
+                  <textarea id="variant-textarea-treatment" rows={3} value={vTreatment} onChange={e => setVTreatment(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                </div>
               </FormField>
 
               <FormField label="Síntomas (uno por línea)" dark={dark}>
-                <textarea rows={3} value={vSymptoms} onChange={e => setVSymptoms(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {renderFormattingToolbar('symptoms')}
+                  <textarea id="variant-textarea-symptoms" rows={3} value={vSymptoms} onChange={e => setVSymptoms(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                </div>
               </FormField>
 
               <FormField label="Factores de Riesgo (uno por línea)" dark={dark}>
-                <textarea rows={3} value={vRiskFactors} onChange={e => setVRiskFactors(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {renderFormattingToolbar('riskFactors')}
+                  <textarea id="variant-textarea-riskFactors" rows={3} value={vRiskFactors} onChange={e => setVRiskFactors(e.target.value)} style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                </div>
               </FormField>
 
               <FormField label="Recursos Externos (Formato: Etiqueta|URL - uno por línea)" dark={dark}>
-                <textarea rows={3} value={vExternalResources} onChange={e => setVExternalResources(e.target.value)} placeholder="Ej: Guía Oficial IMSS|https://imss.gob.mx/guia" style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {renderFormattingToolbar('externalResources')}
+                  <textarea id="variant-textarea-externalResources" rows={3} value={vExternalResources} onChange={e => setVExternalResources(e.target.value)} placeholder="Ej: Guía Oficial IMSS|https://imss.gob.mx/guia" style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                </div>
               </FormField>
 
               <FormField label="Videos de YouTube (Formato: Título|youtubeId - uno por línea)" dark={dark}>
-                <textarea rows={3} value={vYoutubeVideos} onChange={e => setVYoutubeVideos(e.target.value)} placeholder="Ej: Prevención Cáncer de Tiroides|dQw4w9WgXcQ" style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {renderFormattingToolbar('youtubeVideos')}
+                  <textarea id="variant-textarea-youtubeVideos" rows={3} value={vYoutubeVideos} onChange={e => setVYoutubeVideos(e.target.value)} placeholder="Ej: Prevención Cáncer de Tiroides|dQw4w9WgXcQ" style={{ ...inputStyle(dark), resize: 'vertical' }} />
+                </div>
               </FormField>
 
               <FormField label="Validado por" dark={dark}>

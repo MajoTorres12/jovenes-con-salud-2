@@ -632,12 +632,26 @@ export default function DiseaseDetail() {
             flex-direction: row !important;
             overflow-x: auto;
             white-space: nowrap;
-            padding-bottom: 0.5rem;
+            padding-bottom: 0.75rem;
             width: 100%;
+            gap: 0.5rem;
+            -webkit-overflow-scrolling: touch;
+          }
+          .disease-tabs-nav::-webkit-scrollbar {
+            height: 4px;
+          }
+          .disease-tabs-nav::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .disease-tabs-nav::-webkit-scrollbar-thumb {
+            background-color: var(--color-surface-300);
+            border-radius: 4px;
           }
           .disease-tabs-nav button {
-            flex: 1 0 auto;
+            flex: 0 0 auto !important;
+            width: auto !important;
             justify-content: center !important;
+            padding: 0.6rem 1.2rem !important;
           }
         }
       `}</style>

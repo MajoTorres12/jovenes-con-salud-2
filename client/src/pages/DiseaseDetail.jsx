@@ -4,6 +4,28 @@ import { FaArrowLeft, FaExternalLinkAlt, FaCheckCircle, FaExclamationTriangle, F
 import { useTheme } from '../context/ThemeContext'
 import api from '../services/api'
 
+const parseFormattedText = (text) => {
+  if (!text) return '';
+  // Escapar caracteres HTML para prevenir XSS
+  let safeText = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  
+  // Restaurar etiquetas <u> y </u> permitidas
+  safeText = safeText
+    .replace(/&lt;u&gt;/gi, '<u>')
+    .replace(/&lt;\/u&gt;/gi, '</u>');
+  
+  // Negrita: **texto** -> <strong>texto</strong>
+  safeText = safeText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Cursiva: *texto* -> <em>texto</em>
+  safeText = safeText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  return safeText;
+}
+
 export default function DiseaseDetail() {
   const { id: slug } = useParams()
   const { dark } = useTheme()
@@ -382,9 +404,10 @@ export default function DiseaseDetail() {
                   </h1>
                 </div>
               </div>
-              <p style={{ paddingLeft: '0.75rem', fontSize: '0.98rem', color: 'var(--color-surface-700)', lineHeight: 1.8, maxWidth: '720px', margin: '0 0 1.5rem 0' }}>
-                {activeDesc}
-              </p>
+              <p 
+                style={{ paddingLeft: '0.75rem', fontSize: '0.98rem', color: 'var(--color-surface-700)', lineHeight: 1.8, maxWidth: '720px', margin: '0 0 1.5rem 0' }}
+                dangerouslySetInnerHTML={{ __html: parseFormattedText(activeDesc) }}
+              />
               <div style={{ paddingLeft: '0.75rem' }}>
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
@@ -412,9 +435,10 @@ export default function DiseaseDetail() {
                   <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-surface-900)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <FaBandAid style={{ color: '#10b981' }} /> Recomendaciones de Tratamiento
                   </h2>
-                  <p style={{ fontSize: '0.95rem', color: 'var(--color-surface-700)', lineHeight: 1.8, whiteSpace: 'pre-wrap', margin: 0 }}>
-                    {activeTreatment}
-                  </p>
+                  <p 
+                    style={{ fontSize: '0.95rem', color: 'var(--color-surface-700)', lineHeight: 1.8, whiteSpace: 'pre-wrap', margin: 0 }}
+                    dangerouslySetInnerHTML={{ __html: parseFormattedText(activeTreatment) }}
+                  />
                 </div>
               ) : (
                 <p style={{ textAlign: 'center', color: 'var(--color-surface-400)', padding: '2rem' }}>No hay información de tratamiento registrada aún.</p>

@@ -463,7 +463,7 @@ export default function DiseaseDetail() {
                     {symptoms.map((s, i) => (
                       <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--color-surface-700)' }}>
                         <FaCheckCircle style={{ color: color, flexShrink: 0, marginTop: '0.15rem' }} />
-                        {s}
+                        <span dangerouslySetInnerHTML={{ __html: parseFormattedText(s) }} />
                       </li>
                     ))}
                   </ul>
@@ -488,7 +488,7 @@ export default function DiseaseDetail() {
                     {riskFactors.map((r, i) => (
                       <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--color-surface-700)' }}>
                         <FaExclamationTriangle style={{ color: '#f59e0b', flexShrink: 0, marginTop: '0.15rem', fontSize: '0.8rem' }} />
-                        {r}
+                        <span dangerouslySetInnerHTML={{ __html: parseFormattedText(r) }} />
                       </li>
                     ))}
                   </ul>

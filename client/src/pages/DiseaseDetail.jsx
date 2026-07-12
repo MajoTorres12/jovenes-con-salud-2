@@ -376,62 +376,68 @@ export default function DiseaseDetail() {
           )}
 
           {/* Ficha Principal Tab */}
-          {activeTab === 'main' && (
-            <div style={{
+          <div 
+            className="disease-detail-tab-section tab-section-main"
+            style={{
               padding: '2rem',
               borderRadius: 'var(--radius-2xl)',
               background: `linear-gradient(135deg, ${color}15, ${color}05)`,
               border: `1px solid ${color}30`,
               position: 'relative', overflow: 'hidden',
-              boxShadow: 'var(--shadow-card)'
-            }}>
-              <div style={{
-                position: 'absolute', top: 0, left: 0, width: '6px', height: '100%',
-                background: color,
-              }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', paddingLeft: '0.75rem' }}>
-                <span style={{ fontSize: '3.5rem' }}>{disease.iconEmoji || '🏥'}</span>
-                <div>
-                  <div style={{
-                    display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '2rem',
-                    background: color + '25', color, fontSize: '0.75rem', fontWeight: '700',
-                    textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem',
-                  }}>
-                    {disease.category}
-                  </div>
-                  <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--color-surface-900)', lineHeight: 1.2 }}>
-                    {activeName}
-                  </h1>
-                </div>
-              </div>
-              <p 
-                style={{ paddingLeft: '0.75rem', fontSize: '0.98rem', color: 'var(--color-surface-700)', lineHeight: 1.8, maxWidth: '720px', margin: '0 0 1.5rem 0' }}
-                dangerouslySetInnerHTML={{ __html: parseFormattedText(activeDesc) }}
-              />
-              <div style={{ paddingLeft: '0.75rem' }}>
+              boxShadow: 'var(--shadow-card)',
+              marginBottom: '1.5rem',
+            }}
+          >
+            <div style={{
+              position: 'absolute', top: 0, left: 0, width: '6px', height: '100%',
+              background: color,
+            }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', paddingLeft: '0.75rem' }}>
+              <span style={{ fontSize: '3.5rem' }}>{disease.iconEmoji || '🏥'}</span>
+              <div>
                 <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.4rem 0.85rem', borderRadius: '8px',
-                  background: 'rgba(16, 185, 129, 0.08)', color: '#10b981',
-                  border: '1px solid rgba(16, 185, 129, 0.2)',
-                  fontSize: '0.75rem', fontWeight: '700',
+                  display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '2rem',
+                  background: color + '25', color, fontSize: '0.75rem', fontWeight: '700',
+                  textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem',
                 }}>
-                  <FaShieldAlt size={12} />
-                  Ficha Médica Validada por: {activeValidated || 'Secretaría de Salud de Tamaulipas'}
+                  {disease.category}
                 </div>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--color-surface-900)', lineHeight: 1.2 }}>
+                  {activeName}
+                </h1>
               </div>
             </div>
-          )}
+            <p 
+              style={{ paddingLeft: '0.75rem', fontSize: '0.98rem', color: 'var(--color-surface-700)', lineHeight: 1.8, maxWidth: '720px', margin: '0 0 1.5rem 0' }}
+              dangerouslySetInnerHTML={{ __html: parseFormattedText(activeDesc) }}
+            />
+            <div style={{ paddingLeft: '0.75rem' }}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.4rem 0.85rem', borderRadius: '8px',
+                background: 'rgba(16, 185, 129, 0.08)', color: '#10b981',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                fontSize: '0.75rem', fontWeight: '700',
+              }}>
+                <FaShieldAlt size={12} />
+                Ficha Médica Validada por: {activeValidated || 'Secretaría de Salud de Tamaulipas'}
+              </div>
+            </div>
+          </div>
 
           {/* General y Tratamiento Tab */}
-          {activeTab === 'general' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {(activeTreatment || activeTab === 'general') && (
+            <div 
+              className="disease-detail-tab-section tab-section-general"
+              style={{
+                padding: '1.75rem', borderRadius: 'var(--radius-xl)',
+                background: 'white', boxShadow: 'var(--shadow-card)',
+                border: '1px solid var(--color-surface-200)',
+                marginBottom: '1.5rem',
+              }}
+            >
               {activeTreatment ? (
-                <div style={{
-                  padding: '1.75rem', borderRadius: 'var(--radius-xl)',
-                  background: 'white', boxShadow: 'var(--shadow-card)',
-                  border: '1px solid var(--color-surface-200)',
-                }}>
+                <>
                   <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-surface-900)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <FaBandAid style={{ color: '#10b981' }} /> Recomendaciones de Tratamiento
                   </h2>
@@ -439,16 +445,19 @@ export default function DiseaseDetail() {
                     style={{ fontSize: '0.95rem', color: 'var(--color-surface-700)', lineHeight: 1.8, whiteSpace: 'pre-wrap', margin: 0 }}
                     dangerouslySetInnerHTML={{ __html: parseFormattedText(activeTreatment) }}
                   />
-                </div>
+                </>
               ) : (
-                <p style={{ textAlign: 'center', color: 'var(--color-surface-400)', padding: '2rem' }}>No hay información de tratamiento registrada aún.</p>
+                <p style={{ textAlign: 'center', color: 'var(--color-surface-400)', padding: '2rem', margin: 0 }}>No hay información de tratamiento registrada aún.</p>
               )}
             </div>
           )}
 
           {/* Síntomas y Riesgos Tab */}
-          {activeTab === 'symptoms' && (
-            <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+          {(symptoms.length > 0 || riskFactors.length > 0 || activeTab === 'symptoms') && (
+            <div 
+              className="disease-detail-tab-section tab-section-symptoms"
+              style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '1.5rem' }}
+            >
               {/* Symptoms */}
               {symptoms.length > 0 ? (
                 <div style={{
@@ -468,11 +477,11 @@ export default function DiseaseDetail() {
                     ))}
                   </ul>
                 </div>
-              ) : (
+              ) : activeTab === 'symptoms' ? (
                 <div style={{ padding: '1.5rem', borderRadius: 'var(--radius-xl)', background: 'white', border: '1px solid var(--color-surface-200)', textAlign: 'center' }}>
                   <p style={{ color: 'var(--color-surface-400)', margin: 0 }}>No hay síntomas registrados.</p>
                 </div>
-              )}
+              ) : null}
 
               {/* Risk Factors */}
               {riskFactors.length > 0 ? (
@@ -493,17 +502,17 @@ export default function DiseaseDetail() {
                     ))}
                   </ul>
                 </div>
-              ) : (
+              ) : activeTab === 'symptoms' ? (
                 <div style={{ padding: '1.5rem', borderRadius: 'var(--radius-xl)', background: 'white', border: '1px solid var(--color-surface-200)', textAlign: 'center' }}>
                   <p style={{ color: 'var(--color-surface-400)', margin: 0 }}>No hay factores de riesgo registrados.</p>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
 
           {/* Videos Informativos Tab */}
-          {activeTab === 'videos' && (
-            <div>
+          {(youtubeVideos && youtubeVideos.length > 0 || activeTab === 'videos') && (
+            <div className="disease-detail-tab-section tab-section-videos" style={{ marginBottom: '1.5rem' }}>
               {youtubeVideos && youtubeVideos.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
                   {youtubeVideos.map((v, i) => (
@@ -531,17 +540,14 @@ export default function DiseaseDetail() {
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--color-surface-400)' }}>
-                  <FaYoutube size={48} style={{ opacity: 0.25, marginBottom: '0.75rem' }} />
-                  <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: '600' }}>No hay videos informativos disponibles para esta enfermedad.</p>
-                </div>
+                <p style={{ textAlign: 'center', color: 'var(--color-surface-400)', padding: '2rem', background: 'white', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)', margin: 0 }}>No hay videos informativos disponibles para esta enfermedad.</p>
               )}
             </div>
           )}
 
           {/* Recursos y Artículos Tab */}
-          {activeTab === 'resources' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {(resources.length > 0 || articles.length > 0 || activeTab === 'resources') && (
+            <div className="disease-detail-tab-section tab-section-resources" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '1.5rem' }}>
               {/* External Resources */}
               {resources.length > 0 && (
                 <div style={{
@@ -606,7 +612,7 @@ export default function DiseaseDetail() {
               )}
 
               {resources.length === 0 && articles.length === 0 && (
-                <p style={{ textAlign: 'center', color: 'var(--color-surface-400)', padding: '2rem' }}>No hay artículos o enlaces relacionados.</p>
+                <p style={{ textAlign: 'center', color: 'var(--color-surface-400)', padding: '2rem', background: 'white', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)', margin: 0 }}>No hay artículos o enlaces relacionados.</p>
               )}
             </div>
           )}
@@ -615,6 +621,12 @@ export default function DiseaseDetail() {
       </div>
 
       <style>{`
+        .tab-section-main { display: ${activeTab === 'main' ? 'block' : 'none'}; }
+        .tab-section-general { display: ${activeTab === 'general' ? 'block' : 'none'}; }
+        .tab-section-symptoms { display: ${activeTab === 'symptoms' ? 'grid' : 'none'}; }
+        .tab-section-videos { display: ${activeTab === 'videos' ? 'block' : 'none'}; }
+        .tab-section-resources { display: ${activeTab === 'resources' ? 'block' : 'none'}; }
+
         .disease-detail-container {
           display: flex;
           gap: 2.5rem;
@@ -646,36 +658,21 @@ export default function DiseaseDetail() {
             position: relative;
             top: 0;
             gap: 1rem;
-            border-bottom: 1.5px solid var(--color-surface-200);
-            padding-bottom: 1rem;
+            border-bottom: none !important;
+            padding-bottom: 0.5rem !important;
           }
           .collapse-toggle-btn {
             display: none !important;
           }
           .disease-tabs-nav {
-            flex-direction: row !important;
-            overflow-x: auto;
-            white-space: nowrap;
-            padding-bottom: 0.75rem;
-            width: 100%;
-            gap: 0.5rem;
-            -webkit-overflow-scrolling: touch;
+            display: none !important;
           }
-          .disease-tabs-nav::-webkit-scrollbar {
-            height: 4px;
+          .disease-detail-tab-section {
+            display: block !important;
+            margin-bottom: 1.5rem;
           }
-          .disease-tabs-nav::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .disease-tabs-nav::-webkit-scrollbar-thumb {
-            background-color: var(--color-surface-300);
-            border-radius: 4px;
-          }
-          .disease-tabs-nav button {
-            flex: 0 0 auto !important;
-            width: auto !important;
-            justify-content: center !important;
-            padding: 0.6rem 1.2rem !important;
+          .tab-section-symptoms {
+            display: grid !important;
           }
         }
       `}</style>

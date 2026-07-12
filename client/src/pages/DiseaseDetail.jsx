@@ -130,7 +130,7 @@ export default function DiseaseDetail() {
     { id: 'resources', label: 'Recursos y Artículos', icon: FaExternalLinkAlt }
   ]
   return (
-    <div style={{ padding: '2.5rem 2rem', maxWidth: '1350px', margin: '0 auto', minHeight: '80vh' }}>
+    <div className="disease-detail-wrapper">
       <div className="disease-detail-container">
         
         {/* Sidebar */}
@@ -615,6 +615,12 @@ export default function DiseaseDetail() {
       </div>
 
       <style>{`
+        .disease-detail-wrapper {
+          padding: 2.5rem 2rem;
+          max-width: 1350px;
+          margin: 0 auto;
+          min-height: 80vh;
+        }
         .disease-detail-container {
           display: flex;
           gap: 2.5rem;
@@ -676,6 +682,9 @@ export default function DiseaseDetail() {
             width: auto !important;
             justify-content: center !important;
             padding: 0.6rem 1.2rem !important;
+          }
+          .disease-detail-wrapper {
+            padding: 1.5rem 1rem;
           }
         }
       `}</style>

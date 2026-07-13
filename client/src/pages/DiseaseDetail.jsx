@@ -377,7 +377,7 @@ export default function DiseaseDetail() {
 
           {/* Ficha Principal Tab */}
           {activeTab === 'main' && (
-            <div style={{
+            <div className="disease-card-content" style={{
               padding: '2rem',
               borderRadius: 'var(--radius-2xl)',
               background: `linear-gradient(135deg, ${color}15, ${color}05)`,
@@ -389,9 +389,9 @@ export default function DiseaseDetail() {
                 position: 'absolute', top: 0, left: 0, width: '6px', height: '100%',
                 background: color,
               }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', paddingLeft: '0.75rem' }}>
-                <span style={{ fontSize: '3.5rem' }}>{disease.iconEmoji || '🏥'}</span>
-                <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', paddingLeft: '0.75rem', minWidth: 0 }}>
+                <span style={{ fontSize: '3.5rem', flexShrink: 0 }}>{disease.iconEmoji || '🏥'}</span>
+                <div style={{ minWidth: 0 }}>
                   <div style={{
                     display: 'inline-block', padding: '0.2rem 0.75rem', borderRadius: '2rem',
                     background: color + '25', color, fontSize: '0.75rem', fontWeight: '700',
@@ -399,25 +399,28 @@ export default function DiseaseDetail() {
                   }}>
                     {disease.category}
                   </div>
-                  <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--color-surface-900)', lineHeight: 1.2 }}>
+                  <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--color-surface-900)', lineHeight: 1.2, wordBreak: 'break-word' }}>
                     {activeName}
                   </h1>
                 </div>
               </div>
               <p 
-                style={{ paddingLeft: '0.75rem', fontSize: '0.98rem', color: 'var(--color-surface-700)', lineHeight: 1.8, maxWidth: '720px', margin: '0 0 1.5rem 0' }}
+                style={{ paddingLeft: '0.75rem', fontSize: '0.98rem', color: 'var(--color-surface-700)', lineHeight: 1.8, maxWidth: '720px', margin: '0 0 1.5rem 0', wordBreak: 'break-word', overflowWrap: 'break-word' }}
                 dangerouslySetInnerHTML={{ __html: parseFormattedText(activeDesc) }}
               />
-              <div style={{ paddingLeft: '0.75rem' }}>
+              <div style={{ paddingLeft: '0.75rem', maxWidth: '100%' }}>
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                   padding: '0.4rem 0.85rem', borderRadius: '8px',
                   background: 'rgba(16, 185, 129, 0.08)', color: '#10b981',
                   border: '1px solid rgba(16, 185, 129, 0.2)',
                   fontSize: '0.75rem', fontWeight: '700',
+                  maxWidth: '100%', boxSizing: 'border-box',
                 }}>
-                  <FaShieldAlt size={12} />
-                  Ficha Médica Validada por: {activeValidated || 'Secretaría de Salud de Tamaulipas'}
+                  <FaShieldAlt size={12} style={{ flexShrink: 0 }} />
+                  <span style={{ whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                    Ficha Médica Validada por: {activeValidated || 'Secretaría de Salud de Tamaulipas'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -427,7 +430,7 @@ export default function DiseaseDetail() {
           {activeTab === 'general' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {activeTreatment ? (
-                <div style={{
+                <div className="disease-card-content" style={{
                   padding: '1.75rem', borderRadius: 'var(--radius-xl)',
                   background: 'white', boxShadow: 'var(--shadow-card)',
                   border: '1px solid var(--color-surface-200)',
@@ -451,7 +454,7 @@ export default function DiseaseDetail() {
             <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
               {/* Symptoms */}
               {symptoms.length > 0 ? (
-                <div style={{
+                <div className="disease-card-content" style={{
                   padding: '1.5rem', borderRadius: 'var(--radius-xl)',
                   background: 'white', boxShadow: 'var(--shadow-card)',
                   border: '1px solid var(--color-surface-200)',
@@ -476,7 +479,7 @@ export default function DiseaseDetail() {
 
               {/* Risk Factors */}
               {riskFactors.length > 0 ? (
-                <div style={{
+                <div className="disease-card-content" style={{
                   padding: '1.5rem', borderRadius: 'var(--radius-xl)',
                   background: 'white', boxShadow: 'var(--shadow-card)',
                   border: '1px solid var(--color-surface-200)',
@@ -682,6 +685,13 @@ export default function DiseaseDetail() {
             width: auto !important;
             justify-content: center !important;
             padding: 0.6rem 1.2rem !important;
+          }
+          .disease-content-area {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .disease-card-content {
+            padding: 1.25rem 1rem !important;
           }
           .disease-detail-wrapper {
             padding: 1.5rem 1rem;

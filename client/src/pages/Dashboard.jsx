@@ -715,6 +715,24 @@ export default function Dashboard() {
 
         {/* ── Action buttons header group ─────────────────────── */}
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }} data-html2canvas-ignore="true">
+          {user?.doctorId && (
+            <Link
+              to="/citas-virtuales"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.6rem 1.25rem', borderRadius: '10px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #0ea5e9, #6366f1)',
+                color: 'white', fontSize: '0.85rem', fontWeight: '600',
+                cursor: 'pointer', boxShadow: 'var(--shadow-sm)',
+                textDecoration: 'none', transition: 'all 0.2s',
+              }}
+            >
+              <FaCalendarAlt style={{ color: 'white' }} />
+              Citas Virtuales
+            </Link>
+          )}
+
           {streaks && (
             <button
               onClick={() => setShowStreakModal(true)}

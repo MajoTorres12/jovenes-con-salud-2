@@ -13,6 +13,7 @@ import FAQ from './pages/FAQ'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import AdvancedAnalytics from './pages/AdvancedAnalytics'
+import VirtualAppointments from './pages/VirtualAppointments'
 import BMICalculator from './pages/BMICalculator'
 import News from './pages/News'
 import NewsDetail from './pages/NewsDetail'
@@ -52,6 +53,11 @@ export default function App() {
             <Route path="/analytics" element={
               <ProtectedRoute>
                 <AdvancedAnalytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/citas-virtuales" element={
+              <ProtectedRoute>
+                <VirtualAppointments />
               </ProtectedRoute>
             } />
             <Route path="/perfil" element={

@@ -11,7 +11,8 @@ import {
   FaCapsules, FaStethoscope, FaEnvelope, FaExclamationTriangle,
   FaWeight, FaTint, FaRunning, FaVial, FaFlask, FaCheckCircle,
   FaFilePrescription, FaUtensils, FaUserFriends, FaChevronRight,
-  FaTrash
+  FaTrash, FaCalendarAlt, FaVideo, FaLink, FaCopy, FaPlus, FaTrashAlt,
+  FaCog, FaClipboardCheck
 } from 'react-icons/fa'
 import { HiMenu } from 'react-icons/hi'
 import {
@@ -55,7 +56,7 @@ const formatTimeTo12h = (timeStr) => {
 export default function DoctorPanel() {
   const { user, logout } = useAuth()
   const { dark } = useTheme()
-  const [activeTab, setActiveTab] = useState('patients') // 'patients' or 'alerts'
+  const [activeTab, setActiveTab] = useState('patients') // 'patients', 'alerts', or 'appointments'
   const [alertsSubTab, setAlertsSubTab] = useState('all') // 'all', 'critical', 'warning'
   const [sidebarOpen, setSidebarOpen] = useState(false)
   
@@ -72,6 +73,30 @@ export default function DoctorPanel() {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [activePatientTab, setActivePatientTab] = useState('main') // 'main' or family member ID
   const [chartMetric, setChartMetric] = useState('glucose')
+
+  // Appointments & Schedule States
+  const [doctorAppointments, setDoctorAppointments] = useState([])
+  const [apptStats, setApptStats] = useState({ pending: 0, acceptedToday: 0, completed: 0 })
+  const [doctorSchedule, setDoctorSchedule] = useState([])
+  const [appointmentDuration, setAppointmentDuration] = useState(30)
+  const [maxDailyAppointments, setMaxDailyAppointments] = useState('')
+  const [showAcceptModal, setShowAcceptModal] = useState(false)
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [showPrescriptionModal, setShowPrescriptionModal] = useState(false)
+  const [selectedAppt, setSelectedAppt] = useState(null)
+  const [copiedApptId, setCopiedApptId] = useState(null)
+
+  // Modal Form States
+  const [meetLink, setMeetLink] = useState('')
+  const [meetCode, setMeetCode] = useState('')
+  const [acceptNotes, setAcceptNotes] = useState('')
+  const [rejectionReason, setRejectionReason] = useState('')
+  const [diagnosis, setDiagnosis] = useState('')
+  const [medications, setMedications] = useState([{ name: '', dose: '', frequency: '', duration: '', route: 'Oral', instructions: '' }])
+  const [generalInstructions, setGeneralInstructions] = useState('')
+  const [validUntil, setValidUntil] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
+  const [configSuccess, setConfigSuccess] = useState('')
 
   // Load summary statistics, patient list and alerts list
   const loadDashboardData = useCallback(async () => {
@@ -91,12 +116,43 @@ export default function DoctorPanel() {
     }
   }, [])
 
+  // Fetch appointments and schedules
+  const fetchAppointmentsAndSchedule = useCallback(async () => {
+    try {
+      const [resAppts, resApptStats, resSchedule] = await Promise.all([
+        api.get('/appointments/doctor'),
+        api.get('/appointments/doctor/stats'),
+        api.get('/appointments/doctor/schedule')
+      ])
+      setDoctorAppointments(resAppts.data.appointments)
+      setApptStats(resApptStats.data)
+      // Group schedule objects by day of week or keep raw list
+      setDoctorSchedule(resSchedule.data.schedules || [])
+    } catch (err) {
+      console.error('Error loading appointments and schedules:', err)
+    }
+  }, [])
+
   useEffect(() => {
     loadDashboardData()
-    // 15 seconds polling to keep metrics fresh
-    const interval = setInterval(loadDashboardData, 15000)
+    if (user?.role === 'doctor') {
+      fetchAppointmentsAndSchedule()
+      // Get doctor config
+      api.get('/auth/me').then(res => {
+        setAppointmentDuration(res.data.user.appointmentDuration || 30)
+        setMaxDailyAppointments(res.data.user.maxDailyAppointments || '')
+      }).catch(err => console.error(err))
+    }
+    
+    const interval = setInterval(() => {
+      loadDashboardData()
+      if (user?.role === 'doctor') {
+        fetchAppointmentsAndSchedule()
+      }
+    }, 15000)
+
     return () => clearInterval(interval)
-  }, [loadDashboardData])
+  }, [loadDashboardData, fetchAppointmentsAndSchedule, user])
 
   // Fetch individual patient records details
   const viewPatientDetails = async (patientId) => {
@@ -299,6 +355,151 @@ export default function DoctorPanel() {
     )
   }
 
+  // ── Appointment Action Handlers ──
+  const handleSaveConfig = async (e) => {
+    e.preventDefault()
+    setActionLoading(true)
+    setConfigSuccess('')
+    try {
+      await api.put('/appointments/doctor/config', {
+        appointmentDuration: Number(appointmentDuration),
+        maxDailyAppointments: maxDailyAppointments === '' ? null : Number(maxDailyAppointments)
+      })
+      await api.put('/appointments/doctor/schedule', {
+        schedules: doctorSchedule
+      })
+      setConfigSuccess('Configuración y horarios guardados correctamente.')
+      await fetchAppointmentsAndSchedule()
+      setTimeout(() => setConfigSuccess(''), 4000)
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al guardar la configuración.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleAddBlock = (dayIdx) => {
+    const newBlock = {
+      dayOfWeek: dayIdx,
+      startTime: '09:00',
+      endTime: '17:00',
+      isActive: true
+    }
+    setDoctorSchedule(prev => [...prev, newBlock])
+  }
+
+  const handleRemoveBlock = (indexToRemove) => {
+    setDoctorSchedule(prev => prev.filter((_, idx) => idx !== indexToRemove))
+  }
+
+  const handleBlockChange = (index, field, value) => {
+    setDoctorSchedule(prev => prev.map((s, idx) => {
+      if (idx === index) {
+        return { ...s, [field]: value }
+      }
+      return s
+    }))
+  }
+
+  const handleAcceptSubmit = async (e) => {
+    e.preventDefault()
+    if (!meetLink || !meetCode) return alert('Debes proporcionar el enlace y código de Google Meet.')
+    setActionLoading(true)
+    try {
+      await api.put(`/appointments/${selectedAppt.id}/accept`, { meetLink, meetCode, notes: acceptNotes })
+      setShowAcceptModal(false)
+      setMeetLink('')
+      setMeetCode('')
+      setAcceptNotes('')
+      setSelectedAppt(null)
+      await fetchAppointmentsAndSchedule()
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al confirmar la cita.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleRejectSubmit = async (e) => {
+    e.preventDefault()
+    if (!rejectionReason) return alert('Debes indicar un motivo de rechazo.')
+    setActionLoading(true)
+    try {
+      await api.put(`/appointments/${selectedAppt.id}/reject`, { rejectionReason })
+      setShowRejectModal(false)
+      setRejectionReason('')
+      setSelectedAppt(null)
+      await fetchAppointmentsAndSchedule()
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al rechazar la cita.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleCompleteAppointment = async (apptId) => {
+    if (!window.confirm('¿Estás seguro de que deseas marcar esta cita como completada?')) return
+    try {
+      await api.put(`/appointments/${apptId}/complete`)
+      await fetchAppointmentsAndSchedule()
+    } catch (err) {
+      alert('Error al marcar la cita como completada.')
+    }
+  }
+
+  const handleMedicationChange = (index, field, value) => {
+    setMedications(prev => prev.map((med, idx) => {
+      if (idx === index) return { ...med, [field]: value }
+      return med
+    }))
+  }
+
+  const handleAddMedication = () => {
+    setMedications(prev => [...prev, { name: '', dose: '', frequency: '', duration: '', route: 'Oral', instructions: '' }])
+  }
+
+  const handleRemoveMedication = (index) => {
+    if (medications.length === 1) return
+    setMedications(prev => prev.filter((_, idx) => idx !== index))
+  }
+
+  const handlePrescriptionSubmit = async (e) => {
+    e.preventDefault()
+    if (!diagnosis) return alert('Debes ingresar el diagnóstico.')
+    
+    // Validate medications list
+    const invalidMeds = medications.some(m => !m.name || !m.dose || !m.frequency || !m.duration)
+    if (invalidMeds) return alert('Todos los campos de los medicamentos agregados son obligatorios.')
+
+    setActionLoading(true)
+    try {
+      await api.post(`/appointments/${selectedAppt.id}/prescription`, {
+        diagnosis,
+        medications,
+        generalInstructions,
+        validUntil: validUntil || undefined
+      })
+      setShowPrescriptionModal(false)
+      setDiagnosis('')
+      setMedications([{ name: '', dose: '', frequency: '', duration: '', route: 'Oral', instructions: '' }])
+      setGeneralInstructions('')
+      setValidUntil('')
+      setSelectedAppt(null)
+      await fetchAppointmentsAndSchedule()
+      alert('¡Receta médica emitida y registrada con éxito!')
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al emitir la receta médica.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleCopyCode = (code, id) => {
+    navigator.clipboard.writeText(code)
+    setCopiedApptId(id)
+    setTimeout(() => setCopiedApptId(null), 2000)
+  }
+
   return (
     <div className="doctor-layout" style={{ display: 'flex', minHeight: '100vh', background: dark ? '#0c0b0f' : '#f1ede6', fontFamily: 'var(--font-sans)' }}>
       {/* Sidebar overlay backdrop for mobile */}
@@ -379,6 +580,34 @@ export default function DoctorPanel() {
                 padding: '1px 6px', borderRadius: '10px'
               }}>
                 {pendingCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => { setSelectedPatientId(null); setActiveTab('appointments'); setSidebarOpen(false); }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '0.7rem 0.875rem', borderRadius: '10px',
+              border: 'none', cursor: 'pointer', width: '100%',
+              fontSize: '0.88rem', fontWeight: '600',
+              background: !selectedPatientId && activeTab === 'appointments' ? '#0369a1' : 'transparent',
+              color: !selectedPatientId && activeTab === 'appointments' ? '#fff' : 'rgba(255,255,255,0.6)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => { if (selectedPatientId || activeTab !== 'appointments') e.currentTarget.style.background = 'rgba(3,105,161,0.15)' }}
+            onMouseLeave={e => { if (selectedPatientId || activeTab !== 'appointments') e.currentTarget.style.background = 'transparent' }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <FaCalendarAlt size={14} />
+              Citas Virtuales
+            </span>
+            {apptStats.pending > 0 && (
+              <span style={{
+                background: '#e11d48', color: 'white', fontSize: '0.68rem', fontWeight: '800',
+                padding: '1px 6px', borderRadius: '10px'
+              }}>
+                {apptStats.pending}
               </span>
             )}
           </button>
@@ -1003,6 +1232,26 @@ export default function DoctorPanel() {
                     </span>
                   )}
                 </button>
+                <button
+                  onClick={() => setActiveTab('appointments')}
+                  style={{
+                    padding: '0.75rem 1.5rem', border: 'none', background: 'none', cursor: 'pointer',
+                    fontSize: '0.9rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    color: activeTab === 'appointments' ? (dark ? '#38bdf8' : '#0369a1') : (dark ? '#7e7a8c' : '#a89580'),
+                    borderBottom: activeTab === 'appointments' ? `3px solid ${dark ? '#38bdf8' : '#0369a1'}` : '3px solid transparent',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Citas Virtuales
+                  {apptStats.pending > 0 && (
+                    <span style={{
+                      background: '#e11d48', color: '#fff', fontSize: '0.65rem', fontWeight: '800',
+                      padding: '1px 5px', borderRadius: '10px'
+                    }}>
+                      {apptStats.pending}
+                    </span>
+                  )}
+                </button>
               </div>
 
               {/* Tab Content */}
@@ -1115,7 +1364,7 @@ export default function DoctorPanel() {
 
                 </div>
 
-              ) : (
+              ) : activeTab === 'alerts' ? (
                 
                 /* ── Alerts Tab Content ─────────────────────── */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1246,15 +1495,602 @@ export default function DoctorPanel() {
                   )}
                 </div>
 
-              )}
+              ) : (
+                 /* ── Appointments (Citas Virtuales) Tab Content ── */
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                   
+                   {/* Dashboard stats specific to appointments */}
+                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+                     <div style={{ ...cardStyle(dark), padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#e11d4815', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e11d48', fontSize: '1.25rem' }}>
+                         <FaCalendarAlt />
+                       </div>
+                       <div>
+                         <span style={{ fontSize: '0.68rem', fontWeight: '800', letterSpacing: '0.08em', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580' }}>
+                           Solicitudes Pendientes
+                         </span>
+                         <div style={{ fontSize: '1.75rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', margin: '2px 0 0' }}>
+                           {apptStats.pending}
+                         </div>
+                       </div>
+                     </div>
 
-            </div>
-          )}
+                     <div style={{ ...cardStyle(dark), padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#10b98115', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', fontSize: '1.25rem' }}>
+                         <FaVideo />
+                       </div>
+                       <div>
+                         <span style={{ fontSize: '0.68rem', fontWeight: '800', letterSpacing: '0.08em', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580' }}>
+                           Confirmadas para Hoy
+                         </span>
+                         <div style={{ fontSize: '1.75rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', margin: '2px 0 0' }}>
+                           {apptStats.acceptedToday}
+                         </div>
+                       </div>
+                     </div>
 
-        </div>
+                     <div style={{ ...cardStyle(dark), padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                       <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#0284c715', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0284c7', fontSize: '1.25rem' }}>
+                         <FaCheckCircle />
+                       </div>
+                       <div>
+                         <span style={{ fontSize: '0.68rem', fontWeight: '800', letterSpacing: '0.08em', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580' }}>
+                           Total Completadas
+                         </span>
+                         <div style={{ fontSize: '1.75rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', margin: '2px 0 0' }}>
+                           {apptStats.completed}
+                         </div>
+                       </div>
+                     </div>
+                   </div>
 
-      </main>
+                   {/* Grid Layout: Left column has config & schedules, right column has appointments list */}
+                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'flex-start' }}>
+                     
+                     {/* LEFT COLUMN: Agenda Configuration & Recurrent Schedule */}
+                     <div style={{ ...cardStyle(dark), padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: `1px solid ${dark ? '#1e1c25' : '#e8ddd0'}`, paddingBottom: '0.75rem' }}>
+                         <FaCog style={{ color: dark ? '#38bdf8' : '#0369a1' }} />
+                         <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715' }}>Configuración de Agenda</h3>
+                       </div>
 
-    </div>
-  )
-}
+                       {configSuccess && (
+                         <div style={{ padding: '0.75rem', borderRadius: '8px', background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#10b981', fontSize: '0.85rem', fontWeight: '600' }}>
+                           {configSuccess}
+                         </div>
+                       )}
+
+                       <form onSubmit={handleSaveConfig} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                         {/* Duration settings */}
+                         <div>
+                           <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>
+                             Duración por cita (Minutos):
+                           </label>
+                           <select
+                             value={appointmentDuration}
+                             onChange={e => setAppointmentDuration(Number(e.target.value))}
+                             style={{
+                               width: '100%', padding: '0.55rem', borderRadius: '8px',
+                               background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715',
+                               border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, fontSize: '0.9rem', fontWeight: '600'
+                             }}
+                           >
+                             <option value={15}>15 minutos</option>
+                             <option value={20}>20 minutos</option>
+                             <option value={30}>30 minutos</option>
+                             <option value={45}>45 minutos</option>
+                             <option value={60}>60 minutos</option>
+                           </select>
+                         </div>
+
+                         {/* Daily limit */}
+                         <div>
+                           <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>
+                             Límite de citas por día:
+                           </label>
+                           <input
+                             type="number"
+                             placeholder="Sin límite"
+                             value={maxDailyAppointments}
+                             onChange={e => setMaxDailyAppointments(e.target.value === '' ? '' : Number(e.target.value))}
+                             style={{
+                               width: '100%', padding: '0.55rem', borderRadius: '8px',
+                               background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715',
+                               border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, fontSize: '0.9rem'
+                             }}
+                           />
+                         </div>
+
+                         {/* Schedule list by Day of week */}
+                         <div>
+                           <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.5rem' }}>
+                             Horarios de atención semanal:
+                           </label>
+                           
+                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                             {['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'].map((dayName, dayIdx) => {
+                               const daySchedules = doctorSchedule.filter(s => s.dayOfWeek === dayIdx)
+                               
+                               return (
+                                 <div key={dayIdx} style={{ padding: '0.75rem', borderRadius: '8px', background: dark ? '#1e1c25' : '#faf8f5', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                     <strong style={{ fontSize: '0.85rem', color: dark ? '#fff' : '#1a1715' }}>{dayName}</strong>
+                                     <button
+                                       type="button"
+                                       onClick={() => handleAddBlock(dayIdx)}
+                                       style={{
+                                         display: 'inline-flex', alignItems: 'center', gap: '0.2rem',
+                                         background: 'transparent', border: 'none', color: '#10b981',
+                                         fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer'
+                                       }}
+                                     >
+                                       <FaPlus size={10} /> Añadir Bloque
+                                     </button>
+                                   </div>
+
+                                   {daySchedules.length === 0 ? (
+                                     <span style={{ fontSize: '0.75rem', color: dark ? '#7e7a8c' : '#a89580', fontStyle: 'italic' }}>Sin horario de atención</span>
+                                   ) : (
+                                     daySchedules.map((s) => {
+                                       // Find index in master list
+                                       const masterIndex = doctorSchedule.findIndex(item => item === s)
+                                       return (
+                                         <div key={masterIndex} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                           <input
+                                             type="time"
+                                             value={s.startTime}
+                                             onChange={e => handleBlockChange(masterIndex, 'startTime', e.target.value)}
+                                             style={{
+                                               padding: '0.25rem', borderRadius: '4px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`,
+                                               background: dark ? '#0c0b0f' : '#fff', color: dark ? '#fff' : '#1a1715', fontSize: '0.8rem'
+                                             }}
+                                           />
+                                           <span style={{ fontSize: '0.75rem', color: dark ? '#7e7a8c' : '#a89580' }}>a</span>
+                                           <input
+                                             type="time"
+                                             value={s.endTime}
+                                             onChange={e => handleBlockChange(masterIndex, 'endTime', e.target.value)}
+                                             style={{
+                                               padding: '0.25rem', borderRadius: '4px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`,
+                                               background: dark ? '#0c0b0f' : '#fff', color: dark ? '#fff' : '#1a1715', fontSize: '0.8rem'
+                                             }}
+                                           />
+                                           <button
+                                             type="button"
+                                             onClick={() => handleRemoveBlock(masterIndex)}
+                                             style={{
+                                               border: 'none', background: 'transparent', color: '#ef4444',
+                                               cursor: 'pointer', display: 'flex', alignItems: 'center'
+                                             }}
+                                             title="Eliminar bloque"
+                                           >
+                                             <FaTrashAlt size={12} />
+                                           </button>
+                                         </div>
+                                       )
+                                     })
+                                   )}
+                                 </div>
+                               )
+                             })}
+                           </div>
+                         </div>
+
+                         <button
+                           type="submit"
+                           disabled={actionLoading}
+                           style={{
+                             padding: '0.7rem', borderRadius: '8px', border: 'none',
+                             background: 'var(--color-primary-500)', color: 'white',
+                             fontWeight: '700', cursor: actionLoading ? 'not-allowed' : 'pointer',
+                             fontSize: '0.88rem', boxShadow: 'var(--shadow-sm)'
+                           }}
+                         >
+                           {actionLoading ? 'Guardando...' : 'Guardar Configuración'}
+                         </button>
+                       </form>
+                     </div>
+
+                      {/* RIGHT COLUMN: Appointments lists */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {/* Sub-sección: Solicitudes Pendientes */}
+                        <div style={{ ...cardStyle(dark), padding: '1.5rem' }}>
+                          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', borderBottom: `1px solid ${dark ? '#1e1c25' : '#e8ddd0'}`, paddingBottom: '0.5rem' }}>
+                            Solicitudes Pendientes ({doctorAppointments.filter(a => a.status === 'pending').length})
+                          </h3>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {doctorAppointments.filter(a => a.status === 'pending').length === 0 ? (
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: dark ? '#7e7a8c' : '#a89580', fontStyle: 'italic', textAlign: 'center', padding: '1rem 0' }}>No hay solicitudes de citas pendientes.</p>
+                            ) : (
+                              doctorAppointments.filter(a => a.status === 'pending').map(appt => (
+                                <div key={appt.id} style={{ padding: '1rem', borderRadius: '10px', background: dark ? '#1e1c25' : '#faf8f5', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <strong style={{ fontSize: '0.9rem', color: dark ? '#fff' : '#1a1715' }}>{appt.patient?.name}</strong>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-primary-500)', fontWeight: '700' }}>
+                                      {appt.appointmentDate} @ {appt.appointmentTime}
+                                    </span>
+                                  </div>
+                                  <div style={{ fontSize: '0.82rem', color: dark ? '#acb4c4' : '#5c5248' }}>
+                                    <strong>Motivo:</strong> {appt.reason}
+                                  </div>
+                                  {appt.symptoms && (
+                                    <div style={{ fontSize: '0.82rem', color: dark ? '#acb4c4' : '#5c5248' }}>
+                                      <strong>Síntomas:</strong> {appt.symptoms}
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                    <button
+                                      onClick={() => { setSelectedAppt(appt); setShowAcceptModal(true) }}
+                                      style={{
+                                        flex: 1, padding: '0.45rem', borderRadius: '6px', border: 'none',
+                                        background: '#10b981', color: 'white', fontSize: '0.75rem', fontWeight: '700',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Aceptar
+                                    </button>
+                                    <button
+                                      onClick={() => { setSelectedAppt(appt); setShowRejectModal(true) }}
+                                      style={{
+                                        flex: 1, padding: '0.45rem', borderRadius: '6px', border: '1px solid #ef4444',
+                                        background: 'transparent', color: '#ef4444', fontSize: '0.75rem', fontWeight: '700',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Rechazar
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Sub-sección: Citas Confirmadas (Aceptadas) */}
+                        <div style={{ ...cardStyle(dark), padding: '1.5rem' }}>
+                          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', borderBottom: `1px solid ${dark ? '#1e1c25' : '#e8ddd0'}`, paddingBottom: '0.5rem' }}>
+                            Citas Confirmadas / Próximas
+                          </h3>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {doctorAppointments.filter(a => a.status === 'accepted').length === 0 ? (
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: dark ? '#7e7a8c' : '#a89580', fontStyle: 'italic', textAlign: 'center', padding: '1rem 0' }}>No hay próximas citas confirmadas.</p>
+                            ) : (
+                              doctorAppointments.filter(a => a.status === 'accepted').map(appt => (
+                                <div key={appt.id} style={{ padding: '1rem', borderRadius: '10px', background: dark ? '#1e1c25' : '#faf8f5', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <strong style={{ fontSize: '0.9rem', color: dark ? '#fff' : '#1a1715' }}>{appt.patient?.name}</strong>
+                                    <span style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: '700' }}>
+                                      {appt.appointmentDate} a las {appt.appointmentTime} hrs
+                                    </span>
+                                  </div>
+                                  <div style={{ fontSize: '0.82rem', color: dark ? '#acb4c4' : '#5c5248' }}>
+                                    <strong>Google Meet:</strong> <code>{appt.meetCode}</code>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                    <button
+                                      onClick={() => handleCompleteAppointment(appt.id)}
+                                      style={{
+                                        flex: 1, padding: '0.45rem', borderRadius: '6px', border: 'none',
+                                        background: '#0284c7', color: 'white', fontSize: '0.75rem', fontWeight: '700',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Completar Cita
+                                    </button>
+                                    <button
+                                      onClick={() => { setSelectedAppt(appt); setShowPrescriptionModal(true) }}
+                                      style={{
+                                        flex: 1, padding: '0.45rem', borderRadius: '6px', border: 'none',
+                                        background: 'var(--color-primary-500)', color: 'white', fontSize: '0.75rem', fontWeight: '700',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Generar Receta
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Sub-sección: Historial de Citas */}
+                        <div style={{ ...cardStyle(dark), padding: '1.5rem' }}>
+                          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', borderBottom: `1px solid ${dark ? '#1e1c25' : '#e8ddd0'}`, paddingBottom: '0.5rem' }}>
+                            Historial de Citas
+                          </h3>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.50rem', maxHeight: '300px', overflowY: 'auto' }}>
+                            {doctorAppointments.filter(a => ['completed', 'rejected', 'cancelled'].includes(a.status)).length === 0 ? (
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: dark ? '#7e7a8c' : '#a89580', fontStyle: 'italic', textAlign: 'center', padding: '1rem 0' }}>El historial de citas está vacío.</p>
+                            ) : (
+                              doctorAppointments.filter(a => ['completed', 'rejected', 'cancelled'].includes(a.status)).map(appt => {
+                                let statusLabel = 'Cancelada', statusColor = '#64748b'
+                                if (appt.status === 'completed') { statusLabel = 'Completada'; statusColor = '#10b981' }
+                                if (appt.status === 'rejected') { statusLabel = 'Rechazada'; statusColor = '#ef4444' }
+                                
+                                return (
+                                  <div key={appt.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: `1px solid ${dark ? '#1e1c25' : '#faf8f5'}` }}>
+                                    <div>
+                                      <div style={{ fontSize: '0.85rem', fontWeight: '700', color: dark ? '#fff' : '#1a1715' }}>{appt.patient?.name}</div>
+                                      <div style={{ fontSize: '0.72rem', color: dark ? '#7e7a8c' : '#a89580' }}>
+                                        {appt.appointmentDate} | {appt.appointmentTime} hrs
+                                      </div>
+                                    </div>
+                                    <span style={{ fontSize: '0.72rem', fontWeight: '800', color: statusColor }}>
+                                      {statusLabel}
+                                    </span>
+                                  </div>
+                                )
+                              })
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+                )}
+
+              </div>
+            )}
+
+          </div>
+        </main>
+
+        {/* ── MODALS SECTION ── */}
+
+        {/* 1. Accept Appointment Modal */}
+        {showAcceptModal && selectedAppt && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem' }}>
+            <form onSubmit={handleAcceptSubmit} className="glass animate-fade-in" style={{ padding: '2rem', borderRadius: '16px', maxWidth: '450px', width: '100%', display: 'flex', flexDirection: 'column', gap: '1.25rem', border: '1px solid var(--color-surface-200)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715' }}>Confirmar Cita Virtual</h3>
+                <button type="button" onClick={() => { setShowAcceptModal(false); setSelectedAppt(null) }} style={{ background: 'transparent', border: 'none', color: 'var(--color-surface-400)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+              </div>
+              
+              <p style={{ margin: 0, fontSize: '0.88rem', color: dark ? '#b5bac5' : '#403a34' }}>
+                Confirmarás la cita con <strong>{selectedAppt.patient?.name}</strong> para el día <strong>{selectedAppt.appointmentDate}</strong> a las <strong>{selectedAppt.appointmentTime} hrs</strong>.
+              </p>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>Enlace de Google Meet: *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="https://meet.google.com/abc-defg-hij"
+                  value={meetLink}
+                  onChange={e => setMeetLink(e.target.value)}
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>Código de Meet: *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="abc-defg-hij"
+                  value={meetCode}
+                  onChange={e => setMeetCode(e.target.value)}
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>Notas para el paciente (opcional):</label>
+                <textarea
+                  placeholder="Indicaciones adicionales de acceso, etc..."
+                  value={acceptNotes}
+                  onChange={e => setAcceptNotes(e.target.value)}
+                  style={{ width: '100%', minHeight: '60px', padding: '0.55rem', borderRadius: '6px', border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="submit" disabled={actionLoading} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: 'none', background: '#10b981', color: 'white', fontWeight: '700', cursor: 'pointer' }}>
+                  {actionLoading ? 'Guardando...' : 'Confirmar Cita'}
+                </button>
+                <button type="button" onClick={() => { setShowAcceptModal(false); setSelectedAppt(null) }} style={{ padding: '0.65rem 1.25rem', borderRadius: '8px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, background: 'transparent', color: dark ? '#fff' : '#1a1715', fontWeight: '600', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* 2. Reject Appointment Modal */}
+        {showRejectModal && selectedAppt && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem' }}>
+            <form onSubmit={handleRejectSubmit} className="glass animate-fade-in" style={{ padding: '2rem', borderRadius: '16px', maxWidth: '420px', width: '100%', display: 'flex', flexDirection: 'column', gap: '1.25rem', border: '1px solid var(--color-surface-200)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715' }}>Rechazar Solicitud de Cita</h3>
+                <button type="button" onClick={() => { setShowRejectModal(false); setSelectedAppt(null) }} style={{ background: 'transparent', border: 'none', color: 'var(--color-surface-400)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>Escribe el Motivo del Rechazo: *</label>
+                <textarea
+                  required
+                  placeholder="Explica al paciente por qué no es posible agendar la cita en este horario..."
+                  value={rejectionReason}
+                  onChange={e => setRejectionReason(e.target.value)}
+                  style={{ width: '100%', minHeight: '100px', padding: '0.55rem', borderRadius: '6px', border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="submit" disabled={actionLoading} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: '700', cursor: 'pointer' }}>
+                  {actionLoading ? 'Rechazando...' : 'Confirmar Rechazo'}
+                </button>
+                <button type="button" onClick={() => { setShowRejectModal(false); setSelectedAppt(null) }} style={{ padding: '0.65rem 1.25rem', borderRadius: '8px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, background: 'transparent', color: dark ? '#fff' : '#1a1715', fontWeight: '600', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* 3. Emit Prescription Modal */}
+        {showPrescriptionModal && selectedAppt && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem' }}>
+            <form onSubmit={handlePrescriptionSubmit} className="glass animate-fade-in no-scrollbar" style={{ padding: '2rem', borderRadius: '16px', maxWidth: '650px', width: '100%', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', border: '1px solid var(--color-surface-200)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, paddingBottom: '0.5rem' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715' }}>Emitir Receta Médica</h3>
+                  <span style={{ fontSize: '0.8rem', color: dark ? '#7e7a8c' : '#a89580' }}>Paciente: {selectedAppt.patient?.name}</span>
+                </div>
+                <button type="button" onClick={() => { setShowPrescriptionModal(false); setSelectedAppt(null) }} style={{ background: 'transparent', border: 'none', color: 'var(--color-surface-400)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+              </div>
+
+              {/* Diagnóstico */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>Diagnóstico Clínico: *</label>
+                <textarea
+                  required
+                  placeholder="Describe el diagnóstico general del paciente..."
+                  value={diagnosis}
+                  onChange={e => setDiagnosis(e.target.value)}
+                  style={{ width: '100%', minHeight: '60px', padding: '0.55rem', borderRadius: '6px', border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Medicamentos Lista */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580' }}>Medicamentos: *</label>
+                  <button
+                    type="button"
+                    onClick={handleAddMedication}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.2rem',
+                      background: 'transparent', border: 'none', color: '#38bdf8',
+                      fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer'
+                    }}
+                  >
+                    <FaPlus size={10} /> Añadir Medicamento
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {medications.map((med, idx) => (
+                    <div key={idx} style={{ padding: '0.75rem', borderRadius: '8px', background: dark ? '#1e1c25' : '#faf8f5', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.50rem', position: 'relative' }}>
+                      {medications.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMedication(idx)}
+                          style={{ position: 'absolute', top: '0.35rem', right: '0.35rem', border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}
+                          title="Eliminar medicamento"
+                        >
+                          ✕
+                        </button>
+                      )}
+                      <div style={{ gridColumn: 'span 2', paddingRight: '1rem' }}>
+                        <input
+                          required
+                          type="text"
+                          placeholder="Nombre comercial o genérico del medicamento"
+                          value={med.name}
+                          onChange={e => handleMedicationChange(idx, 'name', e.target.value)}
+                          style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#0c0b0f' : '#fff', color: dark ? '#fff' : '#1a1715', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                      <div>
+                        <input
+                          required
+                          type="text"
+                          placeholder="Dosis (ej: 500 mg)"
+                          value={med.dose}
+                          onChange={e => handleMedicationChange(idx, 'dose', e.target.value)}
+                          style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#0c0b0f' : '#fff', color: dark ? '#fff' : '#1a1715', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                      <div>
+                        <input
+                          required
+                          type="text"
+                          placeholder="Frecuencia (ej: cada 8 hrs)"
+                          value={med.frequency}
+                          onChange={e => handleMedicationChange(idx, 'frequency', e.target.value)}
+                          style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#0c0b0f' : '#fff', color: dark ? '#fff' : '#1a1715', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                      <div>
+                        <input
+                          required
+                          type="text"
+                          placeholder="Duración (ej: 7 días)"
+                          value={med.duration}
+                          onChange={e => handleMedicationChange(idx, 'duration', e.target.value)}
+                          style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#0c0b0f' : '#fff', color: dark ? '#fff' : '#1a1715', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                      <div>
+                        <select
+                          value={med.route}
+                          onChange={e => handleMedicationChange(idx, 'route', e.target.value)}
+                          style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#0c0b0f' : '#fff', color: dark ? '#fff' : '#1a1715', fontSize: '0.85rem' }}
+                        >
+                          <option value="Oral">Vía Oral</option>
+                          <option value="Cutánea">Vía Cutánea</option>
+                          <option value="Sublingual">Vía Sublingual</option>
+                          <option value="Inyectable">Vía Inyectable</option>
+                          <option value="Inhalada">Vía Inhalada</option>
+                          <option value="Oftálmica">Vía Oftálmica</option>
+                          <option value="Ótica">Vía Ótica</option>
+                        </select>
+                      </div>
+                      <div style={{ gridColumn: 'span 2' }}>
+                        <input
+                          type="text"
+                          placeholder="Instrucciones adicionales (ej: después de los alimentos)"
+                          value={med.instructions}
+                          onChange={e => handleMedicationChange(idx, 'instructions', e.target.value)}
+                          style={{ width: '100%', padding: '0.35rem', borderRadius: '4px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#0c0b0f' : '#fff', color: dark ? '#fff' : '#1a1715', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Indicaciones Generales */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>Indicaciones Generales:</label>
+                <textarea
+                  placeholder="Dieta, reposo, cuidados o recomendaciones no farmacológicas..."
+                  value={generalInstructions}
+                  onChange={e => setGeneralInstructions(e.target.value)}
+                  style={{ width: '100%', minHeight: '50px', padding: '0.55rem', borderRadius: '6px', border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Fecha Vigencia */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>Vigencia de Receta (Opcional):</label>
+                <input
+                  type="date"
+                  value={validUntil}
+                  onChange={e => setValidUntil(e.target.value)}
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="submit" disabled={actionLoading} style={{ flex: 1, padding: '0.7rem', borderRadius: '8px', border: 'none', background: 'var(--color-primary-500)', color: 'white', fontWeight: '700', cursor: 'pointer' }}>
+                  {actionLoading ? 'Registrando...' : 'Emitir Receta Certificada'}
+                </button>
+                <button type="button" onClick={() => { setShowPrescriptionModal(false); setSelectedAppt(null) }} style={{ padding: '0.7rem 1.25rem', borderRadius: '8px', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, background: 'transparent', color: dark ? '#fff' : '#1a1715', fontWeight: '600', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+      </div>
+    )
+  }

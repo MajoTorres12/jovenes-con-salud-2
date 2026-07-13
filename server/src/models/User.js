@@ -81,6 +81,27 @@ const User = sequelize.define('User', {
     allowNull: true,
     field: 'wearable_metrics',
   },
+  professionalLicense: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'professional_license',
+  },
+  specialty: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  appointmentDuration: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 30,
+    field: 'appointment_duration',
+  },
+  maxDailyAppointments: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: null,
+    field: 'max_daily_appointments',
+  },
 }, {
   tableName: 'users',
   timestamps: true,

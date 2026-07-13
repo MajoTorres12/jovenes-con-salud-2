@@ -17,6 +17,9 @@ import './src/models/ContactSettings.js'
 import './src/models/Location.js'
 import './src/models/ChatMessage.js'
 import './src/models/MedicalAlert.js'
+import './src/models/DoctorSchedule.js'
+import './src/models/Appointment.js'
+import './src/models/Prescription.js'
 
 
 

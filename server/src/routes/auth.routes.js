@@ -55,6 +55,7 @@ router.post('/register', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        doctorId: user.doctorId,
       },
     })
   } catch (error) {
@@ -100,6 +101,7 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        doctorId: user.doctorId,
       },
     })
   } catch (error) {
@@ -120,7 +122,7 @@ router.get('/me', async (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET)
 
     const user = await User.findByPk(decoded.id, {
-      attributes: ['id', 'name', 'email', 'role', 'birthDate', 'avatar', 'createdAt'],
+      attributes: ['id', 'name', 'email', 'role', 'birthDate', 'avatar', 'createdAt', 'doctorId'],
     })
 
     if (!user) {

@@ -26,6 +26,7 @@ import chatRoutes from './routes/chat.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 import analyticsRoutes from './routes/analytics.routes.js'
 import wearableRoutes from './routes/wearable.routes.js'
+import appointmentRoutes from './routes/appointment.routes.js'
 import ContactSettings from './models/ContactSettings.js'
 
 const app = express()
@@ -110,6 +111,7 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/doctor', doctorRoutes)
 app.use('/api/chat', chatRoutes)
 app.use('/api/wearable', wearableRoutes)
+app.use('/api/appointments', appointmentRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/analytics', analyticsRoutes)
 

@@ -102,6 +102,10 @@ const User = sequelize.define('User', {
     defaultValue: null,
     field: 'max_daily_appointments',
   },
+  signature: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
 }, {
   tableName: 'users',
   timestamps: true,

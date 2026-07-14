@@ -487,7 +487,7 @@ router.post('/:id/prescription', authenticate, requireDoctor, async (req, res, n
   try {
     const doctorId = req.user.id
     const appointmentId = req.params.id
-    const { diagnosis, medications, generalInstructions, validUntil } = req.body
+    const { diagnosis, medications, generalInstructions, validUntil, doctorSignature } = req.body
 
     if (!diagnosis || !medications || !Array.isArray(medications) || medications.length === 0) {
       return res.status(400).json({ error: 'Diagnóstico y al menos un medicamento son requeridos.' })
@@ -535,6 +535,9 @@ router.post('/:id/prescription', authenticate, requireDoctor, async (req, res, n
     // Calculate validUntil: default to 30 days from now
     const defaultValidUntil = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
+    // Determine signature to use: custom uploaded in this prescription or persistent profile signature
+    const finalSignature = doctorSignature || doctor.signature || null
+
     // Create prescription
     const prescription = await Prescription.create({
       appointmentId,
@@ -547,6 +550,7 @@ router.post('/:id/prescription', authenticate, requireDoctor, async (req, res, n
       doctorName: doctor.name,
       doctorLicense: doctor.professionalLicense || 'C.P. PENDIENTE',
       doctorSpecialty: doctor.specialty || 'Médico General',
+      doctorSignature: finalSignature,
       validUntil: validUntil || defaultValidUntil,
     })
 
@@ -627,7 +631,7 @@ router.put('/doctor/schedule', authenticate, requireDoctor, async (req, res, nex
 router.put('/doctor/config', authenticate, requireDoctor, async (req, res, next) => {
   try {
     const doctorId = req.user.id
-    const { appointmentDuration, maxDailyAppointments } = req.body
+    const { appointmentDuration, maxDailyAppointments, professionalLicense, specialty, signature } = req.body
 
     const doctor = await User.findByPk(doctorId)
 
@@ -642,6 +646,18 @@ router.put('/doctor/config', authenticate, requireDoctor, async (req, res, next)
       doctor.maxDailyAppointments = maxDailyAppointments === null ? null : Number(maxDailyAppointments)
     }
 
+    if (professionalLicense !== undefined) {
+      doctor.professionalLicense = professionalLicense
+    }
+
+    if (specialty !== undefined) {
+      doctor.specialty = specialty
+    }
+
+    if (signature !== undefined) {
+      doctor.signature = signature
+    }
+
     await doctor.save()
 
     res.json({
@@ -649,6 +665,9 @@ router.put('/doctor/config', authenticate, requireDoctor, async (req, res, next)
       config: {
         appointmentDuration: doctor.appointmentDuration,
         maxDailyAppointments: doctor.maxDailyAppointments,
+        professionalLicense: doctor.professionalLicense,
+        specialty: doctor.specialty,
+        signature: doctor.signature
       },
     })
   } catch (err) {

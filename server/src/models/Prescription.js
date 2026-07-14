@@ -70,6 +70,11 @@ const Prescription = sequelize.define('Prescription', {
     allowNull: true,
     field: 'doctor_specialty',
   },
+  doctorSignature: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'doctor_signature',
+  },
   issuedAt: {
     type: DataTypes.DATE,
     allowNull: false,

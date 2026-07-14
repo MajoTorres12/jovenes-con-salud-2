@@ -225,6 +225,16 @@ export async function generatePrescriptionPdf(prescription, patientName, patient
     // ── Signature and Verification footer ──
     const footerStartY = pageH - 45
     
+    // Draw signature image if present
+    if (prescription.doctorSignature) {
+      try {
+        // Signature image centered horizontally (width: 40mm, height: 14mm)
+        pdf.addImage(prescription.doctorSignature, 'PNG', pageW / 2 - 20, footerStartY - 15, 40, 14)
+      } catch (err) {
+        console.error('Error adding signature image to PDF:', err)
+      }
+    }
+
     // Draw signature line and text
     pdf.setDrawColor(180, 160, 140)
     pdf.setLineWidth(0.5)

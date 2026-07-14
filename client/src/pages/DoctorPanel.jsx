@@ -98,6 +98,13 @@ export default function DoctorPanel() {
   const [actionLoading, setActionLoading] = useState(false)
   const [configSuccess, setConfigSuccess] = useState('')
 
+  // Digital Signature States
+  const [professionalLicense, setProfessionalLicense] = useState('')
+  const [specialty, setSpecialty] = useState('')
+  const [savedSignature, setSavedSignature] = useState('')
+  const [useProfileSignature, setUseProfileSignature] = useState(true)
+  const [tempSignature, setTempSignature] = useState('')
+
   // Load summary statistics, patient list and alerts list
   const loadDashboardData = useCallback(async () => {
     try {
@@ -141,6 +148,9 @@ export default function DoctorPanel() {
       api.get('/auth/me').then(res => {
         setAppointmentDuration(res.data.user.appointmentDuration || 30)
         setMaxDailyAppointments(res.data.user.maxDailyAppointments || '')
+        setProfessionalLicense(res.data.user.professionalLicense || '')
+        setSpecialty(res.data.user.specialty || '')
+        setSavedSignature(res.data.user.signature || '')
       }).catch(err => console.error(err))
     }
     
@@ -363,7 +373,10 @@ export default function DoctorPanel() {
     try {
       await api.put('/appointments/doctor/config', {
         appointmentDuration: Number(appointmentDuration),
-        maxDailyAppointments: maxDailyAppointments === '' ? null : Number(maxDailyAppointments)
+        maxDailyAppointments: maxDailyAppointments === '' ? null : Number(maxDailyAppointments),
+        professionalLicense,
+        specialty,
+        signature: savedSignature
       })
       await api.put('/appointments/doctor/schedule', {
         schedules: doctorSchedule
@@ -477,13 +490,16 @@ export default function DoctorPanel() {
         diagnosis,
         medications,
         generalInstructions,
-        validUntil: validUntil || undefined
+        validUntil: validUntil || undefined,
+        doctorSignature: useProfileSignature ? undefined : tempSignature
       })
       setShowPrescriptionModal(false)
       setDiagnosis('')
       setMedications([{ name: '', dose: '', frequency: '', duration: '', route: 'Oral', instructions: '' }])
       setGeneralInstructions('')
       setValidUntil('')
+      setTempSignature('')
+      setUseProfileSignature(true)
       setSelectedAppt(null)
       await fetchAppointmentsAndSchedule()
       alert('¡Receta médica emitida y registrada con éxito!')
@@ -1601,6 +1617,88 @@ export default function DoctorPanel() {
                            />
                          </div>
 
+                          {/* Cédula Profesional */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>
+                              Cédula Profesional:
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ej: 12345678"
+                              value={professionalLicense}
+                              onChange={e => setProfessionalLicense(e.target.value)}
+                              style={{
+                                width: '100%', padding: '0.55rem', borderRadius: '8px',
+                                background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715',
+                                border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, fontSize: '0.9rem'
+                              }}
+                            />
+                          </div>
+
+                          {/* Especialidad */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>
+                              Especialidad Médica:
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ej: Médico Pediatra"
+                              value={specialty}
+                              onChange={e => setSpecialty(e.target.value)}
+                              style={{
+                                width: '100%', padding: '0.55rem', borderRadius: '8px',
+                                background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715',
+                                border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, fontSize: '0.9rem'
+                              }}
+                            />
+                          </div>
+
+                          {/* Firma Digital Guardada */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.35rem' }}>
+                              Firma Digital (PNG transparente):
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/png"
+                              onChange={e => {
+                                const file = e.target.files[0]
+                                if (!file) return
+                                if (file.type !== 'image/png') {
+                                  alert('Por favor selecciona una imagen formato PNG.')
+                                  e.target.value = ''
+                                  return
+                                }
+                                const reader = new FileReader()
+                                reader.onload = (event) => setSavedSignature(event.target.result)
+                                reader.readAsDataURL(file)
+                              }}
+                              style={{
+                                width: '100%', padding: '0.35rem', borderRadius: '8px',
+                                background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715',
+                                border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, fontSize: '0.85rem'
+                              }}
+                            />
+                            {savedSignature && (
+                              <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <span style={{ fontSize: '0.75rem', color: dark ? '#7e7a8c' : '#a89580' }}>Vista previa de la firma:</span>
+                                <div style={{ padding: '0.5rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60px' }}>
+                                  <img src={savedSignature} alt="Firma guardada" style={{ maxHeight: '100%', objectFit: 'contain' }} />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setSavedSignature('')}
+                                  style={{
+                                    alignSelf: 'flex-start', border: 'none', background: 'transparent',
+                                    color: '#ef4444', fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', padding: 0
+                                  }}
+                                >
+                                  Eliminar firma
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
                          {/* Schedule list by Day of week */}
                          <div>
                            <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '800', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.5rem' }}>
@@ -2077,6 +2175,83 @@ export default function DoctorPanel() {
                   onChange={e => setValidUntil(e.target.value)}
                   style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715' }}
                 />
+              </div>
+
+              {/* Firma Digital para esta Receta */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.5rem' }}>
+                  Firma Digital en Receta:
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: dark ? '#fff' : '#1a1715', cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="signatureSource"
+                      checked={useProfileSignature}
+                      onChange={() => setUseProfileSignature(true)}
+                    />
+                    <span>Usar firma guardada en mi perfil</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: dark ? '#fff' : '#1a1715', cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="signatureSource"
+                      checked={!useProfileSignature}
+                      onChange={() => setUseProfileSignature(false)}
+                    />
+                    <span>Subir firma temporal para esta receta</span>
+                  </label>
+
+                  {useProfileSignature && (
+                    <div style={{ padding: '0.5rem', borderRadius: '6px', background: dark ? '#1e1c25' : '#faf8f5', border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, fontSize: '0.8rem' }}>
+                      {savedSignature ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                          <span style={{ color: '#10b981', fontWeight: '600' }}>✓ Firma de perfil disponible:</span>
+                          <div style={{ height: '40px', padding: '0.25rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                            <img src={savedSignature} alt="Firma de perfil" style={{ maxHeight: '100%', objectFit: 'contain' }} />
+                          </div>
+                        </div>
+                      ) : (
+                        <span style={{ color: '#f59e0b', fontWeight: '600' }}>⚠ No tienes una firma configurada en tu perfil. Se usará la firma de texto por defecto.</span>
+                      )}
+                    </div>
+                  )}
+
+                  {!useProfileSignature && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <input
+                        type="file"
+                        accept="image/png"
+                        onChange={e => {
+                          const file = e.target.files[0]
+                          if (!file) return
+                          if (file.type !== 'image/png') {
+                            alert('Por favor selecciona una imagen formato PNG.')
+                            e.target.value = ''
+                            return
+                          }
+                          const reader = new FileReader()
+                          reader.onload = (event) => setTempSignature(event.target.result)
+                          reader.readAsDataURL(file)
+                        }}
+                        style={{
+                          width: '100%', padding: '0.35rem', borderRadius: '8px',
+                          background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#1a1715',
+                          border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`, fontSize: '0.85rem'
+                        }}
+                      />
+                      {tempSignature && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <span style={{ fontSize: '0.75rem', color: dark ? '#7e7a8c' : '#a89580' }}>Vista previa de firma temporal:</span>
+                          <div style={{ padding: '0.5rem', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60px' }}>
+                            <img src={tempSignature} alt="Firma temporal" style={{ maxHeight: '100%', objectFit: 'contain' }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>

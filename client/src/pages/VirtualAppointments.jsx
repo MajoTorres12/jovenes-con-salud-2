@@ -32,10 +32,23 @@ export default function VirtualAppointments() {
   const [availableSlotsData, setAvailableSlotsData] = useState({})
   const [loadingSlots, setLoadingSlots] = useState(false)
   
-  // Navigation tabs
-  const [activeView, setActiveView] = useState('appointments') // 'appointments' or 'prescriptions'
+  const [activeView, setActiveView] = useState('appointments') // 'appointments', 'prescriptions', or 'info'
   const [showRequestForm, setShowRequestForm] = useState(false)
   const [copiedApptId, setCopiedApptId] = useState(null)
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (!mobile && activeView === 'info') {
+        setActiveView('appointments')
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [activeView])
 
   // Fetch all user appointments
   const fetchAppointments = useCallback(async () => {
@@ -277,10 +290,10 @@ export default function VirtualAppointments() {
       )}
 
       {/* Grid General */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '2rem', alignItems: 'flex-start' }} className="disease-detail-container">
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 320px', gap: '2rem', alignItems: 'flex-start' }} className="disease-detail-container">
         {/* Lado Izquierdo: Citas y Recetas */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }} className="disease-content-area">
-          {/* Selector de Pestañas Citas / Recetas */}
+          {/* Selector de Pestañas Citas / Recetas / Info */}
           <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--color-surface-200)', paddingBottom: '0.75rem' }}>
             <button
               onClick={() => setActiveView('appointments')}
@@ -304,6 +317,19 @@ export default function VirtualAppointments() {
             >
               Recetas Médicas ({prescriptions.length})
             </button>
+            {isMobile && (
+              <button
+                onClick={() => setActiveView('info')}
+                style={{
+                  padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none',
+                  background: activeView === 'info' ? 'var(--color-primary-500)' : 'transparent',
+                  color: activeView === 'info' ? 'white' : 'var(--color-surface-600)',
+                  fontWeight: '700', fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
+                }}
+              >
+                Info
+              </button>
+            )}
           </div>
 
           {/* VISTA CITAS */}
@@ -659,14 +685,67 @@ export default function VirtualAppointments() {
               )}
             </div>
           )}
+
+          {activeView === 'info' && isMobile && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+              <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.75rem' }}>
+                <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--color-surface-400)', letterSpacing: '0.05em', width: '100%', borderBottom: '1px solid var(--color-surface-200)', paddingBottom: '0.5rem' }}>
+                  Tu Médico de Cabecera
+                </h3>
+                
+                {doctorInfo ? (
+                  <>
+                    <img
+                      src={doctorInfo.avatar ? (doctorInfo.avatar.startsWith('http') ? doctorInfo.avatar : `http://localhost:3001${doctorInfo.avatar}`) : '/icons.svg#user'}
+                      alt={doctorInfo.name}
+                      style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2.5px solid var(--color-primary-500)', padding: '2px', background: 'white' }}
+                      onError={e => { e.currentTarget.src = '/favicon.svg' }}
+                    />
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: 'var(--color-surface-900)' }}>Dr(a). {doctorInfo.name}</h4>
+                      <p style={{ margin: '0.2rem 0 0.4rem 0', fontSize: '0.8rem', color: 'var(--color-surface-400)', fontWeight: '600', textTransform: 'uppercase' }}>
+                        {doctorInfo.specialty || 'General Practitioner'}
+                      </p>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-surface-500)', background: 'var(--color-surface-100)', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-block' }}>
+                        Lic: {doctorInfo.professionalLicense || 'Pending'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--color-surface-100)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--color-surface-400)' }}>
+                      <FaUserMd size={40} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: 'var(--color-surface-900)' }}>Asignado</h4>
+                      <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--color-surface-400)' }}>Consultorio de cabecera</p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Tips block */}
+              <div className="glass" style={{ padding: '1.25rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)', fontSize: '0.82rem', color: 'var(--color-surface-500)', lineHeight: 1.5 }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-surface-800)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <FaExclamationCircle style={{ color: 'var(--color-accent-500)' }} /> Importante
+                </h4>
+                <ul style={{ paddingLeft: '1rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <li>Debes solicitar tu cita con un mínimo de <strong>24 horas</strong> de anticipación.</li>
+                  <li>Las recetas generadas son documentos digitales certificados oficiales del Gobierno del Estado de Tamaulipas.</li>
+                  <li>Si presentas una emergencia médica crítica, por favor acude de inmediato a tu hospital más cercano o llama al <strong>911</strong>.</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Lado Derecho: Info del Médico Asignado */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
-          <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.75rem' }}>
-            <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--color-surface-400)', letterSpacing: '0.05em', width: '100%', borderBottom: '1px solid var(--color-surface-200)', paddingBottom: '0.5rem' }}>
-              Tu Médico de Cabecera
-            </h3>
+        {!isMobile && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+            <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.75rem' }}>
+              <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--color-surface-400)', letterSpacing: '0.05em', width: '100%', borderBottom: '1px solid var(--color-surface-200)', paddingBottom: '0.5rem' }}>
+                Tu Médico de Cabecera
+              </h3>
             
             {doctorInfo ? (
               <>
@@ -711,6 +790,7 @@ export default function VirtualAppointments() {
             </ul>
           </div>
         </div>
+      )}
       </div>
     </div>
   )

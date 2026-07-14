@@ -348,9 +348,13 @@ export default function VirtualAppointments() {
                             onClick={() => { setSelectedDate(dateStr); setSelectedTime('') }}
                             style={{
                               flexShrink: 0, padding: '0.6rem 1rem', borderRadius: '12px', border: '1px solid',
-                              borderColor: isSel ? 'var(--color-primary-500)' : 'var(--color-surface-200)',
-                              background: isSel ? 'var(--color-primary-50)' : 'white',
-                              color: isSel ? 'var(--color-primary-500)' : (dateInfo.available ? 'var(--color-surface-800)' : 'var(--color-surface-400)'),
+                              borderColor: isSel ? 'var(--color-primary-500)' : (dark ? '#272530' : '#e8ddd0'),
+                              background: isSel 
+                                ? (dark ? 'rgba(56, 189, 248, 0.15)' : 'var(--color-primary-50)') 
+                                : (dark ? '#1e1c25' : '#ffffff'),
+                              color: isSel 
+                                ? (dark ? '#38bdf8' : 'var(--color-primary-600)') 
+                                : (dateInfo.available ? (dark ? '#e8e6e3' : '#334155') : (dark ? '#5e5a6c' : '#94a3b8')),
                               cursor: dateInfo.available ? 'pointer' : 'not-allowed', opacity: dateInfo.available ? 1 : 0.45,
                               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', transition: 'all 0.2s'
                             }}
@@ -381,9 +385,13 @@ export default function VirtualAppointments() {
                               onClick={() => setSelectedTime(tStr)}
                               style={{
                                 padding: '0.5rem', borderRadius: '8px', border: '1px solid',
-                                borderColor: isSel ? 'var(--color-primary-500)' : 'var(--color-surface-200)',
-                                background: isSel ? 'var(--color-primary-500)' : 'white',
-                                color: isSel ? 'white' : 'var(--color-surface-700)',
+                                borderColor: isSel ? 'var(--color-primary-500)' : (dark ? '#272530' : '#e8ddd0'),
+                                background: isSel 
+                                  ? 'var(--color-primary-500)' 
+                                  : (dark ? '#1e1c25' : '#ffffff'),
+                                color: isSel 
+                                  ? '#ffffff' 
+                                  : (dark ? '#e8e6e3' : '#334155'),
                                 fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s'
                               }}
                             >
@@ -405,7 +413,17 @@ export default function VirtualAppointments() {
                       placeholder="Escribe brevemente el motivo de tu consulta médica..."
                       value={reason}
                       onChange={e => setReason(e.target.value)}
-                      style={{ width: '100%', minHeight: '80px', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-surface-200)', fontSize: '0.9rem', resize: 'vertical' }}
+                      style={{ 
+                        width: '100%', 
+                        minHeight: '80px', 
+                        padding: '0.75rem', 
+                        borderRadius: '8px', 
+                        border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`, 
+                        background: dark ? '#1e1c25' : '#ffffff',
+                        color: dark ? '#ffffff' : '#1a1715',
+                        fontSize: '0.9rem', 
+                        resize: 'vertical' 
+                      }}
                     />
                   </div>
 

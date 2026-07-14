@@ -239,8 +239,8 @@ export async function generatePrescriptionPdf(prescription, patientName, patient
       try {
         const dims = await getImageDimensions(prescription.doctorSignature)
         if (dims && dims.w && dims.h) {
-          const maxW = 35 // max width in mm
-          const maxH = 14 // max height in mm
+          const maxW = 55 // max width in mm
+          const maxH = 24 // max height in mm
           const imgRatio = dims.w / dims.h
           
           let drawW = maxW
@@ -255,7 +255,7 @@ export async function generatePrescriptionPdf(prescription, patientName, patient
           pdf.addImage(prescription.doctorSignature, 'PNG', pageW / 2 - drawW / 2, footerStartY - drawH - 1, drawW, drawH)
         } else {
           // Fallback to safe defaults if dims failed
-          pdf.addImage(prescription.doctorSignature, 'PNG', pageW / 2 - 15, footerStartY - 15, 30, 14)
+          pdf.addImage(prescription.doctorSignature, 'PNG', pageW / 2 - 25, footerStartY - 24, 50, 23)
         }
       } catch (err) {
         console.error('Error adding signature image to PDF:', err)

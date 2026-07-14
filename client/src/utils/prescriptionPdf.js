@@ -23,6 +23,15 @@ const loadLogo = (url) => new Promise((resolve) => {
   img.src = url
 })
 
+const getImageDimensions = (base64Str) => new Promise((resolve) => {
+  const img = new Image()
+  img.onload = () => {
+    resolve({ w: img.naturalWidth || img.width, h: img.naturalHeight || img.height })
+  }
+  img.onerror = () => resolve(null)
+  img.src = base64Str
+})
+
 export async function generatePrescriptionPdf(prescription, patientName, patientAge) {
   try {
     // Load institutional logos
@@ -228,8 +237,26 @@ export async function generatePrescriptionPdf(prescription, patientName, patient
     // Draw signature image if present
     if (prescription.doctorSignature) {
       try {
-        // Signature image centered horizontally (width: 40mm, height: 14mm)
-        pdf.addImage(prescription.doctorSignature, 'PNG', pageW / 2 - 20, footerStartY - 15, 40, 14)
+        const dims = await getImageDimensions(prescription.doctorSignature)
+        if (dims && dims.w && dims.h) {
+          const maxW = 35 // max width in mm
+          const maxH = 14 // max height in mm
+          const imgRatio = dims.w / dims.h
+          
+          let drawW = maxW
+          let drawH = maxW / imgRatio
+          
+          if (drawH > maxH) {
+            drawH = maxH
+            drawW = maxH * imgRatio
+          }
+          
+          // Draw signature centered horizontally and vertically within the signature box
+          pdf.addImage(prescription.doctorSignature, 'PNG', pageW / 2 - drawW / 2, footerStartY - drawH - 1, drawW, drawH)
+        } else {
+          // Fallback to safe defaults if dims failed
+          pdf.addImage(prescription.doctorSignature, 'PNG', pageW / 2 - 15, footerStartY - 15, 30, 14)
+        }
       } catch (err) {
         console.error('Error adding signature image to PDF:', err)
       }

@@ -3,6 +3,7 @@ import { Op } from 'sequelize'
 import { authenticate } from '../middleware/auth.middleware.js'
 import ChatMessage from '../models/ChatMessage.js'
 import User from '../models/User.js'
+import { sendPushNotification } from '../services/pushNotification.service.js'
 
 const router = Router()
 
@@ -95,6 +96,15 @@ router.post('/messages', async (req, res, next) => {
       receiverId: finalReceiverId,
       message: message.trim()
     })
+
+    const receiver = await User.findByPk(finalReceiverId)
+    if (receiver?.deviceToken) {
+      sendPushNotification(receiver.deviceToken, {
+        title: `💬 Mensaje de ${sender.name}`,
+        body: message.trim().substring(0, 100),
+        data: { type: 'chat_message', senderId: currentUserId, url: '/chat' }
+      })
+    }
 
     res.status(201).json({ message: 'Mensaje enviado', chatMessage: chatMsg })
   } catch (err) {

@@ -7,6 +7,7 @@ import MedicalAlert from '../models/MedicalAlert.js'
 import { checkHealthLimits } from '../utils/healthLimits.js'
 import { calculateStreaks } from '../utils/streakUtils.js'
 import FamilyMember from '../models/FamilyMember.js'
+import { sendPushNotification } from '../services/pushNotification.service.js'
 
 const router = Router()
 
@@ -65,7 +66,7 @@ router.post('/records', async (req, res) => {
             displayValue = `${value} kg (IMC: ${bmi.toFixed(1)})`
           }
 
-          await MedicalAlert.create({
+          const alert = await MedicalAlert.create({
             userId: user.id,
             doctorId: user.doctorId,
             healthRecordId: record.id,
@@ -77,6 +78,15 @@ router.post('/records', async (req, res) => {
             status: 'pending',
             recordedAt: record.recordedAt,
           })
+
+          const doctor = await User.findByPk(user.doctorId)
+          if (doctor?.deviceToken) {
+            sendPushNotification(doctor.deviceToken, {
+              title: checkResult.severity === 'critical' ? '🚨 Alerta Crítica' : '⚠️ Alerta Médica',
+              body: `${user.name}: ${checkResult.message} (${displayValue})`,
+              data: { type: 'medical_alert', alertId: alert.id, patientId: user.id, url: '/doctor' }
+            })
+          }
         }
       }
     } catch (alertErr) {
@@ -134,7 +144,7 @@ router.put('/records/:id', async (req, res) => {
             displayValue = `${record.value} kg (IMC: ${bmi.toFixed(1)})`
           }
 
-          await MedicalAlert.create({
+          const alert = await MedicalAlert.create({
             userId: user.id,
             doctorId: user.doctorId,
             healthRecordId: record.id,
@@ -146,6 +156,15 @@ router.put('/records/:id', async (req, res) => {
             status: 'pending',
             recordedAt: record.recordedAt,
           })
+
+          const doctor = await User.findByPk(user.doctorId)
+          if (doctor?.deviceToken) {
+            sendPushNotification(doctor.deviceToken, {
+              title: checkResult.severity === 'critical' ? '🚨 Alerta Crítica' : '⚠️ Alerta Médica',
+              body: `${user.name}: ${checkResult.message} (${displayValue})`,
+              data: { type: 'medical_alert', alertId: alert.id, patientId: user.id, url: '/doctor' }
+            })
+          }
         }
       }
     } catch (alertErr) {

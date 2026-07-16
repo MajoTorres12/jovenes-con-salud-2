@@ -5,6 +5,7 @@ import User from '../models/User.js'
 import Appointment from '../models/Appointment.js'
 import Prescription from '../models/Prescription.js'
 import DoctorSchedule from '../models/DoctorSchedule.js'
+import { sendPushNotification } from '../services/pushNotification.service.js'
 
 const router = Router()
 
@@ -280,6 +281,14 @@ router.post('/', authenticate, async (req, res, next) => {
       duration: doctor.appointmentDuration || 30,
     })
 
+    if (doctor?.deviceToken) {
+      sendPushNotification(doctor.deviceToken, {
+        title: '📅 Nueva Solicitud de Cita',
+        body: `${patient.name} solicita una cita para el ${appointmentDate} a las ${appointmentTime}`,
+        data: { type: 'appointment_request', appointmentId: appointment.id, url: '/doctor' }
+      })
+    }
+
     res.status(201).json({ message: 'Solicitud de cita enviada exitosamente.', appointment })
   } catch (err) {
     next(err)
@@ -416,6 +425,15 @@ router.put('/:id/accept', authenticate, requireDoctor, async (req, res, next) =>
     if (notes !== undefined) appointment.notes = notes
     await appointment.save()
 
+    const patientUser = await User.findByPk(appointment.patientId)
+    if (patientUser?.deviceToken) {
+      sendPushNotification(patientUser.deviceToken, {
+        title: '✅ Cita Confirmada',
+        body: `Tu cita del ${appointment.appointmentDate} a las ${appointment.appointmentTime} ha sido confirmada`,
+        data: { type: 'appointment_accepted', appointmentId: appointment.id, meetLink, url: '/dashboard' }
+      })
+    }
+
     res.json({ message: 'Cita confirmada y agendada correctamente.', appointment })
   } catch (err) {
     next(err)
@@ -448,6 +466,15 @@ router.put('/:id/reject', authenticate, requireDoctor, async (req, res, next) =>
     appointment.status = 'rejected'
     appointment.rejectionReason = rejectionReason
     await appointment.save()
+
+    const patientUser = await User.findByPk(appointment.patientId)
+    if (patientUser?.deviceToken) {
+      sendPushNotification(patientUser.deviceToken, {
+        title: '❌ Solicitud de Cita no Aceptada',
+        body: `Tu solicitud de cita para el ${appointment.appointmentDate} no pudo ser aceptada. Motivo: ${rejectionReason}`,
+        data: { type: 'appointment_rejected', appointmentId: appointment.id, url: '/dashboard' }
+      })
+    }
 
     res.json({ message: 'Solicitud de cita rechazada.', appointment })
   } catch (err) {

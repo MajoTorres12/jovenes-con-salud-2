@@ -1,6 +1,8 @@
-import admin from 'firebase-admin'
+import { initializeApp, cert } from 'firebase-admin/app'
+import { getMessaging } from 'firebase-admin/messaging'
 
 let isFirebaseConfigured = false
+let messagingInstance = null
 
 const projectId = process.env.FIREBASE_PROJECT_ID
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
@@ -11,13 +13,14 @@ if (projectId && clientEmail && privateKey) {
     // Format private key if it has escaped newlines
     const formattedPrivateKey = privateKey.replace(/\\n/g, '\n')
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
+    initializeApp({
+      credential: cert({
         projectId,
         clientEmail,
         privateKey: formattedPrivateKey,
       }),
     })
+    messagingInstance = getMessaging()
     isFirebaseConfigured = true
     console.log('✅ Firebase Admin SDK inicializado correctamente para Notificaciones Push')
   } catch (error) {
@@ -57,9 +60,9 @@ export async function sendPushNotification(deviceToken, { title, body, data = {}
     token: deviceToken,
   }
 
-  if (isFirebaseConfigured) {
+  if (isFirebaseConfigured && messagingInstance) {
     try {
-      const response = await admin.messaging().send(message)
+      const response = await messagingInstance.send(message)
       console.log('✉️ Notificación Push enviada exitosamente:', response)
       return true
     } catch (error) {
@@ -90,9 +93,9 @@ export async function sendMulticastNotification(deviceTokens, { title, body, dat
     stringifiedData[key] = String(data[key])
   })
 
-  if (isFirebaseConfigured) {
+  if (isFirebaseConfigured && messagingInstance) {
     try {
-      const response = await admin.messaging().sendEachForMulticast({
+      const response = await messagingInstance.sendEachForMulticast({
         tokens: validTokens,
         notification: { title, body },
         data: stringifiedData,

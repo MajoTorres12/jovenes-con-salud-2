@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "763006051328",
+    "project_id": "jovenes-con-salud-abfa1",
+    "storage_bucket": "jovenes-con-salud-abfa1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:763006051328:android:5e31e83ab3227bd665e4e5",
+        "android_client_info": {
+          "package_name": "com.ijt.jovenesconsalud"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYL9D2bYefx5lUHqCRAWjT-GPqcgxCuUg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

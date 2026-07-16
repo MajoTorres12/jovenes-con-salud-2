@@ -43,6 +43,15 @@ class NotificationService {
         sound: 'default'
       })
 
+      await LocalNotifications.createChannel({
+        id: 'medical-push',
+        name: 'Alertas Médicas',
+        description: 'Notificaciones push de citas, alertas médicas y mensajes',
+        importance: 5, // max priority
+        visibility: 1, // public
+        sound: 'default'
+      })
+
       // Solo configurar oyentes de notificaciones push si Firebase está configurado
       if (this.hasFirebaseConfig()) {
         await this.setupPushListeners()
@@ -77,8 +86,22 @@ class NotificationService {
     })
 
     // Al recibir notificación con la app abierta (Primer plano)
-    await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+    await PushNotifications.addListener('pushNotificationReceived', async (notification) => {
       console.log('✉️ Notificación Push recibida (Primer plano):', notification)
+      try {
+        await LocalNotifications.schedule({
+          notifications: [{
+            title: notification.title || 'Jóvenes con Salud',
+            body: notification.body || '',
+            id: Math.floor(Math.random() * 100000),
+            sound: 'default',
+            channelId: 'medical-push',
+            extra: notification.data || {}
+          }]
+        })
+      } catch (err) {
+        console.error('❌ Error al mostrar notificación en primer plano:', err)
+      }
     })
 
     // Al dar clic en una notificación push (Segundo plano o cerrada)

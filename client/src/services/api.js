@@ -14,7 +14,10 @@ const PRODUCTION_GCP_URL = 'https://34-74-246-147.sslip.io'
  */
 function getApiUrl() {
   if (Capacitor.isNativePlatform()) {
-    return `${PRODUCTION_GCP_URL}/api`
+    // Cambiar a la IP local para desarrollo y pruebas
+    return `http://${LOCAL_NETWORK_IP}:${LOCAL_SERVER_PORT}/api`
+    // Para producción en GCP:
+    // return `${PRODUCTION_GCP_URL}/api`
   }
   return import.meta.env.VITE_API_URL || `http://localhost:${LOCAL_SERVER_PORT}/api`
 }
@@ -24,7 +27,8 @@ function getApiUrl() {
  */
 export function getApiBaseUrl() {
   if (Capacitor.isNativePlatform()) {
-    return PRODUCTION_GCP_URL
+    return `http://${LOCAL_NETWORK_IP}:${LOCAL_SERVER_PORT}`
+    // return PRODUCTION_GCP_URL
   }
   return import.meta.env.VITE_API_URL?.replace('/api', '') || `http://localhost:${LOCAL_SERVER_PORT}`
 }

@@ -4,31 +4,41 @@ import { getMessaging } from 'firebase-admin/messaging'
 let isFirebaseConfigured = false
 let messagingInstance = null
 
-const projectId = process.env.FIREBASE_PROJECT_ID
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
-const privateKey = process.env.FIREBASE_PRIVATE_KEY
+function ensureFirebaseInitialized() {
+  if (isFirebaseConfigured) return true
 
-if (projectId && clientEmail && privateKey) {
-  try {
-    // Format private key if it has escaped newlines
-    const formattedPrivateKey = privateKey.replace(/\\n/g, '\n')
+  const projectId = process.env.FIREBASE_PROJECT_ID
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY
 
-    initializeApp({
-      credential: cert({
-        projectId,
-        clientEmail,
-        privateKey: formattedPrivateKey,
-      }),
-    })
-    messagingInstance = getMessaging()
-    isFirebaseConfigured = true
-    console.log('✅ Firebase Admin SDK inicializado correctamente para Notificaciones Push')
-  } catch (error) {
-    console.error('❌ Error inicializando Firebase Admin SDK:', error.message)
+  if (projectId && clientEmail && privateKey) {
+    try {
+      // Format private key if it has escaped newlines
+      const formattedPrivateKey = privateKey.replace(/\\n/g, '\n')
+
+      initializeApp({
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey: formattedPrivateKey,
+        }),
+      })
+      messagingInstance = getMessaging()
+      isFirebaseConfigured = true
+      console.log('✅ Firebase Admin SDK inicializado correctamente para Notificaciones Push')
+      return true
+    } catch (error) {
+      console.error('❌ Error inicializando Firebase Admin SDK:', error.message)
+      return false
+    }
+  } else {
+    if (!global.firebaseWarnLogged) {
+      console.warn('⚠️  Firebase Admin SDK no configurado (falta FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL o FIREBASE_PRIVATE_KEY en .env).')
+      console.warn('   Las notificaciones push se simularán.')
+      global.firebaseWarnLogged = true
+    }
+    return false
   }
-} else {
-  console.warn('⚠️  Firebase Admin SDK no configurado (falta FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL o FIREBASE_PRIVATE_KEY en .env).')
-  console.warn('   Las notificaciones push se registrarán en la consola durante el desarrollo.')
 }
 
 /**
@@ -59,6 +69,8 @@ export async function sendPushNotification(deviceToken, { title, body, data = {}
     data: stringifiedData,
     token: deviceToken,
   }
+
+  ensureFirebaseInitialized()
 
   if (isFirebaseConfigured && messagingInstance) {
     try {
@@ -92,6 +104,8 @@ export async function sendMulticastNotification(deviceTokens, { title, body, dat
   Object.keys(data).forEach(key => {
     stringifiedData[key] = String(data[key])
   })
+
+  ensureFirebaseInitialized()
 
   if (isFirebaseConfigured && messagingInstance) {
     try {

@@ -102,7 +102,13 @@ router.post('/messages', async (req, res, next) => {
       sendPushNotification(receiver.deviceToken, {
         title: `💬 Mensaje de ${sender.name}`,
         body: message.trim().substring(0, 100),
-        data: { type: 'chat_message', senderId: currentUserId, url: '/chat' }
+        data: {
+          type: 'chat_message',
+          senderId: currentUserId,
+          url: receiver.role === 'doctor'
+            ? `/doctor?chat=true&senderId=${currentUserId}`
+            : `/dashboard?chat=true&senderId=${currentUserId}`
+        }
       })
     }
 

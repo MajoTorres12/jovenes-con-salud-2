@@ -509,7 +509,7 @@ router.post('/news', async (req, res, next) => {
           sendMulticastNotification(tokens, {
             title: '📰 Nueva Noticia de Salud',
             body: post.title,
-            data: { type: 'new_news', id: post.id, slug: post.slug, url: `/news/${post.slug}` }
+            data: { type: 'new_news', id: post.id, slug: post.slug, url: `/noticias/${post.slug}` }
           })
         }
       } catch (fcmErr) {
@@ -617,7 +617,7 @@ router.post('/articles', async (req, res, next) => {
           sendMulticastNotification(tokens, {
             title: '💡 Nuevo Artículo de Salud',
             body: article.title,
-            data: { type: 'new_article', id: article.id, slug: article.slug, url: `/articles/${article.slug}` }
+            data: { type: 'new_article', id: article.id, slug: article.slug, url: `/articulos/${article.slug}` }
           })
         }
       } catch (fcmErr) {

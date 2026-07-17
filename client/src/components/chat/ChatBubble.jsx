@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { FaComments, FaTimes, FaPaperPlane, FaUserCircle, FaArrowLeft, FaCircle } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -9,6 +10,7 @@ const API_BASE = getApiBaseUrl()
 export default function ChatBubble() {
   const { user, isAuthenticated } = useAuth()
   const { dark } = useTheme()
+  const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
   const [activeContact, setActiveContact] = useState(null) // { id, name, role }
   const [messages, setMessages] = useState([])
@@ -73,6 +75,38 @@ export default function ChatBubble() {
       setUnreadTotal(0)
     }
   }, [isAuthenticated, loadInitialData])
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return
+
+    const params = new URLSearchParams(location.search)
+    if (params.get('chat') === 'true') {
+      setIsOpen(true)
+      const senderId = params.get('senderId')
+      if (senderId) {
+        if (user.role === 'doctor') {
+          const patient = patients.find(p => p.id === senderId)
+          if (patient) {
+            setActiveContact({
+              id: patient.id,
+              name: patient.name,
+              role: 'user',
+              avatar: patient.avatar
+            })
+          }
+        } else if (user.role === 'user') {
+          if (doctorContact && doctorContact.id === senderId) {
+            setActiveContact({
+              id: doctorContact.id,
+              name: `Dr. ${doctorContact.name}`,
+              role: 'doctor',
+              avatar: doctorContact.avatar
+            })
+          }
+        }
+      }
+    }
+  }, [location, isAuthenticated, user, patients, doctorContact])
 
   // Fetch messages between current user and active contact
   const fetchMessages = useCallback(async () => {

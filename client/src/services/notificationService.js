@@ -113,6 +113,16 @@ class NotificationService {
         window.location.href = data.url
       }
     })
+
+    // Al dar clic en una notificación local nativa (Programada en primer plano)
+    await LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+      console.log('✉️ Clic en Notificación Local:', action)
+      const data = action.notification.extra
+      if (data && data.url) {
+        // Redirección interna
+        window.location.href = data.url
+      }
+    })
   }
 
   /**

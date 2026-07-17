@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import Layout from './components/layout/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -17,6 +17,7 @@ import VirtualAppointments from './pages/VirtualAppointments'
 import BMICalculator from './pages/BMICalculator'
 import News from './pages/News'
 import NewsDetail from './pages/NewsDetail'
+import ArticleDetail from './pages/ArticleDetail'
 import Nutraceuticals from './pages/Nutraceuticals'
 import NutraceuticalDetail from './pages/NutraceuticalDetail'
 import AdminPanel from './pages/AdminPanel'
@@ -39,6 +40,8 @@ export default function App() {
             <Route path="/programas" element={<Programs />} />
             <Route path="/noticias" element={<News />} />
             <Route path="/noticias/:slug" element={<NewsDetail />} />
+            <Route path="/articulos/:slug" element={<ArticleDetail />} />
+            <Route path="/chat" element={<Navigate to="/dashboard?chat=true" replace />} />
             <Route path="/nutraceuticos" element={<Nutraceuticals />} />
             <Route path="/nutraceuticos/:slug" element={<NutraceuticalDetail />} />
             <Route path="/contacto" element={<Contact />} />

@@ -581,6 +581,20 @@ router.post('/:id/prescription', authenticate, requireDoctor, async (req, res, n
       validUntil: validUntil || defaultValidUntil,
     })
 
+    // Notify patient about the new prescription
+    try {
+      const patientUser = await User.findByPk(appointment.patientId)
+      if (patientUser?.deviceToken) {
+        sendPushNotification(patientUser.deviceToken, {
+          title: '📋 Nueva Receta Médica Emitida',
+          body: `El Dr. ${doctor.name} ha emitido la receta médica con folio ${folio}`,
+          data: { type: 'new_prescription', prescriptionId: prescription.id, url: '/dashboard' }
+        })
+      }
+    } catch (fcmErr) {
+      console.error('Error sending prescription push notification:', fcmErr)
+    }
+
     // If appointment is accepted, auto-complete it
     if (appointment.status === 'accepted') {
       appointment.status = 'completed'

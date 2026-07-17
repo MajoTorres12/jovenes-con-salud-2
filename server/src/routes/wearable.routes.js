@@ -5,6 +5,7 @@ import HealthRecord from '../models/HealthRecord.js'
 import MedicalAlert from '../models/MedicalAlert.js'
 import { authenticate } from '../middleware/auth.middleware.js'
 import { checkHealthLimits } from '../utils/healthLimits.js'
+import { sendPushNotification } from '../services/pushNotification.service.js'
 
 const router = Router()
 
@@ -180,7 +181,7 @@ router.post('/sync', async (req, res) => {
                 displayValue = `${value}/${value2} ${UNITS[type] || ''}`
               }
 
-              await MedicalAlert.create({
+              const alert = await MedicalAlert.create({
                 userId: user.id,
                 doctorId: user.doctorId,
                 healthRecordId: record.id,
@@ -192,6 +193,22 @@ router.post('/sync', async (req, res) => {
                 status: 'pending',
                 recordedAt: record.recordedAt,
               })
+
+              const doctor = await User.findByPk(user.doctorId)
+              if (doctor?.deviceToken) {
+                sendPushNotification(doctor.deviceToken, {
+                  title: checkResult.severity === 'critical' ? '🚨 Alerta Wearable Crítica' : '⚠️ Alerta Wearable',
+                  body: `${user.name}: ${checkResult.message} (${displayValue})`,
+                  data: { type: 'medical_alert', alertId: alert.id, patientId: user.id, url: '/doctor' }
+                })
+              }
+              if (user.deviceToken) {
+                sendPushNotification(user.deviceToken, {
+                  title: checkResult.severity === 'critical' ? '🚨 Alerta de Wearable Crítica' : '⚠️ Métrica Anormal en Wearable',
+                  body: `Tu reloj detectó: ${checkResult.message} (${displayValue}). Por favor descansa.`,
+                  data: { type: 'patient_alert', alertId: alert.id, url: '/dashboard' }
+                })
+              }
             }
           }
         } catch (alertErr) {
@@ -269,7 +286,7 @@ router.post('/sync', async (req, res) => {
                 displayValue = `${value}/${value2} ${UNITS[type] || ''}`
               }
 
-              await MedicalAlert.create({
+              const alert = await MedicalAlert.create({
                 userId: user.id,
                 doctorId: user.doctorId,
                 healthRecordId: record.id,
@@ -281,6 +298,22 @@ router.post('/sync', async (req, res) => {
                 status: 'pending',
                 recordedAt: record.recordedAt,
               })
+
+              const doctor = await User.findByPk(user.doctorId)
+              if (doctor?.deviceToken) {
+                sendPushNotification(doctor.deviceToken, {
+                  title: checkResult.severity === 'critical' ? '🚨 Alerta Wearable Crítica' : '⚠️ Alerta Wearable',
+                  body: `${user.name}: ${checkResult.message} (${displayValue})`,
+                  data: { type: 'medical_alert', alertId: alert.id, patientId: user.id, url: '/doctor' }
+                })
+              }
+              if (user.deviceToken) {
+                sendPushNotification(user.deviceToken, {
+                  title: checkResult.severity === 'critical' ? '🚨 Alerta de Wearable Crítica' : '⚠️ Métrica Anormal en Wearable',
+                  body: `Tu reloj detectó: ${checkResult.message} (${displayValue}). Por favor descansa.`,
+                  data: { type: 'patient_alert', alertId: alert.id, url: '/dashboard' }
+                })
+              }
             }
           }
         } catch (alertErr) {

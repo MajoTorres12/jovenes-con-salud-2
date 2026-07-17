@@ -87,6 +87,13 @@ router.post('/records', async (req, res) => {
               data: { type: 'medical_alert', alertId: alert.id, patientId: user.id, url: '/doctor' }
             })
           }
+          if (user.deviceToken) {
+            sendPushNotification(user.deviceToken, {
+              title: checkResult.severity === 'critical' ? '🚨 Métrica Crítica Detectada' : '⚠️ Métrica Anormal Detectada',
+              body: `${checkResult.message} (${displayValue}). Por favor descansa o contacta a tu médico si te sientes mal.`,
+              data: { type: 'patient_alert', alertId: alert.id, url: '/dashboard' }
+            })
+          }
         }
       }
     } catch (alertErr) {
@@ -163,6 +170,13 @@ router.put('/records/:id', async (req, res) => {
               title: checkResult.severity === 'critical' ? '🚨 Alerta Crítica' : '⚠️ Alerta Médica',
               body: `${user.name}: ${checkResult.message} (${displayValue})`,
               data: { type: 'medical_alert', alertId: alert.id, patientId: user.id, url: '/doctor' }
+            })
+          }
+          if (user.deviceToken) {
+            sendPushNotification(user.deviceToken, {
+              title: checkResult.severity === 'critical' ? '🚨 Métrica Crítica Detectada' : '⚠️ Métrica Anormal Detectada',
+              body: `${checkResult.message} (${displayValue}). Por favor descansa o contacta a tu médico si te sientes mal.`,
+              data: { type: 'patient_alert', alertId: alert.id, url: '/dashboard' }
             })
           }
         }

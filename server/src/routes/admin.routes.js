@@ -12,6 +12,7 @@ import HealthRecord from '../models/HealthRecord.js'
 import Location from '../models/Location.js'
 import Article from '../models/Article.js'
 import DiseaseVariant from '../models/DiseaseVariant.js'
+import { sendMulticastNotification } from '../services/pushNotification.service.js'
 
 import multer from 'multer'
 import path from 'path'
@@ -494,6 +495,28 @@ router.post('/news', async (req, res, next) => {
     }
 
     const post = await NewsPost.create(data)
+
+    if (post.isPublished) {
+      try {
+        const patients = await User.findAll({
+          where: {
+            role: 'user',
+            deviceToken: { [Op.ne]: null }
+          }
+        })
+        const tokens = patients.map(p => p.deviceToken).filter(Boolean)
+        if (tokens.length > 0) {
+          sendMulticastNotification(tokens, {
+            title: '📰 Nueva Noticia de Salud',
+            body: post.title,
+            data: { type: 'new_news', id: post.id, slug: post.slug, url: `/news/${post.slug}` }
+          })
+        }
+      } catch (fcmErr) {
+        console.error('Error sending multicast notification for news:', fcmErr)
+      }
+    }
+
     res.status(201).json({ message: 'Noticia creada', post })
   } catch (err) {
     next(err)
@@ -580,6 +603,28 @@ router.post('/articles', async (req, res, next) => {
     }
 
     const article = await Article.create(data)
+
+    if (article.isPublished) {
+      try {
+        const patients = await User.findAll({
+          where: {
+            role: 'user',
+            deviceToken: { [Op.ne]: null }
+          }
+        })
+        const tokens = patients.map(p => p.deviceToken).filter(Boolean)
+        if (tokens.length > 0) {
+          sendMulticastNotification(tokens, {
+            title: '💡 Nuevo Artículo de Salud',
+            body: article.title,
+            data: { type: 'new_article', id: article.id, slug: article.slug, url: `/articles/${article.slug}` }
+          })
+        }
+      } catch (fcmErr) {
+        console.error('Error sending multicast notification for article:', fcmErr)
+      }
+    }
+
     res.status(201).json({ message: 'Artículo creado', article })
   } catch (err) {
     next(err)

@@ -229,6 +229,166 @@ class NotificationService {
       console.error('❌ Error cancelando notificación local:', err)
     }
   }
+
+  /**
+   * Sincroniza y programa las alarmas de notificaciones locales para todos los medicamentos activos.
+   * Cancela las alarmas previas de medicamentos y programa las nuevas basadas en el listado actual.
+   * @param {Array} medications - Listado completo de medicamentos del usuario.
+   */
+  async syncMedications(medications) {
+    if (!this.isNative) return;
+
+    try {
+      const perm = await LocalNotifications.requestPermissions();
+      if (perm.display !== 'granted') {
+        console.warn('⚠️ Permiso de notificaciones denegado, no se pueden programar alarmas.');
+        return;
+      }
+
+      // Obtener notificaciones ya programadas
+      const pending = await LocalNotifications.getPending();
+      
+      // Cancelar solo las alarmas previas de medicamentos
+      const toCancel = pending.notifications.filter(n => n.extra && n.extra.type === 'medication');
+      if (toCancel.length > 0) {
+        await LocalNotifications.cancel({
+          notifications: toCancel.map(n => ({ id: n.id }))
+        });
+        console.log(`🗑️ Se cancelaron ${toCancel.length} alarmas de medicamentos anteriores.`);
+      }
+
+      // Programar cada alarma para cada medicamento
+      for (const med of medications) {
+        let schedulesList = [];
+        if (med.schedules) {
+          schedulesList = Array.isArray(med.schedules)
+            ? med.schedules
+            : typeof med.schedules === 'string'
+              ? med.schedules.split(',').map(s => s.trim()).filter(Boolean)
+              : [];
+        }
+
+        const baseId = this.hashStringToInt(med.id);
+
+        for (let index = 0; index < schedulesList.length; index++) {
+          const timeStr = schedulesList[index];
+          const parts = timeStr.split(':');
+          if (parts.length < 2) continue;
+
+          const hour = parseInt(parts[0], 10);
+          const minute = parseInt(parts[1], 10);
+          const alarmId = baseId + index;
+
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                title: `💊 Hora de tu medicina: ${med.name}`,
+                body: `${med.dose} - ${med.instructions || 'Tomar según indicaciones'}`,
+                id: alarmId,
+                schedule: {
+                  on: { hour, minute },
+                  every: 'day',
+                  allowWhileIdle: true
+                },
+                sound: 'default',
+                channelId: 'reminders',
+                extra: { type: 'medication', url: '/dashboard' }
+              }
+            ]
+          });
+          console.log(`✅ Alarma programada: ${med.name} a las ${timeStr} (ID: ${alarmId})`);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Error al sincronizar notificaciones de medicamentos:', err);
+    }
+  }
+
+  /**
+   * Sincroniza y programa las alarmas de notificaciones locales para todos los suplementos activos.
+   * Cancela las alarmas previas de suplementos y programa las nuevas basadas en el listado actual.
+   * @param {Array} supplements - Listado completo de suplementos del usuario.
+   */
+  async syncSupplements(supplements) {
+    if (!this.isNative) return;
+
+    try {
+      const perm = await LocalNotifications.requestPermissions();
+      if (perm.display !== 'granted') {
+        console.warn('⚠️ Permiso de notificaciones denegado, no se pueden programar alarmas.');
+        return;
+      }
+
+      // Obtener notificaciones ya programadas
+      const pending = await LocalNotifications.getPending();
+      
+      // Cancelar solo las alarmas previas de suplementos
+      const toCancel = pending.notifications.filter(n => n.extra && n.extra.type === 'supplement');
+      if (toCancel.length > 0) {
+        await LocalNotifications.cancel({
+          notifications: toCancel.map(n => ({ id: n.id }))
+        });
+        console.log(`🗑️ Se cancelaron ${toCancel.length} alarmas de suplementos anteriores.`);
+      }
+
+      // Programar cada alarma para cada suplemento
+      for (const sup of supplements) {
+        let schedulesList = [];
+        if (sup.schedules) {
+          schedulesList = Array.isArray(sup.schedules)
+            ? sup.schedules
+            : typeof sup.schedules === 'string'
+              ? sup.schedules.split(',').map(s => s.trim()).filter(Boolean)
+              : [];
+        }
+
+        const baseId = this.hashStringToInt(sup.id);
+
+        for (let index = 0; index < schedulesList.length; index++) {
+          const timeStr = schedulesList[index];
+          const parts = timeStr.split(':');
+          if (parts.length < 2) continue;
+
+          const hour = parseInt(parts[0], 10);
+          const minute = parseInt(parts[1], 10);
+          const alarmId = baseId + index;
+
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                title: `🌿 Hora de tu suplemento: ${sup.name}`,
+                body: `${sup.dose} - ${sup.instructions || 'Tomar según indicaciones'}`,
+                id: alarmId,
+                schedule: {
+                  on: { hour, minute },
+                  every: 'day',
+                  allowWhileIdle: true
+                },
+                sound: 'default',
+                channelId: 'reminders',
+                extra: { type: 'supplement', url: '/dashboard' }
+              }
+            ]
+          });
+          console.log(`✅ Alarma programada: ${sup.name} a las ${timeStr} (ID: ${alarmId})`);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Error al sincronizar notificaciones de suplementos:', err);
+    }
+  }
+
+  // Función auxiliar para hashear UUID a entero de 32 bits
+  hashStringToInt(str) {
+    if (!str) return Math.floor(Math.random() * 1000000);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+    }
+    return Math.abs(hash);
+  }
 }
 
 export default new NotificationService()

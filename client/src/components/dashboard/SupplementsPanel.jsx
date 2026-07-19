@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { FaLeaf, FaPlus, FaTimes, FaTrash, FaEdit } from 'react-icons/fa'
 import api from '../../services/api'
+import notificationService from '../../services/notificationService'
 
 const parse24hTo12hList = (timeString) => {
   if (!timeString) return [{ hour: '08', minute: '00', period: 'AM' }]
@@ -64,7 +65,13 @@ export default function SupplementsPanel({ selectedFamilyId = null }) {
         params.familyMemberId = selectedFamilyId
       }
       const { data } = await api.get('/supplements', { params })
-      setSupplements(data.supplements || [])
+      const list = data.supplements || []
+      setSupplements(list)
+
+      // Sincronizar alarmas locales en dispositivo móvil (solo para el titular, no familiares)
+      if (!selectedFamilyId) {
+        notificationService.syncSupplements(list)
+      }
     } catch (err) {
       console.error('Error fetching supplements:', err)
       setError('No se pudieron cargar los suplementos. Intenta de nuevo.')

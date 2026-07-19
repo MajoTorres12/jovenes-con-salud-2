@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { FaPills, FaPlus, FaTimes, FaTrash, FaEdit, FaCheck, FaInfoCircle } from 'react-icons/fa'
 import api from '../../services/api'
+import notificationService from '../../services/notificationService'
 
 const formatTimeTo12h = (timeStr) => {
   if (!timeStr) return ''
@@ -199,7 +200,13 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
         params.familyMemberId = selectedFamilyId
       }
       const { data } = await api.get('/medications', { params })
-      setMedications(data.medications || [])
+      const list = data.medications || []
+      setMedications(list)
+      
+      // Sincronizar alarmas locales en dispositivo móvil (solo para el titular, no familiares)
+      if (!selectedFamilyId) {
+        notificationService.syncMedications(list)
+      }
     } catch (err) {
       console.error('Error fetching medications:', err)
       setError('No se pudieron cargar los medicamentos. Intenta de nuevo.')

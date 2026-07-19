@@ -18,6 +18,7 @@ import api from '../services/api'
 import MedicationsPanel from '../components/dashboard/MedicationsPanel'
 import SupplementsPanel from '../components/dashboard/SupplementsPanel'
 import WearableSection from '../components/dashboard/WearableSection'
+import StreakBadges from '../components/dashboard/StreakBadges'
 import AddFamilyMemberModal from '../components/family/AddFamilyMemberModal'
 import {
   calcBMI, getBMICategory, getGlucoseCategory, getHeartRateCategory, getBloodPressureCategory,
@@ -40,8 +41,47 @@ const TYPES = [
   { key: 'triglycerides', label: 'Triglicéridos', icon: FaFlask, unit: 'mg/dL', color: 'var(--color-metric-triglycerides)', gradient: ['var(--color-metric-triglycerides-grad-0)', 'var(--color-metric-triglycerides-grad-1)'] },
 ]
 
+// Helper to shade a hex color (adjust brightness by percent)
+function adjustColorBrightness(hex, percent) {
+  if (!hex || hex.charAt(0) !== '#') return hex;
+  let R = parseInt(hex.substring(1, 3), 16);
+  let G = parseInt(hex.substring(3, 5), 16);
+  let B = parseInt(hex.substring(5, 7), 16);
+
+  R = parseInt((R * (100 + percent)) / 100);
+  G = parseInt((G * (100 + percent)) / 100);
+  B = parseInt((B * (100 + percent)) / 100);
+
+  R = (R < 255) ? R : 255;
+  G = (G < 255) ? G : 255;
+  B = (B < 255) ? B : 255;
+
+  R = (R > 0) ? R : 0;
+  G = (G > 0) ? G : 0;
+  B = (B > 0) ? B : 0;
+
+  const rHex = R.toString(16).padStart(2, '0');
+  const gHex = G.toString(16).padStart(2, '0');
+  const bHex = B.toString(16).padStart(2, '0');
+
+  return `#${rHex}${gHex}${bHex}`;
+}
+
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, setUser } = useAuth()
+  
+  const customThemeStyles = user?.themeColor ? {
+    '--color-primary-50': adjustColorBrightness(user.themeColor, 120),
+    '--color-primary-100': adjustColorBrightness(user.themeColor, 90),
+    '--color-primary-200': adjustColorBrightness(user.themeColor, 60),
+    '--color-primary-300': adjustColorBrightness(user.themeColor, 30),
+    '--color-primary-400': adjustColorBrightness(user.themeColor, 15),
+    '--color-primary-500': user.themeColor,
+    '--color-primary-600': adjustColorBrightness(user.themeColor, -15),
+    '--color-primary-700': adjustColorBrightness(user.themeColor, -30),
+    '--color-primary-800': adjustColorBrightness(user.themeColor, -45),
+    '--color-primary-900': adjustColorBrightness(user.themeColor, -60),
+  } : {}
   const { dark } = useTheme()
   const [stats, setStats] = useState(null)
   const [records, setRecords] = useState([])
@@ -692,7 +732,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div id="dashboard-content" style={{ padding: '2rem 1.5rem', maxWidth: '1280px', margin: '0 auto', background: '#f8fafc', minHeight: '100vh' }}>
+    <div id="dashboard-content" style={{ padding: '2rem 1.5rem', maxWidth: '1280px', margin: '0 auto', background: '#f8fafc', minHeight: '100vh', ...customThemeStyles }}>
       {/* Header */}
       <div style={{ marginBottom: '2rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
@@ -1553,6 +1593,14 @@ export default function Dashboard() {
 
       <MedicationsPanel selectedFamilyId={selectedFamilyId} />
       <SupplementsPanel selectedFamilyId={selectedFamilyId} />
+
+      {!selectedFamilyId && streaks && (
+        <StreakBadges
+          maxStreak={streaks.daily?.max || 0}
+          currentUser={user}
+          onThemeUpdated={(newColor) => setUser(prev => ({ ...prev, themeColor: newColor }))}
+        />
+      )}
 
       {/* Add Record Modal */}
       {showModal && (

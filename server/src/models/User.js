@@ -106,6 +106,12 @@ const User = sequelize.define('User', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  themeColor: {
+    type: DataTypes.STRING(7),
+    allowNull: true,
+    field: 'theme_color',
+    defaultValue: null
+  },
 }, {
   tableName: 'users',
   timestamps: true,

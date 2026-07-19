@@ -73,4 +73,27 @@ router.put('/password', async (req, res) => {
   }
 })
 
+// PUT /api/profile/theme — update profile theme customization color
+router.put('/theme', async (req, res) => {
+  try {
+    const { themeColor } = req.body
+    const user = await User.findByPk(req.user.id)
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' })
+    }
+
+    user.themeColor = themeColor || null
+    await user.save()
+
+    res.json({
+      message: 'Tema actualizado exitosamente',
+      themeColor: user.themeColor,
+    })
+  } catch (error) {
+    console.error('Error al actualizar tema:', error)
+    res.status(500).json({ error: 'Error al actualizar el color de personalización' })
+  }
+})
+
 export default router

@@ -13,20 +13,20 @@ export default function Register() {
   const { register: authRegister } = useAuth()
   const navigate = useNavigate()
 
-  const passwordValue = watch('password') || ''
-  const isMinLength = passwordValue.length >= 8
-  const hasUppercase = /[A-Z]/.test(passwordValue)
-  const hasNumber = /\d/.test(passwordValue)
+  const passwordValue = watch('password', '')
+  const isMinLength = (passwordValue || '').length >= 8
+  const hasUppercase = /[A-Z]/.test(passwordValue || '')
+  const hasNumber = /\d/.test(passwordValue || '')
 
   let score = 0
-  if (passwordValue) {
+  if (passwordValue && passwordValue.length > 0) {
     if (isMinLength) score++
     if (hasUppercase) score++
     if (hasNumber) score++
   }
 
   const getStrengthProperties = () => {
-    if (!passwordValue) return { width: '0%', color: 'transparent', label: '' }
+    if (!passwordValue || passwordValue.length === 0) return { width: '0%', color: 'transparent', label: '' }
     if (score <= 1) return { width: '33%', color: '#ef4444', label: 'Débil' }
     if (score === 2) return { width: '66%', color: '#f59e0b', label: 'Media' }
     return { width: '100%', color: '#10b981', label: 'Fuerte' }
@@ -185,7 +185,7 @@ export default function Register() {
             {errors.password && <span style={{ fontSize: '0.8rem', color: 'var(--color-error)', marginTop: '0.25rem', display: 'block' }}>{errors.password.message}</span>}
 
             {/* Password Strength Indicator */}
-            {passwordValue && (
+            {passwordValue && passwordValue.length > 0 && (
               <div style={{ marginTop: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: 'var(--color-surface-50)', border: '1px solid var(--color-surface-200)' }}>
                 {/* Bar */}
                 <div style={{

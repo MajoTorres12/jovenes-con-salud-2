@@ -309,7 +309,7 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
       borderRadius: 'var(--radius-xl)',
       background: 'white',
       boxShadow: 'var(--shadow-card)',
-      border: '1px solid var(--color-surface-200)',
+      border: '1px solid var(--color-theme-accent-border)',
       marginBottom: '2rem',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -377,13 +377,13 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
               <div key={med.id} style={{
                 padding: '1.25rem',
                 borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-surface-200)',
+                border: '1px solid var(--color-theme-accent-border)',
                 background: 'var(--color-surface-50)',
                 position: 'relative',
               }}>
                 {/* Status active pip */}
                 <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', display: 'flex', gap: '0.35rem' }}>
-                  <button onClick={() => openEdit(med)} style={{ background: 'var(--color-surface-100)', border: '1px solid var(--color-surface-200)', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: 'var(--color-surface-500)' }} title="Editar">
+                  <button onClick={() => openEdit(med)} style={{ background: 'var(--color-surface-100)', border: '1px solid var(--color-theme-accent-border)', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: 'var(--color-surface-500)' }} title="Editar">
                     <FaEdit size={12} />
                   </button>
                   <button onClick={() => handleDelete(med.id, med.name)} style={{ background: 'var(--color-surface-100)', border: '1px solid #fecaca', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: '#ef4444' }} title="Eliminar">
@@ -415,7 +415,7 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
                 )}
 
                 {predefinedMatch && (
-                  <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed var(--color-surface-200)' }}>
+                  <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px dashed var(--color-theme-accent-border)' }}>
                     <button
                       onClick={() => toggleInfo(med.id)}
                       style={{

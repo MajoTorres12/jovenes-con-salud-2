@@ -96,6 +96,10 @@
   --color-metric-triglycerides: #7c3aed;
   --color-metric-triglycerides-grad-0: #ddd6fe;
   --color-metric-triglycerides-grad-1: #f5f3ff;
+
+  /* Custom Theme Accent Variables */
+  --color-theme-accent: var(--color-primary-500);
+  --color-theme-accent-border: var(--color-surface-200);
 }
 
 /* ========================================
@@ -240,6 +244,10 @@ p, span, a, li, h1, h2, h3, h4, h5, h6 {
   --color-surface-700: #c5bfae;  /* Highlight texts */
   --color-surface-800: #e5dfef;  /* Heading accents */
   --color-surface-900: #ffffff;  /* High-contrast pure white heading text */
+
+  /* Custom Theme Accent Variables in Dark Mode */
+  --color-theme-accent: var(--color-primary-500);
+  --color-theme-accent-border: var(--color-surface-300);
 
   /* Primary Accent - Government Guinda in Dark Mode */
   --color-primary-50: #29030a;

@@ -71,16 +71,8 @@ export default function Dashboard() {
   const { user, setUser } = useAuth()
   
   const customThemeStyles = user?.themeColor ? {
-    '--color-primary-50': adjustColorBrightness(user.themeColor, 120),
-    '--color-primary-100': adjustColorBrightness(user.themeColor, 90),
-    '--color-primary-200': adjustColorBrightness(user.themeColor, 60),
-    '--color-primary-300': adjustColorBrightness(user.themeColor, 30),
-    '--color-primary-400': adjustColorBrightness(user.themeColor, 15),
-    '--color-primary-500': user.themeColor,
-    '--color-primary-600': adjustColorBrightness(user.themeColor, -15),
-    '--color-primary-700': adjustColorBrightness(user.themeColor, -30),
-    '--color-primary-800': adjustColorBrightness(user.themeColor, -45),
-    '--color-primary-900': adjustColorBrightness(user.themeColor, -60),
+    '--color-theme-accent': user.themeColor,
+    '--color-theme-accent-border': `${user.themeColor}55`, // translucent theme color for borders (33% opacity)
   } : {}
   const { dark } = useTheme()
   const [stats, setStats] = useState(null)
@@ -955,7 +947,7 @@ export default function Dashboard() {
         display: 'flex', alignItems: 'center', gap: '0.5rem',
         padding: '0.4rem', marginBottom: '1.25rem',
         background: 'var(--color-surface-100)',
-        border: '1px solid var(--color-surface-200)',
+        border: '1px solid var(--color-theme-accent-border)',
         borderRadius: '14px',
         overflowX: 'auto',
       }}>
@@ -1182,8 +1174,10 @@ export default function Dashboard() {
                   padding: '1.25rem',
                   borderRadius: 'var(--radius-xl)',
                   background: 'white',
-                  boxShadow: activeType === t.key ? `0 0 0 2px ${t.color}, var(--shadow-card)` : 'var(--shadow-card)',
-                  border: '1px solid var(--color-surface-200)',
+                  boxShadow: activeType === t.key
+                    ? (user?.themeColor ? `0 0 0 2px var(--color-theme-accent), var(--shadow-glow)` : `0 0 0 2px ${t.color}, var(--shadow-card)`)
+                    : 'var(--shadow-card)',
+                  border: '1px solid var(--color-theme-accent-border)',
                   cursor: 'pointer',
                   transition: 'all 0.25s ease',
                   position: 'relative',
@@ -1193,7 +1187,9 @@ export default function Dashboard() {
                 {/* Accent bar */}
                 <div style={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-                  background: `linear-gradient(90deg, ${t.gradient[0]}, ${t.gradient[1]})`,
+                  background: user?.themeColor 
+                    ? `linear-gradient(90deg, var(--color-theme-accent), var(--color-theme-accent-border))`
+                    : `linear-gradient(90deg, ${t.gradient[0]}, ${t.gradient[1]})`,
                   opacity: activeType === t.key ? 1 : 0,
                   transition: 'opacity 0.3s',
                 }} />
@@ -1232,10 +1228,10 @@ export default function Dashboard() {
                   </div>
                   <div style={{
                     width: '40px', height: '40px', borderRadius: 'var(--radius-lg)',
-                    background: `${t.color}12`,
+                    background: user?.themeColor ? `var(--color-theme-accent)15` : `${t.color}12`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <t.icon style={{ fontSize: '1.1rem', color: t.color }} />
+                    <t.icon style={{ fontSize: '1.1rem', color: user?.themeColor ? 'var(--color-theme-accent)' : t.color }} />
                   </div>
                 </div>
                 {latest && (
@@ -1281,7 +1277,7 @@ export default function Dashboard() {
         borderRadius: 'var(--radius-xl)',
         background: 'white',
         boxShadow: 'var(--shadow-card)',
-        border: '1px solid var(--color-surface-200)',
+        border: '1px solid var(--color-theme-accent-border)',
         marginBottom: '2rem',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -1489,7 +1485,7 @@ export default function Dashboard() {
           return (
             <div key={t.key} style={{
               borderRadius: 'var(--radius-xl)', background: 'white',
-              boxShadow: 'var(--shadow-card)', border: '1px solid var(--color-surface-200)',
+              boxShadow: 'var(--shadow-card)', border: '1px solid var(--color-theme-accent-border)',
               overflow: 'hidden',
             }}>
               {/* Header */}
@@ -1519,7 +1515,7 @@ export default function Dashboard() {
                   display: 'flex', alignItems: 'center', gap: '1rem',
                   padding: '0.7rem 1.25rem',
                   background: i % 2 === 0 ? 'var(--color-table-row-even)' : 'var(--color-table-row-odd)',
-                  borderBottom: '1px solid var(--color-surface-200)',
+                  borderBottom: '1px solid var(--color-theme-accent-border)',
                   transition: 'background 0.15s',
                 }}>
                   <div style={{ flex: '0 0 140px' }}>

@@ -147,7 +147,7 @@ export default function SupplementsPanel({ selectedFamilyId = null }) {
       borderRadius: 'var(--radius-xl)',
       background: 'white',
       boxShadow: 'var(--shadow-card)',
-      border: '1px solid var(--color-surface-200)',
+      border: '1px solid var(--color-theme-accent-border)',
       marginBottom: '2rem',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -213,12 +213,12 @@ export default function SupplementsPanel({ selectedFamilyId = null }) {
             <div key={sup.id} style={{
               padding: '1.25rem',
               borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--color-surface-200)',
+              border: '1px solid var(--color-theme-accent-border)',
               background: 'var(--color-surface-50)',
               position: 'relative',
             }}>
               <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', display: 'flex', gap: '0.35rem' }}>
-                <button onClick={() => openEdit(sup)} style={{ background: 'white', border: '1px solid var(--color-surface-200)', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: 'var(--color-surface-500)' }} title="Editar">
+                <button onClick={() => openEdit(sup)} style={{ background: 'white', border: '1px solid var(--color-theme-accent-border)', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: 'var(--color-surface-500)' }} title="Editar">
                   <FaEdit size={12} />
                 </button>
                 <button onClick={() => handleDelete(sup.id, sup.name)} style={{ background: 'white', border: '1px solid #fecaca', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', color: '#ef4444' }} title="Eliminar">
@@ -244,7 +244,7 @@ export default function SupplementsPanel({ selectedFamilyId = null }) {
               )}
 
               {sup.instructions && (
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-surface-500)', fontStyle: 'italic', background: 'white', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--color-surface-200)' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-surface-500)', fontStyle: 'italic', background: 'white', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--color-theme-accent-border)' }}>
                   "{sup.instructions}"
                 </p>
               )}

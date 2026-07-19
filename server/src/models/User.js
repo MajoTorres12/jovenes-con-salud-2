@@ -112,6 +112,16 @@ const User = sequelize.define('User', {
     field: 'theme_color',
     defaultValue: null
   },
+  resetPasswordToken: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'reset_password_token',
+  },
+  resetPasswordExpires: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'reset_password_expires',
+  },
 }, {
   tableName: 'users',
   timestamps: true,

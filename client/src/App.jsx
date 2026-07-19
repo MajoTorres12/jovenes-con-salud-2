@@ -8,6 +8,8 @@ import DiseaseDetail from './pages/DiseaseDetail'
 import Programs from './pages/Programs'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Contact from './pages/Contact'
 import FAQ from './pages/FAQ'
 import Dashboard from './pages/Dashboard'
@@ -72,6 +74,8 @@ export default function App() {
           {/* Auth pages without layout (full-screen) */}
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Register />} />
+          <Route path="/recuperar" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           {/* Admin panel (full-screen, own layout) */}
           <Route path="/admin" element={
             <AdminRoute>

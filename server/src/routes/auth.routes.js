@@ -1,7 +1,10 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
+import { Op } from 'sequelize'
 import User from '../models/User.js'
+import { sendPasswordResetEmail } from '../utils/mailer.js'
 
 const router = Router()
 
@@ -137,6 +140,80 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ error: 'Token inválido' })
     }
     res.status(500).json({ error: 'Error al obtener perfil' })
+  }
+})
+
+// POST /api/auth/forgot-password — Request password reset email
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body
+    if (!email) {
+      return res.status(400).json({ error: 'El correo electrónico es requerido.' })
+    }
+
+    const user = await User.findOne({ where: { email } })
+    if (!user) {
+      // Secure design: avoid indicating whether user exists to prevent email enumeration
+      return res.json({ message: 'Si el correo electrónico está registrado, recibirás un enlace de recuperación.' })
+    }
+
+    // Generate token (expires in 1 hour)
+    const token = crypto.randomBytes(20).toString('hex')
+    user.resetPasswordToken = token
+    user.resetPasswordExpires = new Date(Date.now() + 3600000)
+    await user.save()
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+    const resetLink = `${frontendUrl}/reset-password?token=${token}`
+
+    try {
+      await sendPasswordResetEmail(user.email, user.name, resetLink)
+    } catch (mailErr) {
+      console.error('Error sending email:', mailErr)
+    }
+
+    res.json({ message: 'Si el correo electrónico está registrado, recibirás un enlace de recuperación.' })
+  } catch (error) {
+    console.error('Error in forgot-password:', error)
+    res.status(500).json({ error: 'Error al procesar la solicitud.' })
+  }
+})
+
+// POST /api/auth/reset-password — Reset password using token
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token y nueva contraseña son requeridos.' })
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' })
+    }
+
+    const user = await User.findOne({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: {
+          [Op.gt]: new Date()
+        }
+      }
+    })
+
+    if (!user) {
+      return res.status(400).json({ error: 'El enlace de recuperación es inválido o ha expirado.' })
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12)
+    user.password = hashedPassword
+    user.resetPasswordToken = null
+    user.resetPasswordExpires = null
+    await user.save()
+
+    res.json({ message: 'Contraseña restablecida exitosamente.' })
+  } catch (error) {
+    console.error('Error in reset-password:', error)
+    res.status(500).json({ error: 'Error al restablecer la contraseña.' })
   }
 })
 

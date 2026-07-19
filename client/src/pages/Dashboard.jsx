@@ -69,12 +69,15 @@ function adjustColorBrightness(hex, percent) {
 
 export default function Dashboard() {
   const { user, setUser } = useAuth()
+  const { dark } = useTheme()
   
   const customThemeStyles = user?.themeColor ? {
     '--color-theme-accent': user.themeColor,
     '--color-theme-accent-border': `${user.themeColor}55`, // translucent theme color for borders (33% opacity)
+    '--color-theme-accent-bg': dark 
+      ? `linear-gradient(135deg, ${adjustColorBrightness(user.themeColor, -80)} 0%, var(--color-surface-100) 100%)`
+      : `linear-gradient(135deg, ${adjustColorBrightness(user.themeColor, 120)} 0%, #ffffff 100%)`,
   } : {}
-  const { dark } = useTheme()
   const [stats, setStats] = useState(null)
   const [records, setRecords] = useState([])
   const [activeType, setActiveType] = useState('weight')
@@ -1173,7 +1176,7 @@ export default function Dashboard() {
                 style={{
                   padding: '1.25rem',
                   borderRadius: 'var(--radius-xl)',
-                  background: 'white',
+                  background: 'var(--color-theme-accent-bg)',
                   boxShadow: activeType === t.key
                     ? (user?.themeColor ? `0 0 0 2px var(--color-theme-accent), var(--shadow-glow)` : `0 0 0 2px ${t.color}, var(--shadow-card)`)
                     : 'var(--shadow-card)',

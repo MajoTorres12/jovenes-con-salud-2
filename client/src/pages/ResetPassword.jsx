@@ -22,19 +22,24 @@ export default function ResetPassword() {
 
   const isMinLength = (passwordValue || '').length >= 8
   const hasUppercase = /[A-Z]/.test(passwordValue || '')
+  const hasLowercase = /[a-z]/.test(passwordValue || '')
   const hasNumber = /\d/.test(passwordValue || '')
+  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(passwordValue || '')
 
   let score = 0
   if (passwordValue && passwordValue.length > 0) {
     if (isMinLength) score++
     if (hasUppercase) score++
+    if (hasLowercase) score++
     if (hasNumber) score++
+    if (hasSpecialChar) score++
   }
 
   const getStrengthProperties = () => {
     if (!passwordValue || passwordValue.length === 0) return { width: '0%', color: 'transparent', label: '' }
-    if (score <= 1) return { width: '33%', color: '#ef4444', label: 'Débil' }
-    if (score === 2) return { width: '66%', color: '#f59e0b', label: 'Media' }
+    if (score <= 2) return { width: '25%', color: '#ef4444', label: 'Débil' }
+    if (score <= 3) return { width: '50%', color: '#f59e0b', label: 'Media' }
+    if (score === 4) return { width: '75%', color: '#3b82f6', label: 'Buena' }
     return { width: '100%', color: '#10b981', label: 'Fuerte' }
   }
 
@@ -179,7 +184,7 @@ export default function ResetPassword() {
                   <FaLock style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-surface-400)', fontSize: '0.85rem' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Mínimo 8 caracteres, 1 mayúscula y 1 número"
+                    placeholder="Crea una contraseña segura"
                     disabled={!token}
                     {...register('password', { 
                       required: 'La contraseña es requerida',
@@ -189,7 +194,9 @@ export default function ResetPassword() {
                       },
                       validate: {
                         hasUppercase: value => /[A-Z]/.test(value) || 'Debe incluir al menos una letra mayúscula.',
-                        hasNumber: value => /\d/.test(value) || 'Debe incluir al menos un número.'
+                        hasLowercase: value => /[a-z]/.test(value) || 'Debe incluir al menos una letra minúscula.',
+                        hasNumber: value => /\d/.test(value) || 'Debe incluir al menos un número.',
+                        hasSpecialChar: value => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value) || 'Debe incluir al menos un carácter especial.'
                       }
                     })}
                     style={{
@@ -241,9 +248,17 @@ export default function ResetPassword() {
                         {hasUppercase ? <FaCheck size={8} /> : <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-surface-300)' }} />}
                         <span>Al menos una letra mayúscula</span>
                       </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: hasLowercase ? '#10b981' : 'var(--color-surface-400)' }}>
+                        {hasLowercase ? <FaCheck size={8} /> : <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-surface-300)' }} />}
+                        <span>Al menos una letra minúscula</span>
+                      </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: hasNumber ? '#10b981' : 'var(--color-surface-400)' }}>
                         {hasNumber ? <FaCheck size={8} /> : <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-surface-300)' }} />}
                         <span>Al menos un número</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: hasSpecialChar ? '#10b981' : 'var(--color-surface-400)' }}>
+                        {hasSpecialChar ? <FaCheck size={8} /> : <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-surface-300)' }} />}
+                        <span>Al menos un carácter especial (!@#$%...)</span>
                       </div>
                     </div>
                   </div>

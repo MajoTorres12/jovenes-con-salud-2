@@ -30,10 +30,10 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Todos los campos son requeridos' })
     }
 
-    // Validate password strength: minimum 8 characters, at least 1 uppercase letter, 1 number
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/
+    // Validate password strength: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/
     if (!passwordRegex.test(password)) {
-      return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres, incluir al menos una letra mayúscula y al menos un número.' })
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres, incluir mayúscula, minúscula, número y carácter especial.' })
     }
 
     // Check if user exists
@@ -193,9 +193,9 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Token y nueva contraseña son requeridos.' })
     }
 
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/
     if (!passwordRegex.test(newPassword)) {
-      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres, incluir al menos una letra mayúscula y al menos un número.' })
+      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres, incluir mayúscula, minúscula, número y carácter especial.' })
     }
 
     const user = await User.findOne({

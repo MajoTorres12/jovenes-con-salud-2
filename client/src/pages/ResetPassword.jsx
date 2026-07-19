@@ -159,13 +159,17 @@ export default function ResetPassword() {
                   <FaLock style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-surface-400)', fontSize: '0.85rem' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mínimo 8 caracteres, 1 mayúscula y 1 número"
                     disabled={!token}
                     {...register('password', { 
                       required: 'La contraseña es requerida',
                       minLength: {
-                        value: 6,
-                        message: 'La contraseña debe tener al menos 6 caracteres'
+                        value: 8,
+                        message: 'La contraseña debe tener al menos 8 caracteres'
+                      },
+                      validate: {
+                        hasUppercase: value => /[A-Z]/.test(value) || 'Debe incluir al menos una letra mayúscula.',
+                        hasNumber: value => /\d/.test(value) || 'Debe incluir al menos un número.'
                       }
                     })}
                     style={{

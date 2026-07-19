@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { FaHeartbeat, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCalendar } from 'react-icons/fa'
+import { FaHeartbeat, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCalendar, FaCheck, FaTimes } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
 import logo from '../assets/logo.png'
 
@@ -12,7 +12,27 @@ export default function Register() {
   const { register: formRegister, handleSubmit, formState: { errors }, watch } = useForm()
   const { register: authRegister } = useAuth()
   const navigate = useNavigate()
-  const password = watch('password')
+
+  const passwordValue = watch('password') || ''
+  const isMinLength = passwordValue.length >= 8
+  const hasUppercase = /[A-Z]/.test(passwordValue)
+  const hasNumber = /\d/.test(passwordValue)
+
+  let score = 0
+  if (passwordValue) {
+    if (isMinLength) score++
+    if (hasUppercase) score++
+    if (hasNumber) score++
+  }
+
+  const getStrengthProperties = () => {
+    if (!passwordValue) return { width: '0%', color: 'transparent', label: '' }
+    if (score <= 1) return { width: '33%', color: '#ef4444', label: 'Débil' }
+    if (score === 2) return { width: '66%', color: '#f59e0b', label: 'Media' }
+    return { width: '100%', color: '#10b981', label: 'Fuerte' }
+  }
+
+  const strength = getStrengthProperties()
 
   const onSubmit = async (data) => {
     setApiError('')
@@ -144,8 +164,15 @@ export default function Register() {
               <FaLock style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-surface-400)', fontSize: '0.85rem' }} />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Mínimo 8 caracteres"
-                {...formRegister('password', { required: 'La contraseña es requerida', minLength: { value: 8, message: 'Mínimo 8 caracteres' } })}
+                placeholder="Mínimo 8 caracteres, 1 mayúscula y 1 número"
+                {...formRegister('password', { 
+                  required: 'La contraseña es requerida', 
+                  minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+                  validate: {
+                    hasUppercase: value => /[A-Z]/.test(value) || 'Debe incluir al menos una letra mayúscula.',
+                    hasNumber: value => /\d/.test(value) || 'Debe incluir al menos un número.'
+                  }
+                })}
                 style={{ ...inputStyle(errors.password), paddingRight: '2.5rem' }}
               />
               <button type="button" onClick={() => setShowPassword(!showPassword)} style={{
@@ -155,7 +182,43 @@ export default function Register() {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
-            {errors.password && <span style={{ fontSize: '0.8rem', color: 'var(--color-error)' }}>{errors.password.message}</span>}
+            {errors.password && <span style={{ fontSize: '0.8rem', color: 'var(--color-error)', marginTop: '0.25rem', display: 'block' }}>{errors.password.message}</span>}
+
+            {/* Password Strength Indicator */}
+            {passwordValue && (
+              <div style={{ marginTop: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: 'var(--color-surface-50)', border: '1px solid var(--color-surface-200)' }}>
+                {/* Bar */}
+                <div style={{
+                  height: '4px', width: '100%', backgroundColor: 'var(--color-surface-200)',
+                  borderRadius: '2px', overflow: 'hidden', position: 'relative'
+                }}>
+                  <div style={{
+                    height: '100%', width: strength.width, backgroundColor: strength.color,
+                    transition: 'all 0.3s ease', borderRadius: '2px'
+                  }} />
+                </div>
+                {/* Label */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--color-surface-500)' }}>Fortaleza de contraseña</span>
+                  <span style={{ fontSize: '0.72rem', fontWeight: '700', color: strength.color }}>{strength.label}</span>
+                </div>
+                {/* Requirements Checklist */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: isMinLength ? '#10b981' : 'var(--color-surface-400)' }}>
+                    {isMinLength ? <FaCheck size={8} /> : <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-surface-300)' }} />}
+                    <span>Mínimo 8 caracteres</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: hasUppercase ? '#10b981' : 'var(--color-surface-400)' }}>
+                    {hasUppercase ? <FaCheck size={8} /> : <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-surface-300)' }} />}
+                    <span>Al menos una letra mayúscula</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: hasNumber ? '#10b981' : 'var(--color-surface-400)' }}>
+                    {hasNumber ? <FaCheck size={8} /> : <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-surface-300)' }} />}
+                    <span>Al menos un número</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Confirm Password */}
@@ -170,7 +233,7 @@ export default function Register() {
                 placeholder="Repite tu contraseña"
                 {...formRegister('confirmPassword', {
                   required: 'Confirma tu contraseña',
-                  validate: value => value === password || 'Las contraseñas no coinciden'
+                  validate: value => value === passwordValue || 'Las contraseñas no coinciden'
                 })}
                 style={inputStyle(errors.confirmPassword)}
               />

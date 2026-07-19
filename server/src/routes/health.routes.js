@@ -113,7 +113,7 @@ router.put('/records/:id', async (req, res) => {
   try {
     const { type, value, value2, notes, recordedAt } = req.body
     const record = await HealthRecord.findOne({
-      where: { id: req.params.id, userId: req.user.id }
+      where: { id: req.params.id, userId: req.user.id, familyMemberId: null }
     })
 
     if (!record) {
@@ -196,7 +196,7 @@ router.put('/records/:id', async (req, res) => {
 router.delete('/records/:id', async (req, res) => {
   try {
     const record = await HealthRecord.findOne({
-      where: { id: req.params.id, userId: req.user.id }
+      where: { id: req.params.id, userId: req.user.id, familyMemberId: null }
     })
 
     if (!record) {
@@ -218,7 +218,7 @@ router.get('/records', async (req, res) => {
   try {
     const { type, from, to, limit = 50 } = req.query
 
-    const where = { userId: req.user.id }
+    const where = { userId: req.user.id, familyMemberId: null }
 
     if (type) where.type = type
 
@@ -252,14 +252,14 @@ router.get('/stats', async (req, res) => {
 
     for (const type of types) {
       const record = await HealthRecord.findOne({
-        where: { userId, type },
+        where: { userId, type, familyMemberId: null },
         order: [['recordedAt', 'DESC']],
       })
       latest[type] = record || null
     }
 
     // Count total records
-    const totalRecords = await HealthRecord.count({ where: { userId } })
+    const totalRecords = await HealthRecord.count({ where: { userId, familyMemberId: null } })
 
     res.json({ latest, totalRecords })
   } catch (error) {

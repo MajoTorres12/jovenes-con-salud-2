@@ -714,18 +714,27 @@ export default function Dashboard() {
         </div>
 
         {/* ── Action buttons header group ─────────────────────── */}
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }} data-html2canvas-ignore="true">
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          alignItems: 'center',
+          position: 'relative',
+          width: isMobile ? '100%' : 'auto',
+        }} data-html2canvas-ignore="true">
           {user?.doctorId && (
             <Link
               to="/citas-virtuales"
               style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                 padding: '0.6rem 1.25rem', borderRadius: '10px',
                 border: 'none',
                 background: 'linear-gradient(135deg, #0ea5e9, #6366f1)',
                 color: 'white', fontSize: '0.85rem', fontWeight: '600',
                 cursor: 'pointer', boxShadow: 'var(--shadow-sm)',
                 textDecoration: 'none', transition: 'all 0.2s',
+                flex: isMobile ? '1 1 calc(50% - 0.375rem)' : '0 1 auto',
+                boxSizing: 'border-box',
               }}
             >
               <FaCalendarAlt style={{ color: 'white' }} />
@@ -737,7 +746,7 @@ export default function Dashboard() {
             <button
               onClick={() => setShowStreakModal(true)}
               style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                 padding: '0.6rem 1.25rem', borderRadius: '10px',
                 border: 'none',
                 background: streaks.daily.current > 0 
@@ -746,6 +755,8 @@ export default function Dashboard() {
                 color: 'white', fontSize: '0.85rem', fontWeight: '600',
                 cursor: 'pointer', boxShadow: 'var(--shadow-sm)',
                 transition: 'all 0.2s',
+                flex: isMobile ? '1 1 calc(50% - 0.375rem)' : '0 1 auto',
+                boxSizing: 'border-box',
               }}
             >
               <span style={{ fontSize: '1rem', marginRight: '0.1rem' }}>🔥</span>
@@ -756,29 +767,36 @@ export default function Dashboard() {
           <Link
             to={`/analytics${selectedFamilyId ? `?familyMemberId=${selectedFamilyId}` : ''}`}
             style={{
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
               padding: '0.6rem 1.25rem', borderRadius: '10px',
               border: 'none', background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-primary-800))',
               color: 'white', fontSize: '0.85rem', fontWeight: '600',
               cursor: 'pointer', boxShadow: 'var(--shadow-sm)',
               textDecoration: 'none', transition: 'all 0.2s',
+              flex: isMobile ? '1 1 calc(50% - 0.375rem)' : '0 1 auto',
+              boxSizing: 'border-box',
             }}
           >
             <FaChartLine style={{ color: 'white' }} />
             Estadísticas Avanzadas
           </Link>
 
-          <div ref={pdfMenuRef} style={{ position: 'relative' }}>
+          <div ref={pdfMenuRef} style={{
+            flex: isMobile ? '1 1 calc(50% - 0.375rem)' : '0 1 auto',
+            boxSizing: 'border-box',
+          }}>
             <button
               onClick={() => { if (!exporting) { setPdfMenuOpen(p => !p); setShowCustomPicker(false) } }}
               disabled={exporting}
               style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                 padding: '0.6rem 1.25rem', borderRadius: '10px',
                 border: '1.5px solid var(--color-surface-200)', background: 'white',
                 color: 'var(--color-surface-600)', fontSize: '0.85rem', fontWeight: '600',
                 cursor: exporting ? 'not-allowed' : 'pointer', boxShadow: 'var(--shadow-sm)',
                 transition: 'all 0.2s',
+                width: '100%',
+                boxSizing: 'border-box',
               }}
             >
               <FaFilePdf style={{ color: '#ef4444' }} />

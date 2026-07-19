@@ -1594,14 +1594,6 @@ export default function Dashboard() {
       <MedicationsPanel selectedFamilyId={selectedFamilyId} />
       <SupplementsPanel selectedFamilyId={selectedFamilyId} />
 
-      {!selectedFamilyId && streaks && (
-        <StreakBadges
-          maxStreak={streaks.daily?.max || 0}
-          currentUser={user}
-          onThemeUpdated={(newColor) => setUser(prev => ({ ...prev, themeColor: newColor }))}
-        />
-      )}
-
       {/* Add Record Modal */}
       {showModal && (
         <div style={{
@@ -1806,12 +1798,14 @@ export default function Dashboard() {
           padding: '1rem',
         }}>
           <div className="animate-fade-in-up" style={{
-            width: '100%', maxWidth: '600px',
+            width: '100%', maxWidth: '750px',
+            maxHeight: '90vh',
             borderRadius: 'var(--radius-2xl)',
             background: dark ? 'var(--color-surface-100)' : 'white',
             border: `1px solid ${dark ? 'var(--color-surface-300)' : '#e2e8f0'}`,
             boxShadow: 'var(--shadow-elevated)',
-            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
           }}>
             {/* Modal Header */}
             <div style={{
@@ -1821,6 +1815,7 @@ export default function Dashboard() {
               alignItems: 'center',
               justifyContent: 'space-between',
               background: dark ? 'rgba(0, 0, 0, 0.2)' : '#fafafa',
+              flexShrink: 0
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{
@@ -1853,7 +1848,7 @@ export default function Dashboard() {
             </div>
 
             {/* Modal Body */}
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto' }}>
               {/* Daily Streak Status */}
               <div style={{
                 padding: '1.25rem',
@@ -2037,6 +2032,15 @@ export default function Dashboard() {
                         : 'El primer paso es registrar una medición hoy. ¡Tu salud te lo agradecerá!'}
                 </p>
               </div>
+
+              {!selectedFamilyId && (
+                <StreakBadges
+                  maxStreak={streaks.daily?.max || 0}
+                  currentUser={user}
+                  onThemeUpdated={(newColor) => setUser(prev => ({ ...prev, themeColor: newColor }))}
+                  plain={true}
+                />
+              )}
             </div>
           </div>
         </div>

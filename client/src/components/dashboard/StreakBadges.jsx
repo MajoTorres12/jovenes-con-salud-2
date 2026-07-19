@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { FaMedal, FaLock, FaCheck, FaPalette, FaUndo } from 'react-icons/fa'
+import { useTheme } from '../../context/ThemeContext'
 import api from '../../services/api'
 
 // Define the 6 badges with their requirements and colors
@@ -60,7 +61,8 @@ const BADGES_CONFIG = [
   }
 ]
 
-export default function StreakBadges({ maxStreak = 0, currentUser = null, onThemeUpdated = () => {} }) {
+export default function StreakBadges({ maxStreak = 0, currentUser = null, onThemeUpdated = () => {}, plain = false }) {
+  const { dark } = useTheme()
   const [saving, setSaving] = useState(false)
   const [successMsg, setSuccessMsg] = useState(null)
   const [errorMsg, setErrorMsg] = useState(null)
@@ -87,20 +89,24 @@ export default function StreakBadges({ maxStreak = 0, currentUser = null, onThem
   }
 
   return (
-    <div style={{
-      background: 'white',
+    <div style={plain ? {
+      padding: '1.5rem 0 0 0',
+      borderTop: `1px solid ${dark ? 'var(--color-surface-300)' : '#f1f5f9'}`,
+      marginTop: '1.5rem'
+    } : {
+      background: dark ? 'var(--color-surface-100)' : 'white',
       borderRadius: '16px',
       padding: '2rem',
       boxShadow: 'var(--shadow-card)',
-      border: '1px solid #f1f5f9',
+      border: `1px solid ${dark ? 'var(--color-surface-300)' : '#f1f5f9'}`,
       marginTop: '2rem'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 'bold', color: dark ? '#ffffff' : '#1e293b', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <FaMedal style={{ color: 'var(--color-primary-500)' }} /> Insignias y Logros
           </h2>
-          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+          <p style={{ color: dark ? '#cbd5e1' : '#64748b', fontSize: '0.88rem' }}>
             Desbloquea insignias logrando rachas de registro y personaliza el panel Mi Salud. Tu racha máxima es de <strong>{maxStreak} {maxStreak === 1 ? 'día' : 'días'}</strong>.
           </p>
         </div>
@@ -113,18 +119,18 @@ export default function StreakBadges({ maxStreak = 0, currentUser = null, onThem
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              background: '#f1f5f9',
+              background: dark ? 'var(--color-surface-200)' : '#f1f5f9',
               border: 'none',
               borderRadius: '8px',
               padding: '0.5rem 1rem',
-              color: '#475569',
+              color: dark ? '#f1f5f9' : '#475569',
               cursor: 'pointer',
               fontWeight: '500',
               fontSize: '0.85rem',
               transition: 'background 0.2s'
             }}
-            onMouseOver={(e) => e.currentTarget.style.background = '#e2e8f0'}
-            onMouseOut={(e) => e.currentTarget.style.background = '#f1f5f9'}
+            onMouseOver={(e) => e.currentTarget.style.background = dark ? 'var(--color-surface-300)' : '#e2e8f0'}
+            onMouseOut={(e) => e.currentTarget.style.background = dark ? 'var(--color-surface-200)' : '#f1f5f9'}
           >
             <FaUndo size={12} /> Restaurar Tema
           </button>
@@ -161,13 +167,15 @@ export default function StreakBadges({ maxStreak = 0, currentUser = null, onThem
                 borderRadius: '12px',
                 border: isActiveTheme 
                   ? `2px solid ${badge.color}` 
-                  : '1px solid #e2e8f0',
+                  : `1px solid ${dark ? 'var(--color-surface-300)' : '#e2e8f0'}`,
                 padding: '1.25rem',
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                background: isUnlocked ? '#ffffff' : '#f8fafc',
+                background: isUnlocked 
+                  ? (dark ? 'var(--color-surface-200)' : '#ffffff') 
+                  : (dark ? 'rgba(255, 255, 255, 0.02)' : '#f8fafc'),
                 opacity: isUnlocked ? 1 : 0.8,
                 transition: 'transform 0.2s, box-shadow 0.2s',
                 boxShadow: isActiveTheme ? `0 0 12px ${badge.color}25` : 'none',
@@ -195,11 +203,11 @@ export default function StreakBadges({ maxStreak = 0, currentUser = null, onThem
                     width: '48px',
                     height: '48px',
                     borderRadius: '12px',
-                    background: isUnlocked ? badge.gradient : '#e2e8f0',
+                    background: isUnlocked ? badge.gradient : (dark ? 'var(--color-surface-300)' : '#e2e8f0'),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: isUnlocked ? '#ffffff' : '#94a3b8',
+                    color: isUnlocked ? '#ffffff' : (dark ? 'rgba(255,255,255,0.3)' : '#94a3b8'),
                     boxShadow: isUnlocked ? '0 4px 10px rgba(0,0,0,0.1)' : 'none',
                     flexShrink: 0
                   }}>
@@ -214,7 +222,9 @@ export default function StreakBadges({ maxStreak = 0, currentUser = null, onThem
                     <h3 style={{
                       fontWeight: 'bold',
                       fontSize: '1rem',
-                      color: isUnlocked ? '#1e293b' : '#64748b'
+                      color: isUnlocked 
+                        ? (dark ? '#ffffff' : '#1e293b') 
+                        : (dark ? 'rgba(255,255,255,0.4)' : '#64748b')
                     }}>
                       {badge.name}
                     </h3>
@@ -232,7 +242,9 @@ export default function StreakBadges({ maxStreak = 0, currentUser = null, onThem
                 </div>
 
                 <p style={{
-                  color: isUnlocked ? '#475569' : '#94a3b8',
+                  color: isUnlocked 
+                    ? (dark ? '#cbd5e1' : '#475569') 
+                    : (dark ? 'rgba(255,255,255,0.3)' : '#94a3b8'),
                   fontSize: '0.85rem',
                   lineHeight: '1.4',
                   marginBottom: '1rem'
@@ -245,12 +257,12 @@ export default function StreakBadges({ maxStreak = 0, currentUser = null, onThem
               <div style={{ marginTop: 'auto' }}>
                 {!isUnlocked ? (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: dark ? '#cbd5e1' : '#64748b', marginBottom: '0.25rem' }}>
                       <span>Progreso</span>
                       <span>{maxStreak} / {badge.daysRequired} días</span>
                     </div>
                     {/* Barra de Progreso */}
-                    <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '6px', background: dark ? 'var(--color-surface-300)' : '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
                       <div style={{ width: `${progress}%`, height: '100%', background: '#94a3b8', borderRadius: '3px', transition: 'width 0.3s' }}></div>
                     </div>
                   </div>

@@ -1,18 +1,25 @@
 import nodemailer from 'nodemailer'
 
+const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.ethereal.email'
+const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587
+const secure = (process.env.SMTP_SECURE === 'true' || process.env.EMAIL_SECURE === 'true') || port === 465
+const user = process.env.SMTP_USER || process.env.EMAIL_USER || 'ethereal.user@ethereal.email'
+const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS || 'ethereal.pass'
+const from = process.env.SMTP_FROM || process.env.EMAIL_FROM || '"Jóvenes con Salud" <no-reply@jovenesconsalud.org>'
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+  host,
+  port,
+  secure,
   auth: {
-    user: process.env.SMTP_USER || 'ethereal.user@ethereal.email',
-    pass: process.env.SMTP_PASS || 'ethereal.pass'
+    user,
+    pass
   }
 })
 
 export const sendPasswordResetEmail = async (toEmail, name, resetLink) => {
   const mailOptions = {
-    from: `"Jóvenes con Salud" <${process.env.SMTP_FROM || 'no-reply@jovenesconsalud.org'}>`,
+    from,
     to: toEmail,
     subject: 'Recuperación de Contraseña - Jóvenes con Salud',
     html: `
@@ -55,7 +62,7 @@ export const sendPasswordResetEmail = async (toEmail, name, resetLink) => {
   }
 
   // If no SMTP host is configured in the environment variables, we print a mock console output
-  if (!process.env.SMTP_HOST) {
+  if (!process.env.SMTP_HOST && !process.env.EMAIL_HOST) {
     console.log('\n======================================================')
     console.log('✉ [MOCK EMAIL SENT]')
     console.log(`To: ${toEmail}`)

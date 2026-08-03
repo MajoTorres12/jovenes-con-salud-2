@@ -12,8 +12,10 @@ import {
   FaWeight, FaTint, FaRunning, FaVial, FaFlask, FaCheckCircle,
   FaFilePrescription, FaUtensils, FaUserFriends, FaChevronRight,
   FaTrash, FaCalendarAlt, FaVideo, FaLink, FaCopy, FaPlus, FaTrashAlt,
-  FaCog, FaClipboardCheck
+  FaCog, FaClipboardCheck, FaFilePdf
 } from 'react-icons/fa'
+import { generateClinicalReportPDF } from '../utils/clinicalReportPdf'
+import { generateDoctorPatientsSummaryPDF } from '../utils/doctorSummaryPdf'
 import { HiMenu } from 'react-icons/hi'
 import {
   ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip
@@ -73,6 +75,7 @@ export default function DoctorPanel() {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [activePatientTab, setActivePatientTab] = useState('main') // 'main' or family member ID
   const [chartMetric, setChartMetric] = useState('glucose')
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   // Appointments & Schedule States
   const [doctorAppointments, setDoctorAppointments] = useState([])
@@ -177,6 +180,42 @@ export default function DoctorPanel() {
       setSelectedPatientId(null)
     } finally {
       setLoadingDetail(false)
+    }
+  }
+
+  const handleExportPatientReport = async () => {
+    if (!patientDetail) return
+    setExportingPdf(true)
+    try {
+      await generateClinicalReportPDF({
+        patient: patientDetail.patient,
+        stats: patientDetail.stats,
+        records: patientDetail.records || [],
+        medications: patientDetail.medications || [],
+        supplements: patientDetail.supplements || [],
+        alerts: patientDetail.alerts || [],
+        doctor: user,
+      })
+    } catch (err) {
+      console.error('Error generando reporte clínico PDF:', err)
+      alert('Ocurrió un error al generar el reporte en PDF. Por favor reintenta.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
+  const handleExportDoctorSummary = () => {
+    setExportingPdf(true)
+    try {
+      generateDoctorPatientsSummaryPDF({
+        doctor: user,
+        patients: patients || [],
+      })
+    } catch (err) {
+      console.error('Error exportando resumen de pacientes:', err)
+      alert('Ocurrió un error al generar el reporte PDF de pacientes.')
+    } finally {
+      setExportingPdf(false)
     }
   }
 
@@ -671,6 +710,25 @@ export default function DoctorPanel() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+            <button
+              onClick={handleExportDoctorSummary}
+              disabled={exportingPdf}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.4rem',
+                padding: '0.5rem 0.9rem', borderRadius: '10px',
+                border: '1.5px solid #ef4444',
+                background: exportingPdf ? 'var(--color-surface-200)' : (dark ? '#1e1c25' : '#fff'),
+                color: '#ef4444', fontSize: '0.78rem', fontWeight: '700',
+                cursor: exportingPdf ? 'not-allowed' : 'pointer',
+                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.12)',
+                transition: 'all 0.2s',
+              }}
+              title="Exportar reporte consolidado de todos los pacientes asignados"
+            >
+              <FaFilePdf size={13} color="#ef4444" />
+              {exportingPdf ? 'Exportando...' : 'Exportar Pacientes PDF'}
+            </button>
+
             <select
               value={(() => {
                 const match = document.cookie.match(/googtrans=\/es\/([a-z]{2})/)
@@ -771,32 +829,55 @@ export default function DoctorPanel() {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setActivePatientTab('analytics')}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.6rem 1.25rem',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: 'linear-gradient(135deg, #0369a1, #38bdf8)',
-                      color: 'white',
-                      fontSize: '0.82rem',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(3, 105, 161, 0.3)',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.transform = 'translateY(-1px)'
-                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(3, 105, 161, 0.4)'
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(3, 105, 161, 0.3)'
-                    }}
-                  >
-                    <FaChartLine size={14} /> Estadísticas Avanzadas
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={handleExportPatientReport}
+                      disabled={exportingPdf}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.6rem 1.25rem',
+                        borderRadius: '10px',
+                        border: '1.5px solid #ef4444',
+                        background: exportingPdf ? 'var(--color-surface-200)' : (dark ? '#1e1c25' : '#fff'),
+                        color: '#ef4444',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        cursor: exportingPdf ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 2px 8px rgba(239, 68, 68, 0.15)',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <FaFilePdf size={14} color="#ef4444" />
+                      {exportingPdf ? 'Generando PDF...' : '📄 Reporte Clínico PDF'}
+                    </button>
+
+                    <button
+                      onClick={() => setActivePatientTab('analytics')}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                        padding: '0.6rem 1.25rem',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #0369a1, #38bdf8)',
+                        color: 'white',
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(3, 105, 161, 0.3)',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'translateY(-1px)'
+                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(3, 105, 161, 0.4)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'translateY(0)'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(3, 105, 161, 0.3)'
+                      }}
+                    >
+                      <FaChartLine size={14} /> Estadísticas Avanzadas
+                    </button>
+                  </div>
                 </div>
 
                 {/* Sub-tabs: Principal Patient and Family Members */}

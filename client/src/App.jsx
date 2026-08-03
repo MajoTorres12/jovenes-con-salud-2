@@ -29,6 +29,7 @@ import DoctorRoute from './components/DoctorRoute'
 import ChatBubble from './components/chat/ChatBubble'
 import CookieConsent from './components/layout/CookieConsent'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import OfflineBanner from './components/common/OfflineBanner'
 
 export default function App() {
   return (
@@ -91,6 +92,7 @@ export default function App() {
         </Routes>
         <ChatBubble />
         <CookieConsent />
+        <OfflineBanner />
       </AuthProvider>
     </BrowserRouter>
   )

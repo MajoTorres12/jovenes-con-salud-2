@@ -127,6 +127,16 @@ const User = sequelize.define('User', {
     allowNull: true,
     field: 'reset_password_expires',
   },
+  failedLoginAttempts: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    field: 'failed_login_attempts',
+  },
+  lockUntil: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'lock_until',
+  },
 }, {
   tableName: 'users',
   timestamps: true,

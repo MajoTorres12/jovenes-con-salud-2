@@ -20,6 +20,8 @@ import SupplementsPanel from '../components/dashboard/SupplementsPanel'
 import WearableSection from '../components/dashboard/WearableSection'
 import StreakBadges from '../components/dashboard/StreakBadges'
 import AddFamilyMemberModal from '../components/family/AddFamilyMemberModal'
+import WelcomeChecklist from '../components/dashboard/WelcomeChecklist'
+import { useOnboardingTour } from '../hooks/useOnboardingTour'
 import {
   calcBMI, getBMICategory, getGlucoseCategory, getHeartRateCategory, getBloodPressureCategory,
   getCholesterolCategory, getTriglyceridesCategory,
@@ -70,6 +72,7 @@ function adjustColorBrightness(hex, percent) {
 export default function Dashboard() {
   const { user, setUser } = useAuth()
   const { dark } = useTheme()
+  const { startTour } = useOnboardingTour()
   
   const customThemeStyles = user?.themeColor ? {
     '--color-theme-accent': user.themeColor,
@@ -80,6 +83,16 @@ export default function Dashboard() {
   } : {}
   const [stats, setStats] = useState(null)
   const [records, setRecords] = useState([])
+
+  // Auto-lanzar el tour para usuarios nuevos en su primer login
+  useEffect(() => {
+    if (user && !user.hasCompletedOnboarding && localStorage.getItem('jcs_tour_completed') !== 'true') {
+      const timer = setTimeout(() => {
+        startTour()
+      }, 1200)
+      return () => clearTimeout(timer)
+    }
+  }, [user, startTour])
   const [activeType, setActiveType] = useState('weight')
   const [startIndex, setStartIndex] = useState(0)
 
@@ -739,7 +752,7 @@ export default function Dashboard() {
             <FaChartLine style={{ color: 'white', fontSize: '1.1rem' }} />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-surface-900)' }}>
+            <h1 id="tour-welcome-title" style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-surface-900)' }}>
               Hola, {user?.name?.split(' ')[0]} 👋
             </h1>
             <p style={{ fontSize: '0.85rem', color: dark ? '#ffffff' : 'var(--color-surface-500)' }}>
@@ -779,6 +792,7 @@ export default function Dashboard() {
 
           {streaks && (
             <button
+              id="tour-streak-btn"
               onClick={() => setShowStreakModal(true)}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
@@ -945,6 +959,16 @@ export default function Dashboard() {
 
 
 
+      {/* ── Welcome Checklist ── */}
+      {!isViewingFamily && (
+        <WelcomeChecklist
+          stats={stats}
+          records={records}
+          user={user}
+          onStartTour={startTour}
+        />
+      )}
+
       {/* ── Family Profile Selector Bar ─────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -1088,7 +1112,7 @@ export default function Dashboard() {
       )}
 
       {/* Summary Cards Carousel */}
-      <div style={{
+      <div id="tour-carousel-metrics" style={{
         display: 'flex',
         alignItems: 'center',
         gap: '0.75rem',
@@ -1334,6 +1358,7 @@ export default function Dashboard() {
               <FaFilter size={11} /> Filtrar fechas
             </button>
             <button
+              id="tour-new-record-btn"
               onClick={() => openWeightModal(activeType)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.4rem',
@@ -1590,8 +1615,10 @@ export default function Dashboard() {
         })}
       </div>
 
-      <MedicationsPanel selectedFamilyId={selectedFamilyId} />
-      <SupplementsPanel selectedFamilyId={selectedFamilyId} />
+      <div id="tour-treatments-section">
+        <MedicationsPanel selectedFamilyId={selectedFamilyId} />
+        <SupplementsPanel selectedFamilyId={selectedFamilyId} />
+      </div>
 
       {/* Add Record Modal */}
       {showModal && (

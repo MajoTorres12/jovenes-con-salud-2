@@ -202,6 +202,9 @@ export default function MedicationsPanel({ selectedFamilyId = null }) {
       const { data } = await api.get('/medications', { params })
       const list = data.medications || []
       setMedications(list)
+      if (list.length > 0) {
+        localStorage.setItem('jcs_treatment_added', 'true')
+      }
       
       // Sincronizar alarmas locales en dispositivo móvil (solo para el titular, no familiares)
       if (!selectedFamilyId) {

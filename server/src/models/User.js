@@ -112,6 +112,11 @@ const User = sequelize.define('User', {
     field: 'theme_color',
     defaultValue: null
   },
+  hasCompletedOnboarding: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'has_completed_onboarding',
+  },
   resetPasswordToken: {
     type: DataTypes.STRING(255),
     allowNull: true,

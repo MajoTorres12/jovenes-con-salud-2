@@ -809,6 +809,7 @@ export default function Navbar() {
 
                       {user && (
                         <button
+                          id="tour-wearables-btn"
                           onClick={() => {
                             setUserMenuOpen(false)
                             setShowWearableModal(true)

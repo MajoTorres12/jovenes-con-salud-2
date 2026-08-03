@@ -96,4 +96,26 @@ router.put('/theme', async (req, res) => {
   }
 })
 
+// PUT /api/profile/onboarding-complete — mark onboarding as completed
+router.put('/onboarding-complete', async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id)
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' })
+    }
+
+    user.hasCompletedOnboarding = true
+    await user.save()
+
+    res.json({
+      message: 'Onboarding completado exitosamente',
+      hasCompletedOnboarding: true,
+    })
+  } catch (error) {
+    console.error('Error al marcar onboarding como completado:', error)
+    res.status(500).json({ error: 'Error al actualizar el estado de onboarding' })
+  }
+})
+
 export default router

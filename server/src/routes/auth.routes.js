@@ -66,6 +66,7 @@ router.post('/register', async (req, res) => {
         role: user.role,
         doctorId: user.doctorId,
         themeColor: user.themeColor,
+        hasCompletedOnboarding: user.hasCompletedOnboarding,
       },
     })
   } catch (error) {
@@ -113,6 +114,7 @@ router.post('/login', async (req, res) => {
         role: user.role,
         doctorId: user.doctorId,
         themeColor: user.themeColor,
+        hasCompletedOnboarding: user.hasCompletedOnboarding,
       },
     })
   } catch (error) {
@@ -133,7 +135,7 @@ router.get('/me', async (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET)
 
     const user = await User.findByPk(decoded.id, {
-      attributes: ['id', 'name', 'email', 'role', 'birthDate', 'avatar', 'createdAt', 'doctorId', 'themeColor'],
+      attributes: ['id', 'name', 'email', 'role', 'birthDate', 'avatar', 'createdAt', 'doctorId', 'themeColor', 'hasCompletedOnboarding'],
     })
 
     if (!user) {

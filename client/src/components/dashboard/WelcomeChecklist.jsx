@@ -7,6 +7,9 @@ import api from '../../services/api'
 export default function WelcomeChecklist({ stats, records, user, onStartTour, onDismiss }) {
   const { dark } = useTheme()
   const [dismissed, setDismissed] = useState(false)
+  const [tourDoneState, setTourDoneState] = useState(
+    localStorage.getItem('jcs_tour_completed') === 'true' || !!user?.hasCompletedOnboarding
+  )
 
   useEffect(() => {
     if (localStorage.getItem('jcs_checklist_dismissed') === 'true' || user?.hasCompletedOnboarding) {
@@ -14,7 +17,23 @@ export default function WelcomeChecklist({ stats, records, user, onStartTour, on
     }
   }, [user?.hasCompletedOnboarding])
 
-  const tourDone = localStorage.getItem('jcs_tour_completed') === 'true'
+  useEffect(() => {
+    const handleTourCompleted = () => {
+      setTourDoneState(true)
+      localStorage.setItem('jcs_tour_completed', 'true')
+    }
+    window.addEventListener('jcs-tour-completed', handleTourCompleted)
+    return () => window.removeEventListener('jcs-tour-completed', handleTourCompleted)
+  }, [])
+
+  const handleStartTour = () => {
+    setTourDoneState(true)
+    localStorage.setItem('jcs_tour_completed', 'true')
+    window.dispatchEvent(new Event('jcs-tour-completed'))
+    onStartTour?.()
+  }
+
+  const tourDone = tourDoneState || localStorage.getItem('jcs_tour_completed') === 'true' || !!user?.hasCompletedOnboarding
   const recordDone = (records && records.length > 0) || (stats?.latest && Object.values(stats.latest).some(Boolean))
   const treatmentDone = localStorage.getItem('jcs_treatment_added') === 'true'
   const wearableDone = !!user?.wearableConnected
@@ -25,8 +44,8 @@ export default function WelcomeChecklist({ stats, records, user, onStartTour, on
       label: 'Realiza el tour guiado por la plataforma',
       icon: FaCompass,
       done: tourDone,
-      action: onStartTour,
-      actionText: 'Iniciar Tour',
+      action: handleStartTour,
+      actionText: tourDone ? 'Ver Tour' : 'Iniciar Tour',
     },
     {
       id: 'record',
@@ -159,12 +178,13 @@ export default function WelcomeChecklist({ stats, records, user, onStartTour, on
                   {task.label}
                 </span>
               </div>
-              {task.action && !task.done && (
+              {task.action && (
                 <button
                   onClick={task.action}
                   style={{
                     padding: '0.2rem 0.55rem', borderRadius: '6px',
-                    background: 'var(--color-primary-500)', color: 'white',
+                    background: task.done ? 'var(--color-surface-300)' : 'var(--color-primary-500)',
+                    color: task.done ? 'var(--color-surface-700)' : 'white',
                     border: 'none', fontSize: '0.72rem', fontWeight: '600',
                     cursor: 'pointer', flexShrink: 0,
                   }}

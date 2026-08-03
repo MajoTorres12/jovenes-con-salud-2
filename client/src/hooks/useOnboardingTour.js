@@ -70,6 +70,10 @@ export function useOnboardingTour({ onTourComplete } = {}) {
       return
     }
 
+    // Marcar como completado al iniciar para actualizar el checklist inmediatamente
+    localStorage.setItem('jcs_tour_completed', 'true')
+    window.dispatchEvent(new Event('jcs-tour-completed'))
+
     const driverObj = driver({
       showProgress: true,
       animate: true,
@@ -89,6 +93,7 @@ export function useOnboardingTour({ onTourComplete } = {}) {
           console.error('Error al guardar estado de onboarding:', err)
         }
         localStorage.setItem('jcs_tour_completed', 'true')
+        window.dispatchEvent(new Event('jcs-tour-completed'))
         onTourComplete?.()
       },
       steps: validSteps,

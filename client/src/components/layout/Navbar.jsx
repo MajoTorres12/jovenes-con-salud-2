@@ -1354,12 +1354,16 @@ export default function Navbar() {
             padding: '1.5rem',
             width: '100%',
             maxWidth: '460px',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
             boxShadow: 'var(--shadow-elevated)',
             border: '1px solid var(--color-surface-200)',
             position: 'relative',
             animation: 'wearable-modal-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            overflow: 'hidden',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <MdWatch size={20} style={{ color: 'var(--color-primary-500)' }} />
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-surface-900)' }}>

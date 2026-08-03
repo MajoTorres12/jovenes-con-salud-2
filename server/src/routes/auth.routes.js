@@ -95,42 +95,13 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({ error: 'Tu cuenta ha sido desactivada' })
     }
 
-    // Check if account is currently locked out
-    if (user.lockUntil && new Date(user.lockUntil) > new Date()) {
-      const minutesLeft = Math.ceil((new Date(user.lockUntil) - new Date()) / 60000)
-      return res.status(423).json({
-        error: `Tu cuenta se encuentra bloqueada temporalmente por seguridad. Por favor reintenta en ${minutesLeft} minuto(s).`
-      })
-    }
-
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password)
     if (!isValidPassword) {
-      const attempts = (user.failedLoginAttempts || 0) + 1
-      let lockUntil = null
-
-      if (attempts >= 10) {
-        lockUntil = new Date(Date.now() + 15 * 60 * 1000) // Bloqueo por 15 min
-      }
-
-      await user.update({
-        failedLoginAttempts: attempts,
-        lockUntil,
-      })
-
-      if (attempts >= 10) {
-        return res.status(423).json({
-          error: 'Has alcanzado el límite de 10 intentos fallidos. Tu cuenta ha sido bloqueada por 15 minutos.'
-        })
-      }
-
-      const remaining = 10 - attempts
-      return res.status(401).json({
-        error: `Credenciales inválidas. Te quedan ${remaining} intento(s) antes del bloqueo de cuenta.`
-      })
+      return res.status(401).json({ error: 'Credenciales inválidas' })
     }
 
-    // Successful login: Reset failed login attempts and unlock
+    // Reset any lockout state if previously locked
     if (user.failedLoginAttempts > 0 || user.lockUntil !== null) {
       await user.update({
         failedLoginAttempts: 0,

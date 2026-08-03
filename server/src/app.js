@@ -31,9 +31,8 @@ import ContactSettings from './models/ContactSettings.js'
 
 const app = express()
 
-// ========================================
-// Middleware
-// ========================================
+// Disable X-Powered-By header for security
+app.disable('x-powered-by')
 
 // Security headers
 app.use(helmet({

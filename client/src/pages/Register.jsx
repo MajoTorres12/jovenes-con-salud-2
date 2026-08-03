@@ -256,6 +256,51 @@ export default function Register() {
             {errors.confirmPassword && <span style={{ fontSize: '0.8rem', color: 'var(--color-error)' }}>{errors.confirmPassword.message}</span>}
           </div>
 
+          {/* Aceptación de Aviso de Privacidad y Uso de Datos */}
+          <div style={{ marginTop: '0.25rem' }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.6rem',
+              cursor: 'pointer',
+              fontSize: '0.83rem',
+              color: 'var(--color-surface-600)',
+              lineHeight: '1.4',
+            }}>
+              <input
+                type="checkbox"
+                {...formRegister('acceptPrivacy', {
+                  required: 'Debes aceptar el aviso de privacidad y el uso de datos de salud para continuar.'
+                })}
+                style={{
+                  marginTop: '0.15rem',
+                  accentColor: 'var(--color-primary-500)',
+                  width: '16px',
+                  height: '16px',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              />
+              <span>
+                He leído y acepto el{' '}
+                <Link
+                  to="/aviso-de-privacidad"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--color-primary-500)', fontWeight: '600', textDecoration: 'underline' }}
+                >
+                  Aviso de Privacidad
+                </Link>{' '}
+                y autorizo el tratamiento de mis datos personales y de salud.
+              </span>
+            </label>
+            {errors.acceptPrivacy && (
+              <span style={{ display: 'block', marginTop: '0.35rem', fontSize: '0.8rem', color: 'var(--color-error)', fontWeight: '500' }}>
+                {errors.acceptPrivacy.message}
+              </span>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={isLoading}

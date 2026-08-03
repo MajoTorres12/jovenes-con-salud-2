@@ -1,0 +1,869 @@
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  FaArrowLeft, FaFileMedical, FaUser, FaIdCard, FaTint, FaHeartbeat,
+  FaExclamationTriangle, FaPlus, FaTimes, FaFileUpload, FaFilePdf,
+  FaDownload, FaTrash, FaCheck, FaBuilding, FaNotesMedical, FaSearch,
+  FaFileDownload, FaInfoCircle
+} from 'react-icons/fa'
+import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import api, { getApiBaseUrl } from '../services/api'
+import { generateClinicalReportPDF } from '../utils/clinicalReportPdf'
+
+const API_BASE = getApiBaseUrl()
+
+const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']
+
+export default function UniversalMedicalHistory() {
+  const { user } = useAuth()
+  const { dark } = useTheme()
+
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [uploadingPdf, setUploadingPdf] = useState(false)
+  const [successMsg, setSuccessMsg] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
+
+  // Expediente State
+  const [history, setHistory] = useState({
+    curp: '',
+    nss: '',
+    bloodType: 'O+',
+    organDonor: false,
+    allergies: [],
+    hereditaryDiseases: [],
+    personalPathologies: [],
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    emergencyContactRelation: '',
+    diagnoses: [],
+    labReports: [],
+  })
+
+  // Inputs para agregar elementos
+  const [newAllergy, setNewAllergy] = useState('')
+  const [newHereditary, setNewHereditary] = useState('')
+  const [newPathology, setNewPathology] = useState('')
+
+  // Formulario nuevo diagnóstico CIE-10
+  const [showDiagForm, setShowDiagForm] = useState(false)
+  const [diagForm, setDiagForm] = useState({ code: '', name: '', status: 'En Tratamiento' })
+
+  // Formulario subir PDF
+  const [showPdfModal, setShowPdfModal] = useState(false)
+  const [pdfForm, setPdfForm] = useState({
+    title: '',
+    labName: '',
+    date: new Date().toISOString().slice(0, 10),
+    file: null,
+  })
+
+  // Cargar expediente al montar
+  useEffect(() => {
+    fetchMedicalHistory()
+  }, [])
+
+  const fetchMedicalHistory = async () => {
+    setLoading(true)
+    try {
+      const { data } = await api.get('/profile/medical-history')
+      if (data.medicalHistory) {
+        setHistory({
+          curp: data.medicalHistory.curp || '',
+          nss: data.medicalHistory.nss || '',
+          bloodType: data.medicalHistory.bloodType || 'O+',
+          organDonor: !!data.medicalHistory.organDonor,
+          allergies: Array.isArray(data.medicalHistory.allergies) ? data.medicalHistory.allergies : [],
+          hereditaryDiseases: Array.isArray(data.medicalHistory.hereditaryDiseases) ? data.medicalHistory.hereditaryDiseases : [],
+          personalPathologies: Array.isArray(data.medicalHistory.personalPathologies) ? data.medicalHistory.personalPathologies : [],
+          emergencyContactName: data.medicalHistory.emergencyContactName || '',
+          emergencyContactPhone: data.medicalHistory.emergencyContactPhone || '',
+          emergencyContactRelation: data.medicalHistory.emergencyContactRelation || '',
+          diagnoses: Array.isArray(data.medicalHistory.diagnoses) ? data.medicalHistory.diagnoses : [],
+          labReports: Array.isArray(data.medicalHistory.labReports) ? data.medicalHistory.labReports : [],
+        })
+      }
+    } catch (err) {
+      console.error('Error cargando historial médico:', err)
+      setErrorMsg('No se pudo cargar el expediente clínico. Intenta de nuevo.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveHistory = async (e) => {
+    if (e) e.preventDefault()
+    setSaving(true)
+    setSuccessMsg('')
+    setErrorMsg('')
+    try {
+      const { data } = await api.put('/profile/medical-history', history)
+      setSuccessMsg('Expediente clínico actualizado exitosamente.')
+      setTimeout(() => setSuccessMsg(''), 4000)
+    } catch (err) {
+      console.error('Error guardando expediente:', err)
+      setErrorMsg(err.response?.data?.error || 'Error al guardar los datos del expediente.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Manejo de listas
+  const addAllergy = () => {
+    if (!newAllergy.trim()) return
+    setHistory(prev => ({ ...prev, allergies: [...prev.allergies, newAllergy.trim()] }))
+    setNewAllergy('')
+  }
+  const removeAllergy = (idx) => {
+    setHistory(prev => ({ ...prev, allergies: prev.allergies.filter((_, i) => i !== idx) }))
+  }
+
+  const addHereditary = () => {
+    if (!newHereditary.trim()) return
+    setHistory(prev => ({ ...prev, hereditaryDiseases: [...prev.hereditaryDiseases, newHereditary.trim()] }))
+    setNewHereditary('')
+  }
+  const removeHereditary = (idx) => {
+    setHistory(prev => ({ ...prev, hereditaryDiseases: prev.hereditaryDiseases.filter((_, i) => i !== idx) }))
+  }
+
+  const addPathology = () => {
+    if (!newPathology.trim()) return
+    setHistory(prev => ({ ...prev, personalPathologies: [...prev.personalPathologies, newPathology.trim()] }))
+    setNewPathology('')
+  }
+  const removePathology = (idx) => {
+    setHistory(prev => ({ ...prev, personalPathologies: prev.personalPathologies.filter((_, i) => i !== idx) }))
+  }
+
+  const handleAddDiagnosis = (e) => {
+    e.preventDefault()
+    if (!diagForm.name.trim()) return
+    const newDiag = {
+      id: `diag_${Date.now()}`,
+      code: diagForm.code.trim().toUpperCase() || 'CIE-10',
+      name: diagForm.name.trim(),
+      status: diagForm.status,
+      date: new Date().toISOString().slice(0, 10),
+    }
+    setHistory(prev => ({ ...prev, diagnoses: [newDiag, ...prev.diagnoses] }))
+    setDiagForm({ code: '', name: '', status: 'En Tratamiento' })
+    setShowDiagForm(false)
+  }
+
+  const handleRemoveDiagnosis = (id) => {
+    setHistory(prev => ({ ...prev, diagnoses: prev.diagnoses.filter(d => d.id !== id) }))
+  }
+
+  // Subir PDF de Análisis Clínico
+  const handleUploadPdf = async (e) => {
+    e.preventDefault()
+    if (!pdfForm.file) {
+      alert('Por favor selecciona un archivo PDF.')
+      return
+    }
+    setUploadingPdf(true)
+    setErrorMsg('')
+    try {
+      const formData = new FormData()
+      formData.append('pdf', pdfForm.file)
+      formData.append('title', pdfForm.title || 'Análisis Clínico')
+      formData.append('labName', pdfForm.labName || 'Laboratorio Externo')
+      formData.append('date', pdfForm.date)
+
+      const { data } = await api.post('/profile/medical-history/upload-pdf', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      if (data.medicalHistory) {
+        setHistory(prev => ({ ...prev, labReports: data.medicalHistory.labReports || [] }))
+      }
+      setShowPdfModal(false)
+      setPdfForm({ title: '', labName: '', date: new Date().toISOString().slice(0, 10), file: null })
+      setSuccessMsg('Estudio médico en PDF subido exitosamente.')
+      setTimeout(() => setSuccessMsg(''), 4000)
+    } catch (err) {
+      console.error('Error subiendo PDF:', err)
+      alert(err.response?.data?.error || 'Error al subir el estudio médico en PDF.')
+    } finally {
+      setUploadingPdf(false)
+    }
+  }
+
+  const handleDeletePdf = async (pdfId) => {
+    if (!window.confirm('¿Eliminar este análisis médico en PDF?')) return
+    try {
+      const { data } = await api.delete(`/profile/medical-history/pdf/${pdfId}`)
+      if (data.medicalHistory) {
+        setHistory(prev => ({ ...prev, labReports: data.medicalHistory.labReports || [] }))
+      }
+    } catch (err) {
+      console.error('Error eliminando PDF:', err)
+    }
+  }
+
+  // Importar Expediente Externo Simulado (FHIR / JSON)
+  const handleImportExternal = () => {
+    const jsonSample = {
+      curp: 'RAMV981106HTSRLN01',
+      nss: '12984712093',
+      bloodType: 'O+',
+      organDonor: true,
+      allergies: ['Penicilina', 'Mariscos'],
+      hereditaryDiseases: ['Diabetes Mellitus Tipo 2 (Materna)', 'Hipertensión Arterial (Paterna)'],
+      personalPathologies: ['Asma Bronquial Leve', 'Apendicectomía (2018)'],
+      emergencyContactName: 'María Guadalupe Vallejo',
+      emergencyContactPhone: '8341234567',
+      emergencyContactRelation: 'Madre',
+      diagnoses: [
+        { id: 'd1', code: 'E11.9', name: 'Diabetes Mellitus Tipo 2 en Control', status: 'En Tratamiento', date: '2026-01-15' },
+        { id: 'd2', code: 'I10', name: 'Hipertensión Esencial (Primaria)', status: 'Controlado', date: '2025-11-20' },
+      ],
+    }
+    setHistory(prev => ({
+      ...prev,
+      ...jsonSample,
+      allergies: Array.from(new Set([...prev.allergies, ...jsonSample.allergies])),
+      hereditaryDiseases: Array.from(new Set([...prev.hereditaryDiseases, ...jsonSample.hereditaryDiseases])),
+      personalPathologies: Array.from(new Set([...prev.personalPathologies, ...jsonSample.personalPathologies])),
+    }))
+    setSuccessMsg('¡Datos de expediente externo (FHIR) importados exitosamente! Haz clic en "Guardar Expediente" para conservar los cambios.')
+  }
+
+  const containerStyle = {
+    maxWidth: '1000px',
+    margin: '0 auto',
+    padding: '2rem 1.5rem',
+  }
+
+  const cardStyle = {
+    background: dark ? 'var(--color-surface-100)' : '#ffffff',
+    borderRadius: 'var(--radius-2xl)',
+    padding: '1.75rem',
+    boxShadow: 'var(--shadow-card)',
+    border: '1px solid var(--color-theme-accent-border)',
+    marginBottom: '1.75rem',
+  }
+
+  const sectionHeaderStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '1.25rem',
+    paddingBottom: '0.75rem',
+    borderBottom: `2px solid ${dark ? '#334155' : '#f1f5f9'}`,
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--color-surface-50)' }}>
+      <div style={containerStyle}>
+        
+        {/* Cabecera y Navegación */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem' }}>
+          <div>
+            <Link
+              to="/perfil"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                color: 'var(--color-primary-500)', fontWeight: '700', fontSize: '0.88rem',
+                textDecoration: 'none', marginBottom: '0.5rem'
+              }}
+            >
+              <FaArrowLeft /> Volver a Mi Perfil
+            </Link>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0 }}>
+              Historial Médico Universal 📋
+            </h1>
+            <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : 'var(--color-surface-500)', margin: '0.2rem 0 0' }}>
+              Expediente Clínico Electrónico (ECE) unificado, antecedentes e integración con instituciones de salud
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.6rem' }}>
+            <button
+              onClick={handleImportExternal}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.65rem 1.1rem', borderRadius: '10px',
+                border: '1.5px solid #0369a1', background: 'transparent',
+                color: '#0369a1', fontSize: '0.82rem', fontWeight: '700',
+                cursor: 'pointer', transition: 'all 0.2s',
+              }}
+              title="Simular importación de datos desde IMSS/ISSSTE/Laboratorios (HL7 FHIR)"
+            >
+              <FaFileDownload /> Importar FHIR
+            </button>
+
+            <button
+              onClick={() => generateClinicalReportPDF({ patient: user, doctor: { name: 'Dr. Autorizado', professionalLicense: 'MÉDICO-REF' }, records: [] })}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.65rem 1.1rem', borderRadius: '10px',
+                border: 'none', background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700))',
+                color: 'white', fontSize: '0.82rem', fontWeight: '700',
+                cursor: 'pointer', boxShadow: '0 4px 12px rgba(135,18,51,0.25)',
+              }}
+            >
+              <FaFilePdf /> Exportar Expediente PDF
+            </button>
+          </div>
+        </div>
+
+        {/* Notificaciones */}
+        {successMsg && (
+          <div style={{
+            padding: '0.85rem 1.25rem', borderRadius: '12px', background: '#ecfdf5',
+            border: '1px solid #10b981', color: '#065f46', fontSize: '0.88rem',
+            fontWeight: '600', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem'
+          }}>
+            <FaCheck style={{ color: '#10b981' }} /> {successMsg}
+          </div>
+        )}
+
+        {errorMsg && (
+          <div style={{
+            padding: '0.85rem 1.25rem', borderRadius: '12px', background: '#fef2f2',
+            border: '1px solid #ef4444', color: '#991b1b', fontSize: '0.88rem',
+            fontWeight: '600', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem'
+          }}>
+            <FaExclamationTriangle style={{ color: '#ef4444' }} /> {errorMsg}
+          </div>
+        )}
+
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+            <div className="spinner" />
+          </div>
+        ) : (
+          <form onSubmit={handleSaveHistory}>
+
+            {/* 1. Ficha de Identificación del Paciente */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaIdCard size={20} style={{ color: 'var(--color-primary-500)' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    1. Ficha de Identificación del Paciente
+                  </h2>
+                </div>
+                <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '20px', background: 'var(--color-primary-500)15', color: 'var(--color-primary-500)', fontWeight: '700' }}>
+                  NOM-024-SSA3-2012
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    CURP (Clave Única):
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={18}
+                    placeholder="ej. RAMV981106HTSRLN01"
+                    value={history.curp}
+                    onChange={e => setHistory({ ...history, curp: e.target.value.toUpperCase() })}
+                    style={{
+                      width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px',
+                      border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`,
+                      background: dark ? '#1e1c25' : '#ffffff', color: dark ? '#ffffff' : '#0f172a',
+                      fontSize: '0.88rem', outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    NSS / Núm. Afiliación (IMSS/ISSSTE/Privado):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ej. 12984712093"
+                    value={history.nss}
+                    onChange={e => setHistory({ ...history, nss: e.target.value })}
+                    style={{
+                      width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px',
+                      border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`,
+                      background: dark ? '#1e1c25' : '#ffffff', color: dark ? '#ffffff' : '#0f172a',
+                      fontSize: '0.88rem', outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Tipo de Sangre y Rh:
+                  </label>
+                  <select
+                    value={history.bloodType}
+                    onChange={e => setHistory({ ...history, bloodType: e.target.value })}
+                    style={{
+                      width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px',
+                      border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`,
+                      background: dark ? '#1e1c25' : '#ffffff', color: dark ? '#ffffff' : '#0f172a',
+                      fontSize: '0.88rem', outline: 'none', cursor: 'pointer'
+                    }}
+                  >
+                    {BLOOD_TYPES.map(bt => (
+                      <option key={bt} value={bt}>{bt}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', paddingTop: '1.25rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontSize: '0.88rem', fontWeight: '600', color: dark ? '#ffffff' : '#0f172a' }}>
+                    <input
+                      type="checkbox"
+                      checked={history.organDonor}
+                      onChange={e => setHistory({ ...history, organDonor: e.target.checked })}
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary-500)', cursor: 'pointer' }}
+                    />
+                    <span>Registro Activo de Donador de Órganos 🫀</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Contacto de Emergencia */}
+              <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: `1px dashed ${dark ? '#334155' : '#cbd5e1'}` }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#334155', marginBottom: '0.75rem' }}>
+                  📞 Contacto de Emergencia Autorizado
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                  <input
+                    type="text"
+                    placeholder="Nombre completo"
+                    value={history.emergencyContactName}
+                    onChange={e => setHistory({ ...history, emergencyContactName: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.85rem' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Teléfono (10 dígitos)"
+                    value={history.emergencyContactPhone}
+                    onChange={e => setHistory({ ...history, emergencyContactPhone: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.85rem' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Parentesco / Relación"
+                    value={history.emergencyContactRelation}
+                    onChange={e => setHistory({ ...history, emergencyContactRelation: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.85rem' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Alergias y Reacciones Adversas (RAM) */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaExclamationTriangle size={20} style={{ color: '#ef4444' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    2. Alergias y Reacciones Adversas (RAM)
+                  </h2>
+                </div>
+                <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: '700' }}>Alerta Crítica</span>
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                {history.allergies.length === 0 ? (
+                  <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', fontStyle: 'italic', margin: 0 }}>
+                    Sin alergias a medicamentos ni alimentos registradas.
+                  </p>
+                ) : (
+                  history.allergies.map((allergy, idx) => (
+                    <span
+                      key={idx}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                        padding: '0.35rem 0.75rem', borderRadius: '20px',
+                        background: '#fef2f2', border: '1px solid #fca5a5',
+                        color: '#991b1b', fontSize: '0.82rem', fontWeight: '700'
+                      }}
+                    >
+                      ⚠️ {allergy}
+                      <button
+                        type="button"
+                        onClick={() => removeAllergy(idx)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991b1b', padding: 0, marginLeft: '4px' }}
+                      >
+                        <FaTimes size={10} />
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', maxWidth: '400px' }}>
+                <input
+                  type="text"
+                  placeholder="Agregar alergia (ej. Penicilina, Mariscos...)"
+                  value={newAllergy}
+                  onChange={e => setNewAllergy(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addAllergy(); } }}
+                  style={{ flex: 1, padding: '0.45rem 0.75rem', borderRadius: '8px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.85rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={addAllergy}
+                  style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: 'white', fontWeight: '700', fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  <FaPlus /> Agregar
+                </button>
+              </div>
+            </div>
+
+            {/* 3. Antecedentes Médicos (Anamnesis) */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaNotesMedical size={20} style={{ color: '#0369a1' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    3. Antecedentes Médicos (Anamnesis)
+                  </h2>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                
+                {/* Heredofamiliares */}
+                <div>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#334155', marginBottom: '0.6rem' }}>
+                    🧬 Antecedentes Heredofamiliares:
+                  </h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                    {history.hereditaryDiseases.map((item, idx) => (
+                      <span key={idx} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', background: dark ? '#334155' : '#f1f5f9', color: dark ? '#f8fafc' : '#334155', fontSize: '0.78rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        {item}
+                        <button type="button" onClick={() => removeHereditary(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: dark ? '#cbd5e1' : '#64748b', padding: 0 }}><FaTimes size={9} /></button>
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <input
+                      type="text"
+                      placeholder="ej. Diabetes (Madre)"
+                      value={newHereditary}
+                      onChange={e => setNewHereditary(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addHereditary(); } }}
+                      style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: '6px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.8rem' }}
+                    />
+                    <button type="button" onClick={addHereditary} style={{ padding: '0.4rem 0.65rem', borderRadius: '6px', border: 'none', background: '#0369a1', color: 'white', fontWeight: '700', fontSize: '0.78rem', cursor: 'pointer' }}>+ Add</button>
+                  </div>
+                </div>
+
+                {/* Personales Patológicos */}
+                <div>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#334155', marginBottom: '0.6rem' }}>
+                    🏥 Personales Patológicos y Cirugías:
+                  </h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                    {history.personalPathologies.map((item, idx) => (
+                      <span key={idx} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', background: dark ? '#334155' : '#f1f5f9', color: dark ? '#f8fafc' : '#334155', fontSize: '0.78rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        {item}
+                        <button type="button" onClick={() => removePathology(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: dark ? '#cbd5e1' : '#64748b', padding: 0 }}><FaTimes size={9} /></button>
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <input
+                      type="text"
+                      placeholder="ej. Apendicectomía (2020)"
+                      value={newPathology}
+                      onChange={e => setNewPathology(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPathology(); } }}
+                      style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: '6px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.8rem' }}
+                    />
+                    <button type="button" onClick={addPathology} style={{ padding: '0.4rem 0.65rem', borderRadius: '6px', border: 'none', background: '#0369a1', color: 'white', fontWeight: '700', fontSize: '0.78rem', cursor: 'pointer' }}>+ Add</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* 4. Diagnósticos Clínicos (CIE-10) */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaBuilding size={20} style={{ color: 'var(--color-primary-500)' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    4. Diagnósticos Clínicos Codificados (CIE-10 / CIE-11)
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDiagForm(p => !p)}
+                  style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: 'none', background: 'var(--color-primary-500)', color: 'white', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}
+                >
+                  <FaPlus /> Nuevo Diagnóstico
+                </button>
+              </div>
+
+              {showDiagForm && (
+                <div style={{ padding: '1rem', borderRadius: '12px', background: dark ? '#1e1c25' : '#faf8f5', border: `1px solid ${dark ? '#334155' : '#e2e8f0'}`, marginBottom: '1.25rem' }}>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: '700', margin: '0 0 0.75rem' }}>Registrar Diagnóstico CIE-10</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 140px auto', gap: '0.6rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      placeholder="CIE-10 (ej. E11.9)"
+                      value={diagForm.code}
+                      onChange={e => setDiagForm({ ...diagForm, code: e.target.value })}
+                      style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Nombre del diagnóstico (ej. Diabetes Mellitus Tipo 2)"
+                      value={diagForm.name}
+                      onChange={e => setDiagForm({ ...diagForm, name: e.target.value })}
+                      style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+                    />
+                    <select
+                      value={diagForm.status}
+                      onChange={e => setDiagForm({ ...diagForm, status: e.target.value })}
+                      style={{ padding: '0.45rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+                    >
+                      <option value="En Tratamiento">En Tratamiento</option>
+                      <option value="Controlado">Controlado</option>
+                      <option value="Crónico">Crónico</option>
+                      <option value="Resuelto">Resuelto</option>
+                    </select>
+                    <button type="button" onClick={handleAddDiagnosis} style={{ padding: '0.45rem 0.85rem', borderRadius: '6px', border: 'none', background: 'var(--color-primary-500)', color: 'white', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}>Guardar</button>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {history.diagnoses.length === 0 ? (
+                  <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', fontStyle: 'italic', margin: 0 }}>
+                    Sin diagnósticos clínicos registrados formalmente.
+                  </p>
+                ) : (
+                  history.diagnoses.map((d) => (
+                    <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', borderRadius: '8px', background: dark ? '#1e1c25' : '#f8fafc', border: `1px solid ${dark ? '#334155' : '#e2e8f0'}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', background: 'var(--color-primary-500)20', color: 'var(--color-primary-500)', fontSize: '0.75rem', fontWeight: '800' }}>
+                          {d.code}
+                        </span>
+                        <span style={{ fontSize: '0.88rem', fontWeight: '600', color: dark ? '#fff' : '#0f172a' }}>
+                          {d.name}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: dark ? '#cbd5e1' : '#64748b' }}>
+                          ({d.date})
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ padding: '0.15rem 0.55rem', borderRadius: '12px', background: '#e0f2fe', color: '#0369a1', fontSize: '0.72rem', fontWeight: '700' }}>
+                          {d.status}
+                        </span>
+                        <button type="button" onClick={() => handleRemoveDiagnosis(d.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
+                          <FaTrash size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* 5. Módulo de Análisis Clínicos y Estudios en PDF */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaFileUpload size={20} style={{ color: '#10b981' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    5. Análisis Clínicos y Estudios Médicos en PDF
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPdfModal(true)}
+                  style={{ padding: '0.45rem 0.9rem', borderRadius: '8px', border: 'none', background: '#10b981', color: 'white', fontWeight: '700', fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <FaPlus /> Subir Análisis (PDF)
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                {history.labReports.length === 0 ? (
+                  <div style={{ gridColumn: '1 / -1', padding: '1.5rem', textAlign: 'center', borderRadius: '12px', background: dark ? '#1e1c25' : '#f8fafc', border: `2px dashed ${dark ? '#334155' : '#e2e8f0'}` }}>
+                    <FaFilePdf size={32} style={{ color: '#cbd5e1', marginBottom: '0.5rem' }} />
+                    <p style={{ fontSize: '0.88rem', fontWeight: '600', color: dark ? '#cbd5e1' : '#64748b', margin: 0 }}>
+                      No has adjuntado archivos PDF de análisis o pruebas clínicas.
+                    </p>
+                    <p style={{ fontSize: '0.78rem', color: dark ? '#94a3b8' : '#94a3b8', margin: '0.2rem 0 0' }}>
+                      Sube estudios de laboratorios públicos o privados (Salud Digna, Chopo, IMSS, ISSSTE, etc.).
+                    </p>
+                  </div>
+                ) : (
+                  history.labReports.map((report) => (
+                    <div key={report.id} style={{ padding: '1rem', borderRadius: '12px', background: dark ? '#1e1c25' : '#ffffff', border: `1.5px solid ${dark ? '#334155' : '#e2e8f0'}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <FaFilePdf size={22} style={{ color: '#ef4444' }} />
+                            <div>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: '700', color: dark ? '#fff' : '#0f172a', margin: 0 }}>
+                                {report.title}
+                              </h4>
+                              <p style={{ fontSize: '0.75rem', color: dark ? '#cbd5e1' : '#64748b', margin: 0 }}>
+                                {report.labName} • {report.date}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '0.5rem', borderTop: `1px solid ${dark ? '#334155' : '#f1f5f9'}` }}>
+                        <a
+                          href={`${API_BASE}/${report.fileUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', fontWeight: '700', color: '#0369a1', textDecoration: 'none' }}
+                        >
+                          <FaFilePdf /> Ver PDF
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePdf(report.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.8rem' }}
+                          title="Eliminar este archivo PDF"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Botón de Guardado General */}
+            <div style={{ textAlign: 'right', marginTop: '1.5rem' }}>
+              <button
+                type="submit"
+                disabled={saving}
+                style={{
+                  padding: '0.85rem 2rem', borderRadius: '12px', border: 'none',
+                  background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700))',
+                  color: 'white', fontSize: '0.95rem', fontWeight: '700',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 14px rgba(135,18,51,0.3)', transition: 'all 0.2s'
+                }}
+              >
+                {saving ? 'Guardando Expediente...' : '💾 Guardar Expediente Clínico'}
+              </button>
+            </div>
+
+          </form>
+        )}
+
+      </div>
+
+      {/* Modal Subir PDF */}
+      {showPdfModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem',
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '440px', padding: '1.75rem',
+            borderRadius: '16px', background: dark ? '#141319' : '#ffffff',
+            border: `1px solid ${dark ? '#1e1c25' : '#e2e8f0'}`,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: dark ? '#ffffff' : '#1e293b', margin: 0 }}>
+                📤 Subir Análisis Clínico (PDF)
+              </h3>
+              <button onClick={() => setShowPdfModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-surface-400)', fontSize: '1.1rem' }}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadPdf}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Título o Nombre del Estudio:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ej. Química Sanguínea 6 Elementos"
+                    value={pdfForm.title}
+                    onChange={e => setPdfForm({ ...pdfForm, title: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Laboratorio / Institución:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ej. Salud Digna / Chopo / IMSS"
+                    value={pdfForm.labName}
+                    onChange={e => setPdfForm({ ...pdfForm, labName: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Fecha de Realización:
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={pdfForm.date}
+                    onChange={e => setPdfForm({ ...pdfForm, date: e.target.value })}
+                    style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Archivo PDF del Estudio:
+                  </label>
+                  <input
+                    type="file"
+                    required
+                    accept="application/pdf,.pdf"
+                    onChange={e => setPdfForm({ ...pdfForm, file: e.target.files[0] })}
+                    style={{ width: '100%', padding: '0.4rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.82rem' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  type="submit"
+                  disabled={uploadingPdf}
+                  style={{
+                    flex: 1, padding: '0.75rem', borderRadius: '10px', border: 'none',
+                    background: '#10b981', color: 'white', fontWeight: '700', fontSize: '0.9rem',
+                    cursor: uploadingPdf ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {uploadingPdf ? 'Subiendo PDF...' : 'Subir Archivo PDF'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPdfModal(false)}
+                  style={{ padding: '0.75rem 1.25rem', borderRadius: '10px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: 'transparent', color: dark ? '#fff' : '#475569', fontWeight: '600' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+    </div>
+  )
+}

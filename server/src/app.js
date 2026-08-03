@@ -39,8 +39,9 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }))
 
-// Serve static images
+// Serve static images and uploads
 app.use('/images', express.static('public/images'))
+app.use('/uploads', express.static('public/uploads'))
 
 // CORS configuration
 const allowedOrigins = [

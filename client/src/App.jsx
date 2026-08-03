@@ -31,6 +31,8 @@ import CookieConsent from './components/layout/CookieConsent'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import OfflineBanner from './components/common/OfflineBanner'
 
+import UniversalMedicalHistory from './pages/UniversalMedicalHistory'
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -69,6 +71,11 @@ export default function App() {
             <Route path="/perfil" element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/historial-medico-universal" element={
+              <ProtectedRoute>
+                <UniversalMedicalHistory />
               </ProtectedRoute>
             } />
           </Route>

@@ -813,6 +813,24 @@ export default function Dashboard() {
             </button>
           )}
 
+          <button
+            onClick={() => startTour()}
+            title="Iniciar recorrido guiado interactivo por la plataforma"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+              padding: '0.6rem 1rem', borderRadius: '10px',
+              border: '1.5px solid var(--color-surface-200)',
+              background: 'var(--color-surface-100)',
+              color: 'var(--color-surface-700)', fontSize: '0.85rem', fontWeight: '600',
+              cursor: 'pointer', boxShadow: 'var(--shadow-sm)',
+              transition: 'all 0.2s',
+              flex: isMobile ? '1 1 calc(50% - 0.375rem)' : '0 1 auto',
+              boxSizing: 'border-box',
+            }}
+          >
+            <span>🗺️</span> Guía
+          </button>
+
           <Link
             to={`/analytics${selectedFamilyId ? `?familyMemberId=${selectedFamilyId}` : ''}`}
             style={{

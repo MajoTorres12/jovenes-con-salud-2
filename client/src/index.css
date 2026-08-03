@@ -1249,6 +1249,54 @@ p, span, a, li, h1, h2, h3, h4, h5, h6 {
   font-style: italic;
 }
 
+/* Custom Driver.js Popover Styling */
+.jcs-tour-popover {
+  border-radius: 16px !important;
+  padding: 1.25rem !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid var(--color-surface-200) !important;
+  font-family: inherit !important;
+}
+
+.dark .jcs-tour-popover {
+  background: var(--color-surface-100) !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.jcs-tour-popover .driver-popover-title {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: var(--color-primary-500) !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.jcs-tour-popover .driver-popover-description {
+  font-size: 0.88rem !important;
+  line-height: 1.45 !important;
+  color: var(--color-surface-700) !important;
+}
+
+.dark .jcs-tour-popover .driver-popover-description {
+  color: #cbd5e1 !important;
+}
+
+.jcs-tour-popover .driver-popover-next-btn {
+  background: var(--color-primary-500) !important;
+  color: white !important;
+  text-shadow: none !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+}
+
+.jcs-tour-popover .driver-popover-prev-btn {
+  border-radius: 8px !important;
+  font-size: 0.82rem !important;
+}
+
 /* Animations */
 @keyframes wearable-spin-anim {
   0% { transform: rotate(0deg); }

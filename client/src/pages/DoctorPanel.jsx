@@ -76,6 +76,10 @@ export default function DoctorPanel() {
   const [activePatientTab, setActivePatientTab] = useState('main') // 'main' or family member ID
   const [chartMetric, setChartMetric] = useState('glucose')
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [pdfDropdownOpen, setPdfDropdownOpen] = useState(false)
+  const [customPdfModalOpen, setCustomPdfModalOpen] = useState(false)
+  const [customFromDate, setCustomFromDate] = useState('')
+  const [customToDate, setCustomToDate] = useState('')
 
   // Appointments & Schedule States
   const [doctorAppointments, setDoctorAppointments] = useState([])
@@ -183,9 +187,25 @@ export default function DoctorPanel() {
     }
   }
 
-  const handleExportPatientReport = async () => {
+  const handleExportPatientReport = async (months = null, customFrom = null, customTo = null) => {
     if (!patientDetail) return
     setExportingPdf(true)
+    setPdfDropdownOpen(false)
+    setCustomPdfModalOpen(false)
+
+    let dateFrom = customFrom
+    let dateTo = customTo
+    let label = 'Historial Completo'
+
+    if (months) {
+      const from = new Date()
+      from.setMonth(from.getMonth() - months)
+      dateFrom = from.toISOString().slice(0, 10)
+      label = `Últimos ${months} mes${months > 1 ? 'es' : ''}`
+    } else if (customFrom || customTo) {
+      label = `Rango (${customFrom || 'Inicio'} al ${customTo || 'Hoy'})`
+    }
+
     try {
       await generateClinicalReportPDF({
         patient: patientDetail.patient,
@@ -195,6 +215,9 @@ export default function DoctorPanel() {
         supplements: patientDetail.supplements || [],
         alerts: patientDetail.alerts || [],
         doctor: user,
+        dateFrom,
+        dateTo,
+        dateRangeLabel: label,
       })
     } catch (err) {
       console.error('Error generando reporte clínico PDF:', err)
@@ -829,27 +852,87 @@ export default function DoctorPanel() {
                       </p>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                    <button
-                      onClick={handleExportPatientReport}
-                      disabled={exportingPdf}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                        padding: '0.6rem 1.25rem',
-                        borderRadius: '10px',
-                        border: '1.5px solid #ef4444',
-                        background: exportingPdf ? 'var(--color-surface-200)' : (dark ? '#1e1c25' : '#fff'),
-                        color: '#ef4444',
-                        fontSize: '0.82rem',
-                        fontWeight: '700',
-                        cursor: exportingPdf ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 2px 8px rgba(239, 68, 68, 0.15)',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      <FaFilePdf size={14} color="#ef4444" />
-                      {exportingPdf ? 'Generando PDF...' : '📄 Reporte Clínico PDF'}
-                    </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', position: 'relative' }}>
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={() => setPdfDropdownOpen(prev => !prev)}
+                        disabled={exportingPdf}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                          padding: '0.6rem 1.25rem',
+                          borderRadius: '10px',
+                          border: '1.5px solid #ef4444',
+                          background: exportingPdf ? 'var(--color-surface-200)' : (dark ? '#1e1c25' : '#fff'),
+                          color: '#ef4444',
+                          fontSize: '0.82rem',
+                          fontWeight: '700',
+                          cursor: exportingPdf ? 'not-allowed' : 'pointer',
+                          boxShadow: '0 2px 8px rgba(239, 68, 68, 0.15)',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <FaFilePdf size={14} color="#ef4444" />
+                        {exportingPdf ? 'Generando PDF...' : '📄 Reporte Clínico PDF'}
+                        <span style={{ fontSize: '0.65rem', marginLeft: '0.2rem' }}>▼</span>
+                      </button>
+
+                      {/* Dropdown Rango de Fechas */}
+                      {pdfDropdownOpen && (
+                        <div style={{
+                          position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 100,
+                          background: dark ? '#1e1c25' : '#ffffff',
+                          borderRadius: '12px', minWidth: '220px',
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+                          border: `1px solid ${dark ? '#334155' : '#e2e8f0'}`,
+                          overflow: 'hidden', padding: '0.5rem 0',
+                        }}>
+                          <p style={{ fontSize: '0.68rem', fontWeight: '800', color: dark ? '#94a3b8' : '#64748b', textTransform: 'uppercase', padding: '0.4rem 1rem', margin: 0 }}>
+                            Filtrar datos por fecha
+                          </p>
+                          <button
+                            onClick={() => handleExportPatientReport(1)}
+                            style={{ display: 'block', width: '100%', padding: '0.55rem 1rem', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.82rem', color: dark ? '#f8fafc' : '#1e293b' }}
+                            onMouseEnter={e => e.currentTarget.style.background = dark ? '#334155' : '#f1f5f9'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          >
+                            📅 Último mes
+                          </button>
+                          <button
+                            onClick={() => handleExportPatientReport(3)}
+                            style={{ display: 'block', width: '100%', padding: '0.55rem 1rem', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.82rem', color: dark ? '#f8fafc' : '#1e293b' }}
+                            onMouseEnter={e => e.currentTarget.style.background = dark ? '#334155' : '#f1f5f9'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          >
+                            📅 Últimos 3 meses
+                          </button>
+                          <button
+                            onClick={() => handleExportPatientReport(6)}
+                            style={{ display: 'block', width: '100%', padding: '0.55rem 1rem', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.82rem', color: dark ? '#f8fafc' : '#1e293b' }}
+                            onMouseEnter={e => e.currentTarget.style.background = dark ? '#334155' : '#f1f5f9'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          >
+                            📅 Últimos 6 meses
+                          </button>
+                          <button
+                            onClick={() => handleExportPatientReport(null)}
+                            style={{ display: 'block', width: '100%', padding: '0.55rem 1rem', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.82rem', color: dark ? '#f8fafc' : '#1e293b' }}
+                            onMouseEnter={e => e.currentTarget.style.background = dark ? '#334155' : '#f1f5f9'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          >
+                            📅 Historial completo
+                          </button>
+                          <div style={{ borderTop: `1px solid ${dark ? '#334155' : '#e2e8f0'}`, marginTop: '0.3rem', paddingTop: '0.3rem' }} />
+                          <button
+                            onClick={() => { setPdfDropdownOpen(false); setCustomPdfModalOpen(true); }}
+                            style={{ display: 'block', width: '100%', padding: '0.55rem 1rem', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '700', color: '#0369a1' }}
+                            onMouseEnter={e => e.currentTarget.style.background = dark ? '#334155' : '#f1f5f9'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          >
+                            📆 Rango personalizado...
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
                     <button
                       onClick={() => setActivePatientTab('analytics')}
@@ -2344,6 +2427,102 @@ export default function DoctorPanel() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* Modal de Rango de Fechas Personalizado para Reporte PDF */}
+        {customPdfModalOpen && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1rem',
+          }}>
+            <div style={{
+              width: '100%', maxWidth: '420px',
+              padding: '1.5rem', borderRadius: '16px',
+              background: dark ? '#141319' : '#ffffff',
+              border: `1px solid ${dark ? '#1e1c25' : '#e2e8f0'}`,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: dark ? '#ffffff' : '#1e293b', margin: 0 }}>
+                  📆 Seleccionar Rango de Fechas
+                </h3>
+                <button
+                  onClick={() => setCustomPdfModalOpen(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-surface-400)', fontSize: '1.1rem' }}
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <p style={{ fontSize: '0.82rem', color: dark ? '#cbd5e1' : '#64748b', marginBottom: '1.25rem', lineHeight: '1.4' }}>
+                Elige la fecha inicial y final para incluir únicamente las mediciones de salud registradas durante este período en el reporte PDF.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Fecha Inicial (Desde):
+                  </label>
+                  <input
+                    type="date"
+                    value={customFromDate}
+                    onChange={e => setCustomFromDate(e.target.value)}
+                    style={{
+                      width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px',
+                      border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`,
+                      background: dark ? '#1e1c25' : '#ffffff',
+                      color: dark ? '#ffffff' : '#0f172a', fontSize: '0.9rem', outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Fecha Final (Hasta):
+                  </label>
+                  <input
+                    type="date"
+                    value={customToDate}
+                    onChange={e => setCustomToDate(e.target.value)}
+                    style={{
+                      width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px',
+                      border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`,
+                      background: dark ? '#1e1c25' : '#ffffff',
+                      color: dark ? '#ffffff' : '#0f172a', fontSize: '0.9rem', outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  onClick={() => handleExportPatientReport(null, customFromDate, customToDate)}
+                  disabled={exportingPdf}
+                  style={{
+                    flex: 1, padding: '0.75rem', borderRadius: '10px', border: 'none',
+                    background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700))',
+                    color: 'white', fontWeight: '700', fontSize: '0.9rem', cursor: exportingPdf ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(135,18,51,0.25)',
+                  }}
+                >
+                  {exportingPdf ? 'Generando PDF...' : '📄 Generar Reporte PDF'}
+                </button>
+                <button
+                  onClick={() => setCustomPdfModalOpen(false)}
+                  style={{
+                    padding: '0.75rem 1.25rem', borderRadius: '10px',
+                    border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`,
+                    background: 'transparent', color: dark ? '#ffffff' : '#475569',
+                    fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

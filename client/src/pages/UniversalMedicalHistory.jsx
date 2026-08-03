@@ -203,32 +203,74 @@ export default function UniversalMedicalHistory() {
     }
   }
 
-  // Importar Expediente Externo Simulado (FHIR / JSON)
-  const handleImportExternal = () => {
-    const jsonSample = {
-      curp: 'RAMV981106HTSRLN01',
-      nss: '12984712093',
-      bloodType: 'O+',
-      organDonor: true,
-      allergies: ['Penicilina', 'Mariscos'],
-      hereditaryDiseases: ['Diabetes Mellitus Tipo 2 (Materna)', 'Hipertensión Arterial (Paterna)'],
-      personalPathologies: ['Asma Bronquial Leve', 'Apendicectomía (2018)'],
-      emergencyContactName: 'María Guadalupe Vallejo',
-      emergencyContactPhone: '8341234567',
-      emergencyContactRelation: 'Madre',
-      diagnoses: [
-        { id: 'd1', code: 'E11.9', name: 'Diabetes Mellitus Tipo 2 en Control', status: 'En Tratamiento', date: '2026-01-15' },
-        { id: 'd2', code: 'I10', name: 'Hipertensión Esencial (Primaria)', status: 'Controlado', date: '2025-11-20' },
-      ],
+  // Modal y estado para importación real de archivo FHIR / JSON
+  const [showFhirModal, setShowFhirModal] = useState(false)
+  const [fhirFile, setFhirFile] = useState(null)
+
+  const handleProcessFhirFile = (e) => {
+    e.preventDefault()
+    if (!fhirFile) {
+      alert('Por favor selecciona un archivo JSON / FHIR.')
+      return
     }
-    setHistory(prev => ({
-      ...prev,
-      ...jsonSample,
-      allergies: Array.from(new Set([...prev.allergies, ...jsonSample.allergies])),
-      hereditaryDiseases: Array.from(new Set([...prev.hereditaryDiseases, ...jsonSample.hereditaryDiseases])),
-      personalPathologies: Array.from(new Set([...prev.personalPathologies, ...jsonSample.personalPathologies])),
-    }))
-    setSuccessMsg('¡Datos de expediente externo (FHIR) importados exitosamente! Haz clic en "Guardar Expediente" para conservar los cambios.')
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const content = event.target.result
+        const parsed = JSON.parse(content)
+
+        let importedCurp = parsed.curp || ''
+        let importedNss = parsed.nss || ''
+        let importedBlood = parsed.bloodType || 'O+'
+        let importedDonor = !!parsed.organDonor
+        let importedAllergies = Array.isArray(parsed.allergies) ? parsed.allergies : []
+        let importedHereditary = Array.isArray(parsed.hereditaryDiseases) ? parsed.hereditaryDiseases : []
+        let importedPathologies = Array.isArray(parsed.personalPathologies) ? parsed.personalPathologies : []
+        let importedEmergencyName = parsed.emergencyContactName || ''
+        let importedEmergencyPhone = parsed.emergencyContactPhone || ''
+        let importedEmergencyRelation = parsed.emergencyContactRelation || ''
+        let importedDiagnoses = Array.isArray(parsed.diagnoses) ? parsed.diagnoses : []
+
+        // Parse de recurso estándar HL7 FHIR Patient / Bundle si aplica
+        if (parsed.resourceType === 'Bundle' || parsed.resourceType === 'Patient') {
+          const patientRes = parsed.resourceType === 'Patient'
+            ? parsed
+            : parsed.entry?.find(e => e.resource?.resourceType === 'Patient')?.resource
+
+          if (patientRes && patientRes.identifier) {
+            const curpObj = patientRes.identifier.find(i => i.system?.toUpperCase().includes('CURP') || i.value?.length === 18)
+            if (curpObj) importedCurp = curpObj.value
+            const nssObj = patientRes.identifier.find(i => i.system?.toUpperCase().includes('NSS'))
+            if (nssObj) importedNss = nssObj.value
+          }
+        }
+
+        setHistory(prev => ({
+          ...prev,
+          curp: importedCurp || prev.curp,
+          nss: importedNss || prev.nss,
+          bloodType: importedBlood || prev.bloodType,
+          organDonor: importedDonor || prev.organDonor,
+          allergies: Array.from(new Set([...prev.allergies, ...importedAllergies])),
+          hereditaryDiseases: Array.from(new Set([...prev.hereditaryDiseases, ...importedHereditary])),
+          personalPathologies: Array.from(new Set([...prev.personalPathologies, ...importedPathologies])),
+          emergencyContactName: importedEmergencyName || prev.emergencyContactName,
+          emergencyContactPhone: importedEmergencyPhone || prev.emergencyContactPhone,
+          emergencyContactRelation: importedEmergencyRelation || prev.emergencyContactRelation,
+          diagnoses: [...importedDiagnoses, ...prev.diagnoses],
+        }))
+
+        setShowFhirModal(false)
+        setFhirFile(null)
+        setSuccessMsg('¡Archivo FHIR / JSON importado correctamente! Haz clic en "Guardar Expediente" para guardar.')
+        setTimeout(() => setSuccessMsg(''), 5000)
+      } catch (err) {
+        console.error('Error procesando archivo FHIR:', err)
+        alert('El archivo seleccionado no contiene un formato JSON / FHIR válido.')
+      }
+    }
+    reader.readAsText(fhirFile)
   }
 
   const containerStyle = {
@@ -282,7 +324,7 @@ export default function UniversalMedicalHistory() {
 
           <div style={{ display: 'flex', gap: '0.6rem' }}>
             <button
-              onClick={handleImportExternal}
+              onClick={() => setShowFhirModal(true)}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.65rem 1.1rem', borderRadius: '10px',
@@ -290,9 +332,9 @@ export default function UniversalMedicalHistory() {
                 color: '#0369a1', fontSize: '0.82rem', fontWeight: '700',
                 cursor: 'pointer', transition: 'all 0.2s',
               }}
-              title="Simular importación de datos desde IMSS/ISSSTE/Laboratorios (HL7 FHIR)"
+              title="Importar archivo real de expediente desde tu dispositivo (HL7 FHIR / JSON)"
             >
-              <FaFileDownload /> Importar FHIR
+              <FaFileDownload /> Importar FHIR / JSON
             </button>
 
             <button
@@ -854,6 +896,71 @@ export default function UniversalMedicalHistory() {
                 <button
                   type="button"
                   onClick={() => setShowPdfModal(false)}
+                  style={{ padding: '0.75rem 1.25rem', borderRadius: '10px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: 'transparent', color: dark ? '#fff' : '#475569', fontWeight: '600' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Importar Archivo FHIR / JSON Real */}
+      {showFhirModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem',
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '460px', padding: '1.75rem',
+            borderRadius: '16px', background: dark ? '#141319' : '#ffffff',
+            border: `1px solid ${dark ? '#1e1c25' : '#e2e8f0'}`,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: dark ? '#ffffff' : '#1e293b', margin: 0 }}>
+                📥 Importar Archivo FHIR / JSON
+              </h3>
+              <button onClick={() => setShowFhirModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-surface-400)', fontSize: '1.1rem' }}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.82rem', color: dark ? '#cbd5e1' : '#64748b', marginBottom: '1.25rem', lineHeight: '1.4' }}>
+              Selecciona un archivo de expediente clínico en formato <strong>HL7 FHIR (.json)</strong> exportado desde cualquier sistema de salud o laboratorio.
+            </p>
+
+            <form onSubmit={handleProcessFhirFile}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                  Seleccionar Archivo FHIR (.json):
+                </label>
+                <input
+                  type="file"
+                  required
+                  accept=".json,.fhir,application/json"
+                  onChange={e => setFhirFile(e.target.files[0])}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.82rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 1, padding: '0.75rem', borderRadius: '10px', border: 'none',
+                    background: '#0369a1', color: 'white', fontWeight: '700', fontSize: '0.9rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Procesar e Importar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFhirModal(false)}
                   style={{ padding: '0.75rem 1.25rem', borderRadius: '10px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: 'transparent', color: dark ? '#fff' : '#475569', fontWeight: '600' }}
                 >
                   Cancelar

@@ -63,26 +63,13 @@ app.use(cors({
   credentials: true,
 }))
 
-// Rate limiting
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 100, // límite de 100 peticiones por IP cada 15 min
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Demasiadas solicitudes desde esta IP. Por favor reintenta en 15 minutos.' },
-})
-
-const authLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 min
-  max: 5, // límite estricto de 5 intentos por IP por minuto
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Demasiados intentos de inicio de sesión desde esta IP. Por favor espera 1 minuto.' },
-})
-
-app.use('/api/', globalLimiter)
-app.use('/api/auth/login', authLimiter)
-app.use('/api/auth/register', authLimiter)
+// Rate limiting (desactivado por solicitud)
+// const globalLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   max: 100,
+//   message: { error: 'Demasiadas solicitudes desde esta IP. Por favor reintenta en 15 minutos.' },
+// })
+// app.use('/api/', globalLimiter)
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }))

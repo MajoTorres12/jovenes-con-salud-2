@@ -868,12 +868,12 @@ export default function UniversalMedicalHistory() {
               </div>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                {history.allergies.length === 0 ? (
+                {(!history.allergies || history.allergies.length === 0) ? (
                   <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', fontStyle: 'italic', margin: 0 }}>
                     Sin alergias a medicamentos ni alimentos registradas.
                   </p>
                 ) : (
-                  history.allergies.map((allergy, idx) => (
+                  (history.allergies || []).map((allergy, idx) => (
                     <span
                       key={idx}
                       style={{
@@ -934,7 +934,7 @@ export default function UniversalMedicalHistory() {
                     🧬 Antecedentes Heredofamiliares:
                   </h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
-                    {history.hereditaryDiseases.map((item, idx) => (
+                    {(history.hereditaryDiseases || []).map((item, idx) => (
                       <span key={idx} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', background: dark ? '#334155' : '#f1f5f9', color: dark ? '#f8fafc' : '#334155', fontSize: '0.78rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                         {item}
                         <button type="button" onClick={() => removeHereditary(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: dark ? '#cbd5e1' : '#64748b', padding: 0 }}><FaTimes size={9} /></button>
@@ -960,7 +960,7 @@ export default function UniversalMedicalHistory() {
                     🏥 Personales Patológicos y Cirugías:
                   </h4>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
-                    {history.personalPathologies.map((item, idx) => (
+                    {(history.personalPathologies || []).map((item, idx) => (
                       <span key={idx} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', background: dark ? '#334155' : '#f1f5f9', color: dark ? '#f8fafc' : '#334155', fontSize: '0.78rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                         {item}
                         <button type="button" onClick={() => removePathology(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: dark ? '#cbd5e1' : '#64748b', padding: 0 }}><FaTimes size={9} /></button>
@@ -1035,12 +1035,12 @@ export default function UniversalMedicalHistory() {
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {history.diagnoses.length === 0 ? (
+                {(!history.diagnoses || history.diagnoses.length === 0) ? (
                   <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', fontStyle: 'italic', margin: 0 }}>
                     Sin diagnósticos clínicos registrados formalmente.
                   </p>
                 ) : (
-                  history.diagnoses.map((d) => (
+                  (history.diagnoses || []).map((d) => (
                     <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', borderRadius: '8px', background: dark ? '#1e1c25' : '#f8fafc', border: `1px solid ${dark ? '#334155' : '#e2e8f0'}` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', background: 'var(--color-primary-500)20', color: 'var(--color-primary-500)', fontSize: '0.75rem', fontWeight: '800' }}>
@@ -1086,7 +1086,7 @@ export default function UniversalMedicalHistory() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-                {history.labReports.length === 0 ? (
+                {(!history.labReports || history.labReports.length === 0) ? (
                   <div style={{ gridColumn: '1 / -1', padding: '1.5rem', textAlign: 'center', borderRadius: '12px', background: dark ? '#1e1c25' : '#f8fafc', border: `2px dashed ${dark ? '#334155' : '#e2e8f0'}` }}>
                     <FaFilePdf size={32} style={{ color: '#cbd5e1', marginBottom: '0.5rem' }} />
                     <p style={{ fontSize: '0.88rem', fontWeight: '600', color: dark ? '#cbd5e1' : '#64748b', margin: 0 }}>
@@ -1097,7 +1097,7 @@ export default function UniversalMedicalHistory() {
                     </p>
                   </div>
                 ) : (
-                  history.labReports.map((report) => (
+                  (history.labReports || []).map((report) => (
                     <div key={report.id} style={{ padding: '1rem', borderRadius: '12px', background: dark ? '#1e1c25' : '#ffffff', border: `1.5px solid ${dark ? '#334155' : '#e2e8f0'}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -1160,7 +1160,7 @@ export default function UniversalMedicalHistory() {
                 </div>
               </div>
 
-              {healthRecords.length === 0 ? (
+              {(!healthRecords || healthRecords.length === 0) ? (
                 <div style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '12px', background: dark ? '#1e1c25' : '#f8fafc', border: `1px dashed ${dark ? '#334155' : '#e2e8f0'}` }}>
                   <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', margin: 0 }}>
                     No se han registrado signos vitales recientemente. Registra tus mediciones desde el Dashboard de Salud.
@@ -1170,8 +1170,8 @@ export default function UniversalMedicalHistory() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                   {(() => {
                     const latestByType = {}
-                    healthRecords.forEach(r => {
-                      if (!latestByType[r.type] || new Date(r.recordedAt) > new Date(latestByType[r.type].recordedAt)) {
+                    ;(healthRecords || []).forEach(r => {
+                      if (r && r.type && (!latestByType[r.type] || (r.recordedAt && new Date(r.recordedAt) > new Date(latestByType[r.type].recordedAt)))) {
                         latestByType[r.type] = r
                       }
                     })
@@ -1201,7 +1201,7 @@ export default function UniversalMedicalHistory() {
                           {record.value} {record.value2 != null ? `/ ${record.value2}` : ''} <span style={{ fontSize: '0.78rem', fontWeight: '600', color: dark ? '#94a3b8' : '#64748b' }}>{record.unit}</span>
                         </div>
                         <div style={{ fontSize: '0.68rem', color: dark ? '#94a3b8' : '#94a3b8', marginTop: '0.3rem' }}>
-                          {new Date(record.recordedAt).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}
+                          {record.recordedAt ? new Date(record.recordedAt).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }) : ''}
                         </div>
                       </div>
                     ))
@@ -1232,7 +1232,7 @@ export default function UniversalMedicalHistory() {
                 </div>
               </div>
 
-              {medications.length === 0 ? (
+              {(!medications || medications.length === 0) ? (
                 <div style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '12px', background: dark ? '#1e1c25' : '#f8fafc', border: `1px dashed ${dark ? '#334155' : '#e2e8f0'}` }}>
                   <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', margin: 0 }}>
                     No tienes medicamentos registrados actualmente. Administra tus recetas e indicaciones desde el Dashboard de Salud.
@@ -1240,7 +1240,7 @@ export default function UniversalMedicalHistory() {
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.85rem' }}>
-                  {medications.map(med => (
+                  {(medications || []).map(med => (
                     <div key={med.id} style={{ padding: '0.85rem 1rem', borderRadius: '10px', background: dark ? '#1e1c25' : '#ffffff', border: `1px solid ${dark ? '#334155' : '#e2e8f0'}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
                         <h4 style={{ fontSize: '0.92rem', fontWeight: '700', color: dark ? '#ffffff' : '#0f172a', margin: 0 }}>
@@ -1292,12 +1292,12 @@ export default function UniversalMedicalHistory() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {history.vaccines.length === 0 ? (
+                {(!history.vaccines || history.vaccines.length === 0) ? (
                   <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', fontStyle: 'italic', margin: 0 }}>
                     Sin registro de vacunas. Agrega vacunas individuales o carga el Esquema Nacional Recomendado.
                   </p>
                 ) : (
-                  history.vaccines.map(vac => (
+                  (history.vaccines || []).map(vac => (
                     <div key={vac.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', borderRadius: '8px', background: dark ? '#1e1c25' : '#f8fafc', border: `1px solid ${dark ? '#334155' : '#e2e8f0'}` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <FaSyringe style={{ color: '#0284c7' }} />
@@ -1440,12 +1440,12 @@ export default function UniversalMedicalHistory() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {history.clinicalNotes.length === 0 ? (
+                {(!history.clinicalNotes || history.clinicalNotes.length === 0) ? (
                   <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', fontStyle: 'italic', margin: 0 }}>
                     Sin notas de evolución médica registradas.
                   </p>
                 ) : (
-                  history.clinicalNotes.map(note => (
+                  (history.clinicalNotes || []).map(note => (
                     <div key={note.id} style={{ padding: '1rem', borderRadius: '12px', background: dark ? '#1e1c25' : '#ffffff', border: `1.5px solid ${dark ? '#334155' : '#e2e8f0'}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
                         <div>

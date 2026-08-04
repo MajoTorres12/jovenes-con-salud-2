@@ -4,7 +4,8 @@ import {
   FaArrowLeft, FaFileMedical, FaUser, FaIdCard, FaTint, FaHeartbeat,
   FaExclamationTriangle, FaPlus, FaTimes, FaFileUpload, FaFilePdf,
   FaDownload, FaTrash, FaCheck, FaBuilding, FaNotesMedical, FaSearch,
-  FaFileDownload, FaInfoCircle, FaLink, FaHospital, FaSync, FaCheckCircle
+  FaFileDownload, FaInfoCircle, FaLink, FaHospital, FaSync, FaCheckCircle,
+  FaShieldAlt, FaMedkit
 } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -60,11 +61,17 @@ export default function UniversalMedicalHistory() {
   })
 
   // Estado de instituciones vinculadas
+  const institutionIcons = {
+    'imss': <FaHospital size={22} />,
+    'issste': <FaBuilding size={22} />,
+    'imss-bienestar': <FaMedkit size={22} />,
+    'seguro-privado': <FaShieldAlt size={22} />,
+  }
   const [linkedInstitutions, setLinkedInstitutions] = useState([
-    { id: 'imss', name: 'IMSS', fullName: 'Instituto Mexicano del Seguro Social', icon: '🏥', color: '#00723f', linked: false, code: '', lastSync: null },
-    { id: 'issste', name: 'ISSSTE', fullName: 'Instituto de Seguridad y Servicios Sociales de los Trabajadores del Estado', icon: '🏛️', color: '#1e3a5f', linked: false, code: '', lastSync: null },
-    { id: 'imss-bienestar', name: 'IMSS-Bienestar', fullName: 'IMSS-Bienestar (antes INSABI)', icon: '💚', color: '#6b8e23', linked: false, code: '', lastSync: null },
-    { id: 'seguro-privado', name: 'Seguro Privado', fullName: 'Seguro de Gastos Médicos Mayores (Privado)', icon: '🛡️', color: '#7c3aed', linked: false, code: '', lastSync: null },
+    { id: 'imss', name: 'IMSS', fullName: 'Instituto Mexicano del Seguro Social', color: '#00723f', linked: false, code: '', lastSync: null },
+    { id: 'issste', name: 'ISSSTE', fullName: 'Instituto de Seguridad y Servicios Sociales de los Trabajadores del Estado', color: '#1e3a5f', linked: false, code: '', lastSync: null },
+    { id: 'imss-bienestar', name: 'IMSS-Bienestar', fullName: 'IMSS-Bienestar (antes INSABI)', color: '#6b8e23', linked: false, code: '', lastSync: null },
+    { id: 'seguro-privado', name: 'Seguro Privado', fullName: 'Seguro de Gastos Médicos Mayores (Privado)', color: '#7c3aed', linked: false, code: '', lastSync: null },
   ])
   const [linkingId, setLinkingId] = useState(null)
 
@@ -447,7 +454,7 @@ export default function UniversalMedicalHistory() {
                 {/* Cabecera de la institución */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <span style={{ fontSize: '1.6rem' }}>{inst.icon}</span>
+                    <span style={{ fontSize: '1.6rem', color: inst.color, display: 'flex', alignItems: 'center' }}>{institutionIcons[inst.id]}</span>
                     <div>
                       <h4 style={{ fontSize: '0.92rem', fontWeight: '700', color: dark ? '#fff' : '#0f172a', margin: 0 }}>{inst.name}</h4>
                       <p style={{ fontSize: '0.68rem', color: dark ? '#94a3b8' : '#94a3b8', margin: 0, maxWidth: '200px', lineHeight: '1.3' }}>{inst.fullName}</p>

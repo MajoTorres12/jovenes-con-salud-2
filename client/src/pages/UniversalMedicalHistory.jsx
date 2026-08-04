@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import {
   FaArrowLeft, FaFileMedical, FaUser, FaIdCard, FaTint, FaHeartbeat,
   FaExclamationTriangle, FaPlus, FaTimes, FaFileUpload, FaFilePdf,
   FaDownload, FaTrash, FaCheck, FaBuilding, FaNotesMedical, FaSearch,
   FaFileDownload, FaInfoCircle, FaLink, FaHospital, FaSync, FaCheckCircle,
-  FaShieldAlt, FaMedkit
+  FaShieldAlt, FaMedkit, FaPills, FaSyringe, FaRunning, FaStethoscope,
+  FaExternalLinkAlt, FaSmoking, FaWineGlass, FaAppleAlt
 } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -16,6 +15,20 @@ const API_BASE = getApiBaseUrl()
 
 const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']
 
+const COMMON_VACCINES = [
+  'BCG (Tuberculosis)',
+  'Hepatitis B',
+  'Hexavalente / Pentavalente',
+  'DPT (Difteria, Tétanos, Tosferina)',
+  'Rotavirus',
+  'Neumocócica Conjugada',
+  'SRP (Sarampión, Rubéola, Parotiditis)',
+  'Influenza Estacional',
+  'COVID-19',
+  'VPH (Virus del Papiloma Humano)',
+  'TD / Tetanico',
+]
+
 export default function UniversalMedicalHistory() {
   const { user } = useAuth()
   const { dark } = useTheme()
@@ -25,6 +38,10 @@ export default function UniversalMedicalHistory() {
   const [uploadingPdf, setUploadingPdf] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+
+  // Datos externos sincronizados del Dashboard de Salud
+  const [healthRecords, setHealthRecords] = useState([])
+  const [medications, setMedications] = useState([])
 
   // Expediente State
   const [history, setHistory] = useState({
@@ -40,6 +57,15 @@ export default function UniversalMedicalHistory() {
     emergencyContactRelation: '',
     diagnoses: [],
     labReports: [],
+    vaccines: [],
+    nonPathologicalHistory: {
+      smoking: 'Nunca',
+      alcohol: 'Nunca',
+      exercise: 'Ocasional',
+      diet: 'Equilibrada',
+      substances: 'Ninguna',
+    },
+    clinicalNotes: [],
   })
 
   // Inputs para agregar elementos
@@ -58,6 +84,28 @@ export default function UniversalMedicalHistory() {
     labName: '',
     date: new Date().toISOString().slice(0, 10),
     file: null,
+  })
+
+  // Formulario nueva Vacuna
+  const [showVaccineModal, setShowVaccineModal] = useState(false)
+  const [vaccineForm, setVaccineForm] = useState({
+    name: 'BCG (Tuberculosis)',
+    customName: '',
+    date: new Date().toISOString().slice(0, 10),
+    lot: '',
+    institution: 'IMSS / Centro de Salud',
+    status: 'Aplicada',
+  })
+
+  // Formulario nueva Nota de Evolución (SOAP)
+  const [showNoteModal, setShowNoteModal] = useState(false)
+  const [noteForm, setNoteForm] = useState({
+    date: new Date().toISOString().slice(0, 10),
+    doctor: '',
+    subjective: '',
+    objective: '',
+    analysis: '',
+    plan: '',
   })
 
   // Estado de instituciones vinculadas
@@ -112,22 +160,47 @@ export default function UniversalMedicalHistory() {
   const fetchMedicalHistory = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get('/profile/medical-history')
-      if (data.medicalHistory) {
+      const [historyRes, healthRes, medRes] = await Promise.allSettled([
+        api.get('/profile/medical-history'),
+        api.get('/health-tracking/records', { params: { limit: 50 } }),
+        api.get('/medications'),
+      ])
+
+      if (historyRes.status === 'fulfilled' && historyRes.value.data?.medicalHistory) {
+        const mh = historyRes.value.data.medicalHistory
         setHistory({
-          curp: data.medicalHistory.curp || '',
-          nss: data.medicalHistory.nss || '',
-          bloodType: data.medicalHistory.bloodType || 'O+',
-          organDonor: !!data.medicalHistory.organDonor,
-          allergies: Array.isArray(data.medicalHistory.allergies) ? data.medicalHistory.allergies : [],
-          hereditaryDiseases: Array.isArray(data.medicalHistory.hereditaryDiseases) ? data.medicalHistory.hereditaryDiseases : [],
-          personalPathologies: Array.isArray(data.medicalHistory.personalPathologies) ? data.medicalHistory.personalPathologies : [],
-          emergencyContactName: data.medicalHistory.emergencyContactName || '',
-          emergencyContactPhone: data.medicalHistory.emergencyContactPhone || '',
-          emergencyContactRelation: data.medicalHistory.emergencyContactRelation || '',
-          diagnoses: Array.isArray(data.medicalHistory.diagnoses) ? data.medicalHistory.diagnoses : [],
-          labReports: Array.isArray(data.medicalHistory.labReports) ? data.medicalHistory.labReports : [],
+          curp: mh.curp || '',
+          nss: mh.nss || '',
+          bloodType: mh.bloodType || 'O+',
+          organDonor: !!mh.organDonor,
+          allergies: Array.isArray(mh.allergies) ? mh.allergies : [],
+          hereditaryDiseases: Array.isArray(mh.hereditaryDiseases) ? mh.hereditaryDiseases : [],
+          personalPathologies: Array.isArray(mh.personalPathologies) ? mh.personalPathologies : [],
+          emergencyContactName: mh.emergencyContactName || '',
+          emergencyContactPhone: mh.emergencyContactPhone || '',
+          emergencyContactRelation: mh.emergencyContactRelation || '',
+          diagnoses: Array.isArray(mh.diagnoses) ? mh.diagnoses : [],
+          labReports: Array.isArray(mh.labReports) ? mh.labReports : [],
+          vaccines: Array.isArray(mh.vaccines) ? mh.vaccines : [],
+          nonPathologicalHistory: mh.nonPathologicalHistory || {
+            smoking: 'Nunca',
+            alcohol: 'Nunca',
+            exercise: 'Ocasional',
+            diet: 'Equilibrada',
+            substances: 'Ninguna',
+          },
+          clinicalNotes: Array.isArray(mh.clinicalNotes) ? mh.clinicalNotes : [],
         })
+      }
+
+      if (healthRes.status === 'fulfilled' && healthRes.value.data) {
+        const records = healthRes.value.data.records || healthRes.value.data || []
+        setHealthRecords(Array.isArray(records) ? records : [])
+      }
+
+      if (medRes.status === 'fulfilled' && medRes.value.data) {
+        const meds = medRes.value.data.medications || medRes.value.data || []
+        setMedications(Array.isArray(meds) ? meds : [])
       }
     } catch (err) {
       console.error('Error cargando historial médico:', err)
@@ -152,6 +225,87 @@ export default function UniversalMedicalHistory() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Manejo de Vacunas
+  const handleAddVaccine = (e) => {
+    e.preventDefault()
+    const vaccineName = vaccineForm.name === 'Otra...' ? vaccineForm.customName : vaccineForm.name
+    if (!vaccineName.trim()) {
+      alert('Ingresa el nombre de la vacuna.')
+      return
+    }
+    const newVac = {
+      id: Date.now().toString(),
+      name: vaccineName.trim(),
+      date: vaccineForm.date,
+      lot: vaccineForm.lot,
+      institution: vaccineForm.institution,
+      status: vaccineForm.status,
+    }
+    setHistory(prev => ({ ...prev, vaccines: [newVac, ...prev.vaccines] }))
+    setShowVaccineModal(false)
+    setVaccineForm({
+      name: 'BCG (Tuberculosis)',
+      customName: '',
+      date: new Date().toISOString().slice(0, 10),
+      lot: '',
+      institution: 'IMSS / Centro de Salud',
+      status: 'Aplicada',
+    })
+  }
+
+  const handleRemoveVaccine = (id) => {
+    setHistory(prev => ({ ...prev, vaccines: prev.vaccines.filter(v => v.id !== id) }))
+  }
+
+  const handleAddDefaultVaccinesScheme = () => {
+    if (!window.confirm('¿Agregar el esquema básico de vacunación nacional como pendientes/consultados?')) return
+    const defaultScheme = COMMON_VACCINES.map((vName, idx) => ({
+      id: `def-${Date.now()}-${idx}`,
+      name: vName,
+      date: new Date().toISOString().slice(0, 10),
+      lot: '',
+      institution: 'Cartilla Nacional',
+      status: 'Aplicada',
+    }))
+    setHistory(prev => ({
+      ...prev,
+      vaccines: Array.from(new Set([...prev.vaccines.map(v => v.name), ...defaultScheme.map(s => s.name)]))
+        .map(name => prev.vaccines.find(v => v.name === name) || defaultScheme.find(s => s.name === name))
+    }))
+  }
+
+  // Manejo de Notas Clínicas SOAP
+  const handleAddClinicalNote = (e) => {
+    e.preventDefault()
+    if (!noteForm.subjective.trim() && !noteForm.analysis.trim()) {
+      alert('Ingresa al menos el resumen subjetivo o análisis médico.')
+      return
+    }
+    const newNote = {
+      id: Date.now().toString(),
+      date: noteForm.date,
+      doctor: noteForm.doctor.trim() || user?.name || 'Médico Tratante',
+      subjective: noteForm.subjective,
+      objective: noteForm.objective,
+      analysis: noteForm.analysis,
+      plan: noteForm.plan,
+    }
+    setHistory(prev => ({ ...prev, clinicalNotes: [newNote, ...prev.clinicalNotes] }))
+    setShowNoteModal(false)
+    setNoteForm({
+      date: new Date().toISOString().slice(0, 10),
+      doctor: '',
+      subjective: '',
+      objective: '',
+      analysis: '',
+      plan: '',
+    })
+  }
+
+  const handleRemoveClinicalNote = (id) => {
+    setHistory(prev => ({ ...prev, clinicalNotes: prev.clinicalNotes.filter(n => n.id !== id) }))
   }
 
   // Manejo de listas
@@ -984,6 +1138,336 @@ export default function UniversalMedicalHistory() {
               </div>
             </div>
 
+            {/* 6. Signos Vitales y Somatometría (Sincronizado con Panel de Salud) */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaHeartbeat size={20} style={{ color: '#ef4444' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    6. Signos Vitales y Somatometría
+                  </h2>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '20px', background: '#fef2f2', color: '#ef4444', fontWeight: '700' }}>
+                    Dashboard de Salud
+                  </span>
+                  <Link
+                    to="/dashboard"
+                    style={{ fontSize: '0.78rem', color: '#0369a1', fontWeight: '700', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    Registrar Métricas <FaExternalLinkAlt size={10} />
+                  </Link>
+                </div>
+              </div>
+
+              {healthRecords.length === 0 ? (
+                <div style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '12px', background: dark ? '#1e1c25' : '#f8fafc', border: `1px dashed ${dark ? '#334155' : '#e2e8f0'}` }}>
+                  <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', margin: 0 }}>
+                    No se han registrado signos vitales recientemente. Registra tus mediciones desde el Dashboard de Salud.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                  {(() => {
+                    const latestByType = {}
+                    healthRecords.forEach(r => {
+                      if (!latestByType[r.type] || new Date(r.recordedAt) > new Date(latestByType[r.type].recordedAt)) {
+                        latestByType[r.type] = r
+                      }
+                    })
+                    const typeNames = {
+                      weight: 'Peso Corporal',
+                      glucose: 'Glucosa en Sangre',
+                      bloodPressure: 'Presión Arterial',
+                      heartRate: 'Frecuencia Cardíaca',
+                      cholesterol: 'Colesterol Total',
+                      triglycerides: 'Triglicéridos',
+                    }
+                    const typeColors = {
+                      weight: '#0369a1',
+                      glucose: '#d97706',
+                      bloodPressure: '#ef4444',
+                      heartRate: '#10b981',
+                      cholesterol: '#7c3aed',
+                      triglycerides: '#ec4899',
+                    }
+
+                    return Object.entries(latestByType).map(([type, record]) => (
+                      <div key={type} style={{ padding: '0.9rem', borderRadius: '10px', background: dark ? '#1e1c25' : '#ffffff', border: `1px solid ${dark ? '#334155' : '#e2e8f0'}` }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: '700', color: typeColors[type] || '#64748b', marginBottom: '0.3rem' }}>
+                          {typeNames[type] || type}
+                        </div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: '800', color: dark ? '#ffffff' : '#0f172a' }}>
+                          {record.value} {record.value2 != null ? `/ ${record.value2}` : ''} <span style={{ fontSize: '0.78rem', fontWeight: '600', color: dark ? '#94a3b8' : '#64748b' }}>{record.unit}</span>
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: dark ? '#94a3b8' : '#94a3b8', marginTop: '0.3rem' }}>
+                          {new Date(record.recordedAt).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}
+                        </div>
+                      </div>
+                    ))
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* 7. Medicamentos Activos en Tratamiento */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaPills size={20} style={{ color: '#8b5cf6' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    7. Medicamentos Activos en Tratamiento
+                  </h2>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '20px', background: '#f3e8ff', color: '#8b5cf6', fontWeight: '700' }}>
+                    Farmacoterapia Activa
+                  </span>
+                  <Link
+                    to="/dashboard"
+                    style={{ fontSize: '0.78rem', color: '#8b5cf6', fontWeight: '700', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                  >
+                    Gestionar Medicamentos <FaExternalLinkAlt size={10} />
+                  </Link>
+                </div>
+              </div>
+
+              {medications.length === 0 ? (
+                <div style={{ padding: '1.25rem', textAlign: 'center', borderRadius: '12px', background: dark ? '#1e1c25' : '#f8fafc', border: `1px dashed ${dark ? '#334155' : '#e2e8f0'}` }}>
+                  <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', margin: 0 }}>
+                    No tienes medicamentos registrados actualmente. Administra tus recetas e indicaciones desde el Dashboard de Salud.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.85rem' }}>
+                  {medications.map(med => (
+                    <div key={med.id} style={{ padding: '0.85rem 1rem', borderRadius: '10px', background: dark ? '#1e1c25' : '#ffffff', border: `1px solid ${dark ? '#334155' : '#e2e8f0'}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
+                        <h4 style={{ fontSize: '0.92rem', fontWeight: '700', color: dark ? '#ffffff' : '#0f172a', margin: 0 }}>
+                          {med.name}
+                        </h4>
+                        <span style={{ padding: '0.15rem 0.5rem', borderRadius: '12px', background: '#f3e8ff', color: '#8b5cf6', fontSize: '0.68rem', fontWeight: '800' }}>
+                          Activo
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: dark ? '#cbd5e1' : '#475569' }}>
+                        <strong>Dosis:</strong> {med.dose} • <strong>Frecuencia:</strong> {med.frequency}
+                      </div>
+                      {med.instructions && (
+                        <div style={{ fontSize: '0.73rem', color: dark ? '#94a3b8' : '#64748b', fontStyle: 'italic', marginTop: '0.3rem' }}>
+                          "{med.instructions}"
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 8. Cartilla Nacional de Vacunación */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaSyringe size={20} style={{ color: '#0284c7' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    8. Cartilla Nacional de Vacunación
+                  </h2>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleAddDefaultVaccinesScheme}
+                    style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: 'transparent', color: dark ? '#cbd5e1' : '#0369a1', fontWeight: '700', fontSize: '0.78rem', cursor: 'pointer' }}
+                  >
+                    + Esquema Nacional
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowVaccineModal(true)}
+                    style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: 'none', background: '#0284c7', color: 'white', fontWeight: '700', fontSize: '0.78rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  >
+                    <FaPlus /> Registrar Vacuna
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {history.vaccines.length === 0 ? (
+                  <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', fontStyle: 'italic', margin: 0 }}>
+                    Sin registro de vacunas. Agrega vacunas individuales o carga el Esquema Nacional Recomendado.
+                  </p>
+                ) : (
+                  history.vaccines.map(vac => (
+                    <div key={vac.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', borderRadius: '8px', background: dark ? '#1e1c25' : '#f8fafc', border: `1px solid ${dark ? '#334155' : '#e2e8f0'}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <FaSyringe style={{ color: '#0284c7' }} />
+                        <div>
+                          <span style={{ fontSize: '0.88rem', fontWeight: '700', color: dark ? '#fff' : '#0f172a' }}>
+                            {vac.name}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: dark ? '#94a3b8' : '#64748b', marginLeft: '0.5rem' }}>
+                            • {vac.date} {vac.institution ? `(${vac.institution})` : ''} {vac.lot ? `• Lote: ${vac.lot}` : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span style={{ padding: '0.15rem 0.55rem', borderRadius: '12px', background: vac.status === 'Aplicada' ? '#dcfce7' : '#fef3c7', color: vac.status === 'Aplicada' ? '#15803d' : '#b45309', fontSize: '0.72rem', fontWeight: '800' }}>
+                          {vac.status}
+                        </span>
+                        <button type="button" onClick={() => handleRemoveVaccine(vac.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
+                          <FaTrash size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* 9. Antecedentes No Patológicos (Estilo de Vida) */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaRunning size={20} style={{ color: '#10b981' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    9. Antecedentes No Patológicos (Estilo de Vida)
+                  </h2>
+                </div>
+                <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '20px', background: '#d1fae5', color: '#047857', fontWeight: '700' }}>
+                  NOM-004-SSA3-2012
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.2rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    <FaSmoking style={{ marginRight: '0.3rem' }} /> Tabaquismo:
+                  </label>
+                  <select
+                    value={history.nonPathologicalHistory?.smoking || 'Nunca'}
+                    onChange={e => setHistory({
+                      ...history,
+                      nonPathologicalHistory: { ...history.nonPathologicalHistory, smoking: e.target.value }
+                    })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                  >
+                    <option value="Nunca">Nunca</option>
+                    <option value="Ex-fumador">Ex-fumador</option>
+                    <option value="Ocasional (<5/día)">Ocasional (&lt;5/día)</option>
+                    <option value="Moderado (5-15/día)">Moderado (5-15/día)</option>
+                    <option value="Intenso (>15/día)">Intenso (&gt;15/día)</option>
+                    <option value="Fumador Pasivo">Fumador Pasivo</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    <FaWineGlass style={{ marginRight: '0.3rem' }} /> Alcoholismo:
+                  </label>
+                  <select
+                    value={history.nonPathologicalHistory?.alcohol || 'Nunca'}
+                    onChange={e => setHistory({
+                      ...history,
+                      nonPathologicalHistory: { ...history.nonPathologicalHistory, alcohol: e.target.value }
+                    })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                  >
+                    <option value="Nunca">Nunca</option>
+                    <option value="Ex-alcoholismo">Ex-alcoholismo</option>
+                    <option value="Ocasional / Social">Ocasional / Social</option>
+                    <option value="Moderado (1-2 días/sem)">Moderado (1-2 días/sem)</option>
+                    <option value="Frecuente (>3 días/sem)">Frecuente (&gt;3 días/sem)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    <FaRunning style={{ marginRight: '0.3rem' }} /> Actividad Física:
+                  </label>
+                  <select
+                    value={history.nonPathologicalHistory?.exercise || 'Ocasional'}
+                    onChange={e => setHistory({
+                      ...history,
+                      nonPathologicalHistory: { ...history.nonPathologicalHistory, exercise: e.target.value }
+                    })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                  >
+                    <option value="Sedentario">Sedentario</option>
+                    <option value="Ligera (1-2 días/sem)">Ligera (1-2 días/sem)</option>
+                    <option value="Moderada (3-4 días/sem)">Moderada (3-4 días/sem)</option>
+                    <option value="Intensa (5+ días/sem)">Intensa (5+ días/sem)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    <FaAppleAlt style={{ marginRight: '0.3rem' }} /> Alimentación:
+                  </label>
+                  <select
+                    value={history.nonPathologicalHistory?.diet || 'Equilibrada'}
+                    onChange={e => setHistory({
+                      ...history,
+                      nonPathologicalHistory: { ...history.nonPathologicalHistory, diet: e.target.value }
+                    })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                  >
+                    <option value="Equilibrada">Equilibrada / Saludable</option>
+                    <option value="Alta en Carbohidratos/Grasas">Alta en Carbohidratos/Grasas</option>
+                    <option value="Hipocalórica">Hipocalórica</option>
+                    <option value="Vegetariana / Vegana">Vegetariana / Vegana</option>
+                    <option value="Irregular">Irregular</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* 10. Notas de Evolución Clínica (SOAP) */}
+            <div style={cardStyle}>
+              <div style={sectionHeaderStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FaStethoscope size={20} style={{ color: '#d97706' }} />
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                    10. Notas de Evolución Clínica (SOAP)
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowNoteModal(true)}
+                  style={{ padding: '0.45rem 0.9rem', borderRadius: '8px', border: 'none', background: '#d97706', color: 'white', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                >
+                  <FaPlus /> Nueva Nota SOAP
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {history.clinicalNotes.length === 0 ? (
+                  <p style={{ fontSize: '0.85rem', color: dark ? '#cbd5e1' : '#64748b', fontStyle: 'italic', margin: 0 }}>
+                    Sin notas de evolución médica registradas.
+                  </p>
+                ) : (
+                  history.clinicalNotes.map(note => (
+                    <div key={note.id} style={{ padding: '1rem', borderRadius: '12px', background: dark ? '#1e1c25' : '#ffffff', border: `1.5px solid ${dark ? '#334155' : '#e2e8f0'}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                        <div>
+                          <strong style={{ fontSize: '0.88rem', color: dark ? '#ffffff' : '#0f172a' }}>{note.doctor}</strong>
+                          <span style={{ fontSize: '0.75rem', color: dark ? '#94a3b8' : '#64748b', marginLeft: '0.5rem' }}>({note.date})</span>
+                        </div>
+                        <button type="button" onClick={() => handleRemoveClinicalNote(note.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
+                          <FaTrash size={12} />
+                        </button>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.6rem', fontSize: '0.8rem' }}>
+                        {note.subjective && <div style={{ background: dark ? '#141319' : '#f8fafc', padding: '0.5rem', borderRadius: '6px' }}><strong>S (Subjetivo):</strong> {note.subjective}</div>}
+                        {note.objective && <div style={{ background: dark ? '#141319' : '#f8fafc', padding: '0.5rem', borderRadius: '6px' }}><strong>O (Objetivo):</strong> {note.objective}</div>}
+                        {note.analysis && <div style={{ background: dark ? '#141319' : '#f8fafc', padding: '0.5rem', borderRadius: '6px' }}><strong>A (Análisis):</strong> {note.analysis}</div>}
+                        {note.plan && <div style={{ background: dark ? '#141319' : '#f8fafc', padding: '0.5rem', borderRadius: '6px' }}><strong>P (Plan):</strong> {note.plan}</div>}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
             {/* Botón de Guardado General */}
             <div style={{ textAlign: 'right', marginTop: '1.5rem' }}>
               <button
@@ -1166,6 +1650,274 @@ export default function UniversalMedicalHistory() {
                 <button
                   type="button"
                   onClick={() => setShowFhirModal(false)}
+                  style={{ padding: '0.75rem 1.25rem', borderRadius: '10px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: 'transparent', color: dark ? '#fff' : '#475569', fontWeight: '600' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Registrar Vacuna */}
+      {showVaccineModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem',
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '440px', padding: '1.75rem',
+            borderRadius: '16px', background: dark ? '#141319' : '#ffffff',
+            border: `1px solid ${dark ? '#1e1c25' : '#e2e8f0'}`,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: dark ? '#ffffff' : '#1e293b', margin: 0 }}>
+                💉 Registrar Vacuna
+              </h3>
+              <button onClick={() => setShowVaccineModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-surface-400)', fontSize: '1.1rem' }}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddVaccine}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Vacuna / Inmunización:
+                  </label>
+                  <select
+                    value={vaccineForm.name}
+                    onChange={e => setVaccineForm({ ...vaccineForm, name: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                  >
+                    {COMMON_VACCINES.map(v => (
+                      <option key={v} value={v}>{v}</option>
+                    ))}
+                    <option value="Otra...">Otra...</option>
+                  </select>
+                </div>
+
+                {vaccineForm.name === 'Otra...' && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                      Nombre personalizado de la vacuna:
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="ej. Varicela / Fiebre Amarilla"
+                      value={vaccineForm.customName}
+                      onChange={e => setVaccineForm({ ...vaccineForm, customName: e.target.value })}
+                      style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Fecha de Aplicación:
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={vaccineForm.date}
+                    onChange={e => setVaccineForm({ ...vaccineForm, date: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    Institución / Clínica:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ej. IMSS Clinica 22 / Centro de Salud"
+                    value={vaccineForm.institution}
+                    onChange={e => setVaccineForm({ ...vaccineForm, institution: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                      Número de Lote (opcional):
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="ej. AB12345"
+                      value={vaccineForm.lot}
+                      onChange={e => setVaccineForm({ ...vaccineForm, lot: e.target.value })}
+                      style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                      Estatus:
+                    </label>
+                    <select
+                      value={vaccineForm.status}
+                      onChange={e => setVaccineForm({ ...vaccineForm, status: e.target.value })}
+                      style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                    >
+                      <option value="Aplicada">Aplicada</option>
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="Refuerzo">Dosis de Refuerzo</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 1, padding: '0.75rem', borderRadius: '10px', border: 'none',
+                    background: '#0284c7', color: 'white', fontWeight: '700', fontSize: '0.9rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Guardar Vacuna
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowVaccineModal(false)}
+                  style={{ padding: '0.75rem 1.25rem', borderRadius: '10px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: 'transparent', color: dark ? '#fff' : '#475569', fontWeight: '600' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nueva Nota de Evolución (SOAP) */}
+      {showNoteModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem',
+        }}>
+          <div style={{
+            width: '100%', maxWidth: '560px', padding: '1.75rem',
+            borderRadius: '16px', background: dark ? '#141319' : '#ffffff',
+            border: `1px solid ${dark ? '#1e1c25' : '#e2e8f0'}`,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            maxHeight: '90vh', overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: dark ? '#ffffff' : '#1e293b', margin: 0 }}>
+                📋 Registrar Nota de Evolución Clínica (SOAP)
+              </h3>
+              <button onClick={() => setShowNoteModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-surface-400)', fontSize: '1.1rem' }}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddClinicalNote}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                      Médico / Especialista Tratante:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Dr(a). Nombre Apellido"
+                      value={noteForm.doctor}
+                      onChange={e => setNoteForm({ ...noteForm, doctor: e.target.value })}
+                      style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                      Fecha:
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={noteForm.date}
+                      onChange={e => setNoteForm({ ...noteForm, date: e.target.value })}
+                      style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    S - Subjetivo (Motivo de consulta y síntomas del paciente):
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="ej. Paciente refiere cefalea de 2 días de evolución..."
+                    value={noteForm.subjective}
+                    onChange={e => setNoteForm({ ...noteForm, subjective: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    O - Objetivo (Hallazgos físicos, signos vitales y estudios):
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="ej. TA 120/80, FC 72bpm. Abdomen blando, sin dolor..."
+                    value={noteForm.objective}
+                    onChange={e => setNoteForm({ ...noteForm, objective: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    A - Análisis / Diagnóstico (Impresión diagnóstica y evolución):
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="ej. Cefalea tensional. Buena respuesta a analgésicos..."
+                    value={noteForm.analysis}
+                    onChange={e => setNoteForm({ ...noteForm, analysis: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: dark ? '#cbd5e1' : '#475569', marginBottom: '0.35rem' }}>
+                    P - Plan (Tratamiento, medicamentos e indicaciones):
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="ej. Paracetamol 500mg c/8h por 3 días. Cita de control en 1 mes..."
+                    value={noteForm.plan}
+                    onChange={e => setNoteForm({ ...noteForm, plan: e.target.value })}
+                    style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: `1.5px solid ${dark ? '#334155' : '#cbd5e1'}`, background: dark ? '#1e1c25' : '#fff', color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem', resize: 'vertical' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 1, padding: '0.75rem', borderRadius: '10px', border: 'none',
+                    background: '#d97706', color: 'white', fontWeight: '700', fontSize: '0.9rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Guardar Nota SOAP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowNoteModal(false)}
                   style={{ padding: '0.75rem 1.25rem', borderRadius: '10px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: 'transparent', color: dark ? '#fff' : '#475569', fontWeight: '600' }}
                 >
                   Cancelar

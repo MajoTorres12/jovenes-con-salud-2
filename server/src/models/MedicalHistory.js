@@ -79,6 +79,23 @@ const MedicalHistory = sequelize.define('MedicalHistory', {
     defaultValue: [],
     field: 'lab_reports',
   },
+  vaccines: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: [],
+  },
+  nonPathologicalHistory: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: {},
+    field: 'non_pathological_history',
+  },
+  clinicalNotes: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: [],
+    field: 'clinical_notes',
+  },
 }, {
   tableName: 'medical_histories',
   timestamps: true,

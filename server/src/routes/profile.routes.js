@@ -180,7 +180,7 @@ router.put('/medical-history', async (req, res) => {
       curp, nss, bloodType, organDonor, allergies,
       hereditaryDiseases, personalPathologies,
       emergencyContactName, emergencyContactPhone, emergencyContactRelation,
-      diagnoses,
+      diagnoses, vaccines, nonPathologicalHistory, clinicalNotes,
     } = req.body
 
     if (curp !== undefined) history.curp = curp
@@ -194,6 +194,9 @@ router.put('/medical-history', async (req, res) => {
     if (emergencyContactPhone !== undefined) history.emergencyContactPhone = emergencyContactPhone
     if (emergencyContactRelation !== undefined) history.emergencyContactRelation = emergencyContactRelation
     if (diagnoses !== undefined) history.diagnoses = diagnoses
+    if (vaccines !== undefined) history.vaccines = vaccines
+    if (nonPathologicalHistory !== undefined) history.nonPathologicalHistory = nonPathologicalHistory
+    if (clinicalNotes !== undefined) history.clinicalNotes = clinicalNotes
 
     await history.save()
 

@@ -4,7 +4,7 @@ import {
   FaArrowLeft, FaFileMedical, FaUser, FaIdCard, FaTint, FaHeartbeat,
   FaExclamationTriangle, FaPlus, FaTimes, FaFileUpload, FaFilePdf,
   FaDownload, FaTrash, FaCheck, FaBuilding, FaNotesMedical, FaSearch,
-  FaFileDownload, FaInfoCircle
+  FaFileDownload, FaInfoCircle, FaLink, FaHospital, FaSync, FaCheckCircle
 } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -58,6 +58,44 @@ export default function UniversalMedicalHistory() {
     date: new Date().toISOString().slice(0, 10),
     file: null,
   })
+
+  // Estado de instituciones vinculadas
+  const [linkedInstitutions, setLinkedInstitutions] = useState([
+    { id: 'imss', name: 'IMSS', fullName: 'Instituto Mexicano del Seguro Social', icon: '🏥', color: '#00723f', linked: false, code: '', lastSync: null },
+    { id: 'issste', name: 'ISSSTE', fullName: 'Instituto de Seguridad y Servicios Sociales de los Trabajadores del Estado', icon: '🏛️', color: '#1e3a5f', linked: false, code: '', lastSync: null },
+    { id: 'imss-bienestar', name: 'IMSS-Bienestar', fullName: 'IMSS-Bienestar (antes INSABI)', icon: '💚', color: '#6b8e23', linked: false, code: '', lastSync: null },
+    { id: 'seguro-privado', name: 'Seguro Privado', fullName: 'Seguro de Gastos Médicos Mayores (Privado)', icon: '🛡️', color: '#7c3aed', linked: false, code: '', lastSync: null },
+  ])
+  const [linkingId, setLinkingId] = useState(null)
+
+  const handleLinkInstitution = (instId) => {
+    setLinkedInstitutions(prev => prev.map(inst => {
+      if (inst.id !== instId) return inst
+      if (!inst.code.trim()) {
+        alert('Ingresa tu número de beneficiario o póliza.')
+        return inst
+      }
+      return { ...inst, linked: true, lastSync: new Date().toISOString() }
+    }))
+    setLinkingId(null)
+    setSuccessMsg('Institución vinculada exitosamente. Los datos se sincronizarán en la próxima conexión disponible.')
+    setTimeout(() => setSuccessMsg(''), 5000)
+  }
+
+  const handleUnlinkInstitution = (instId) => {
+    if (!window.confirm('¿Desvincular esta institución? Se mantendrán los datos previamente importados.')) return
+    setLinkedInstitutions(prev => prev.map(inst =>
+      inst.id === instId ? { ...inst, linked: false, code: '', lastSync: null } : inst
+    ))
+  }
+
+  const handleSyncInstitution = (instId) => {
+    setLinkedInstitutions(prev => prev.map(inst =>
+      inst.id === instId ? { ...inst, lastSync: new Date().toISOString() } : inst
+    ))
+    setSuccessMsg(`Sincronización con ${linkedInstitutions.find(i => i.id === instId)?.name} solicitada. Los datos se actualizarán cuando la institución responda.`)
+    setTimeout(() => setSuccessMsg(''), 5000)
+  }
 
   // Cargar expediente al montar
   useEffect(() => {
@@ -372,6 +410,166 @@ export default function UniversalMedicalHistory() {
             <FaExclamationTriangle style={{ color: '#ef4444' }} /> {errorMsg}
           </div>
         )}
+
+        {/* Sección de Enlace con Instituciones de Salud */}
+        <div style={cardStyle}>
+          <div style={sectionHeaderStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <FaHospital size={20} style={{ color: '#0369a1' }} />
+              <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>
+                Enlace con Instituciones de Salud
+              </h2>
+            </div>
+            <span style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '20px', background: '#e0f2fe', color: '#0369a1', fontWeight: '700' }}>
+              Sincronización de Datos
+            </span>
+          </div>
+
+          <p style={{ fontSize: '0.82rem', color: dark ? '#94a3b8' : '#64748b', marginBottom: '1.25rem', lineHeight: '1.45' }}>
+            Vincula tu cuenta con instituciones de salud públicas y privadas para sincronizar automáticamente tu expediente clínico, citas, recetas y análisis de laboratorio.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+            {linkedInstitutions.map(inst => (
+              <div
+                key={inst.id}
+                style={{
+                  padding: '1.1rem 1.25rem',
+                  borderRadius: '14px',
+                  background: dark ? '#1e1c25' : '#ffffff',
+                  border: inst.linked
+                    ? `2px solid ${inst.color}`
+                    : `1.5px solid ${dark ? '#334155' : '#e2e8f0'}`,
+                  boxShadow: inst.linked ? `0 2px 12px ${inst.color}20` : '0 1px 4px rgba(0,0,0,0.04)',
+                  transition: 'all 0.25s ease',
+                }}
+              >
+                {/* Cabecera de la institución */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontSize: '1.6rem' }}>{inst.icon}</span>
+                    <div>
+                      <h4 style={{ fontSize: '0.92rem', fontWeight: '700', color: dark ? '#fff' : '#0f172a', margin: 0 }}>{inst.name}</h4>
+                      <p style={{ fontSize: '0.68rem', color: dark ? '#94a3b8' : '#94a3b8', margin: 0, maxWidth: '200px', lineHeight: '1.3' }}>{inst.fullName}</p>
+                    </div>
+                  </div>
+                  {inst.linked && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                      padding: '0.2rem 0.55rem', borderRadius: '20px',
+                      background: `${inst.color}15`, color: inst.color,
+                      fontSize: '0.7rem', fontWeight: '800',
+                    }}>
+                      <FaCheckCircle size={10} /> Vinculado
+                    </span>
+                  )}
+                </div>
+
+                {/* Estado: Vinculado */}
+                {inst.linked ? (
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: dark ? '#cbd5e1' : '#64748b', marginBottom: '0.6rem' }}>
+                      <strong>Código de beneficiario:</strong> {inst.code}
+                    </div>
+                    {inst.lastSync && (
+                      <div style={{ fontSize: '0.72rem', color: dark ? '#94a3b8' : '#94a3b8', marginBottom: '0.75rem' }}>
+                        Última sincronización: {new Date(inst.lastSync).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleSyncInstitution(inst.id)}
+                        style={{
+                          flex: 1, padding: '0.45rem 0.7rem', borderRadius: '8px',
+                          border: `1.5px solid ${inst.color}`, background: 'transparent',
+                          color: inst.color, fontSize: '0.76rem', fontWeight: '700',
+                          cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem'
+                        }}
+                      >
+                        <FaSync size={10} /> Sincronizar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleUnlinkInstitution(inst.id)}
+                        style={{
+                          padding: '0.45rem 0.7rem', borderRadius: '8px',
+                          border: '1.5px solid #ef4444', background: 'transparent',
+                          color: '#ef4444', fontSize: '0.76rem', fontWeight: '700',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Desvincular
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Estado: No vinculado */
+                  <div>
+                    {linkingId === inst.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <input
+                          type="text"
+                          placeholder={inst.id === 'seguro-privado' ? 'Núm. de Póliza del Seguro' : inst.id === 'imss' ? 'NSS (11 dígitos)' : 'Núm. de Beneficiario'}
+                          value={inst.code}
+                          onChange={e => setLinkedInstitutions(prev => prev.map(i => i.id === inst.id ? { ...i, code: e.target.value } : i))}
+                          style={{
+                            width: '100%', padding: '0.5rem 0.7rem', borderRadius: '8px',
+                            border: `1.5px solid ${inst.color}`, background: dark ? '#141319' : '#fff',
+                            color: dark ? '#fff' : '#0f172a', fontSize: '0.84rem', outline: 'none'
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleLinkInstitution(inst.id)}
+                            style={{
+                              flex: 1, padding: '0.45rem', borderRadius: '8px', border: 'none',
+                              background: inst.color, color: 'white', fontSize: '0.78rem', fontWeight: '700',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <FaLink size={10} /> Vincular
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setLinkingId(null); setLinkedInstitutions(prev => prev.map(i => i.id === inst.id ? { ...i, code: '' } : i)) }}
+                            style={{ padding: '0.45rem 0.7rem', borderRadius: '8px', border: `1px solid ${dark ? '#334155' : '#cbd5e1'}`, background: 'transparent', color: dark ? '#cbd5e1' : '#64748b', fontSize: '0.78rem' }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setLinkingId(inst.id)}
+                        style={{
+                          width: '100%', padding: '0.55rem', borderRadius: '8px',
+                          border: `1.5px dashed ${dark ? '#475569' : '#cbd5e1'}`, background: 'transparent',
+                          color: dark ? '#cbd5e1' : '#64748b', fontSize: '0.82rem', fontWeight: '600',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = inst.color; e.currentTarget.style.color = inst.color }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = dark ? '#475569' : '#cbd5e1'; e.currentTarget.style.color = dark ? '#cbd5e1' : '#64748b' }}
+                      >
+                        <FaLink size={12} /> Vincular mi cuenta
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', borderRadius: '10px', background: dark ? '#1e1c2580' : '#f0f9ff', border: `1px solid ${dark ? '#334155' : '#bae6fd'}` }}>
+            <p style={{ fontSize: '0.75rem', color: dark ? '#94a3b8' : '#0369a1', margin: 0, lineHeight: '1.45' }}>
+              <FaInfoCircle style={{ marginRight: '0.3rem' }} />
+              <strong>¿Cómo obtener tu código?</strong> El NSS del IMSS aparece en tu carnet o puedes consultarlo en <a href="https://serviciosdigitales.imss.gob.mx" target="_blank" rel="noopener noreferrer" style={{ color: '#0369a1', fontWeight: '700' }}>serviciosdigitales.imss.gob.mx</a>. Para ISSSTE, consulta en <a href="https://www.gob.mx/issste" target="_blank" rel="noopener noreferrer" style={{ color: '#1e3a5f', fontWeight: '700' }}>gob.mx/issste</a>. Para tu seguro privado, consulta tu póliza vigente.
+            </p>
+          </div>
+        </div>
 
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>

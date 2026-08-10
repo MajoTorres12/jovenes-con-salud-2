@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import {
   FaArrowLeft, FaFileMedical, FaUser, FaIdCard, FaTint, FaHeartbeat,
   FaExclamationTriangle, FaPlus, FaTimes, FaFileUpload, FaFilePdf,

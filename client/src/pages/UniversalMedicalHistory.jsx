@@ -539,7 +539,13 @@ export default function UniversalMedicalHistory() {
             </button>
 
             <button
-              onClick={() => generateClinicalReportPDF({ patient: user, doctor: { name: 'Dr. Autorizado', professionalLicense: 'MÉDICO-REF' }, records: [] })}
+              onClick={() => generateClinicalReportPDF({
+                patient: user,
+                medicalHistory: history,
+                records: healthRecords,
+                medications: medications,
+                doctor: { name: 'Dr. Autorizado', professionalLicense: 'MÉDICO-REF' }
+              })}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.65rem 1.1rem', borderRadius: '10px',

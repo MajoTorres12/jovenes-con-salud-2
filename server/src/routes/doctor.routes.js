@@ -7,6 +7,7 @@ import HealthRecord from '../models/HealthRecord.js'
 import Medication from '../models/Medication.js'
 import Supplement from '../models/Supplement.js'
 import MedicalAlert from '../models/MedicalAlert.js'
+import MedicalHistory from '../models/MedicalHistory.js'
 
 const router = Router()
 
@@ -133,6 +134,11 @@ router.get('/patients/:id/records', async (req, res, next) => {
       order: [['createdAt', 'DESC']]
     })
 
+    // Fetch medical history (ECE)
+    const medicalHistory = await MedicalHistory.findOne({
+      where: { userId: patientId }
+    })
+
     // Fetch supplements
     const supplements = await Supplement.findAll({
       where: { userId: patientId },
@@ -147,6 +153,7 @@ router.get('/patients/:id/records', async (req, res, next) => {
         birthDate: patient.birthDate,
         avatar: patient.avatar
       },
+      medicalHistory,
       records,
       familyMembers,
       medications,

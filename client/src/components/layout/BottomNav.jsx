@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
 import {
   RiHome5Fill,
   RiHome5Line,
@@ -20,6 +21,7 @@ import api, { getApiBaseUrl } from '../../services/api'
 const API_BASE = getApiBaseUrl()
 
 export default function BottomNav() {
+  const isNative = Capacitor.isNativePlatform()
   const location = useLocation()
   const { user, isAuthenticated } = useAuth()
   const { dark } = useTheme()
@@ -119,7 +121,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Navegación móvil principal"
-      className="mobile-bottom-nav"
+      className={`mobile-bottom-nav ${isNative ? 'is-native-app' : ''}`}
       style={{
         position: 'fixed',
         bottom: 0,

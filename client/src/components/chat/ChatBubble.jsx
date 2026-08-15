@@ -226,7 +226,7 @@ export default function ChatBubble() {
   const primaryColor = user.role === 'doctor' ? '#0369a1' : 'var(--color-primary-500)'
 
   return (
-    <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 9999, fontFamily: 'var(--font-sans)' }}>
+    <div className="chat-bubble-container" style={{ position: 'fixed', zIndex: 9999, fontFamily: 'var(--font-sans)' }}>
       {/* ── Chat Widget Bubble Toggle Button ── */}
       {!isOpen && (
         <button

@@ -1318,6 +1318,33 @@ p, span, a, li, h1, h2, h3, h4, h5, h6 {
   to { transform: scale(1); opacity: 1; }
 }
 
+/* ========================================
+   Mobile Bottom Navigation Bar (Social Media Style)
+   ======================================== */
+.mobile-bottom-nav {
+  display: none !important;
+}
 
+.chat-bubble-container {
+  bottom: 2rem;
+  right: 2rem;
+}
 
+@media (max-width: 1024px) {
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
 
+  .layout-main-content {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .chat-bubble-container {
+    bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px)) !important;
+    right: 1rem !important;
+  }
+
+  .bottom-nav-item:active {
+    transform: scale(0.92);
+  }
+}

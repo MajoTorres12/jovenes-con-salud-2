@@ -4,7 +4,8 @@ import { getCachedData, setCachedData, addToSyncQueue } from './offlineDb'
 import { initOfflineSyncListeners } from './offlineSync'
 
 const LOCAL_SERVER_PORT = '3001'
-const PRODUCTION_GCP_URL = 'https://34-74-246-147.sslip.io'
+const PRODUCTION_GCP_URL = 'https://34-26-57-247.sslip.io'
+
 
 function getApiUrl() {
   if (Capacitor.isNativePlatform()) {

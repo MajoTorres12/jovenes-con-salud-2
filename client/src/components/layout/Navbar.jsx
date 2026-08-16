@@ -22,6 +22,59 @@ const formatTimeTo12h = (timeStr) => {
   return `${formattedHours}:${minutes} ${ampm}`
 }
 
+const FlagMX = () => (
+  <svg viewBox="0 0 640 480" width="18" height="13" style={{ borderRadius: '2px', display: 'inline-block', flexShrink: 0, boxShadow: '0 0 2px rgba(0,0,0,0.35)', verticalAlign: 'middle' }}>
+    <path fill="#006847" d="M0 0h213.3v480H0z"/>
+    <path fill="#fff" d="M213.3 0h213.4v480H213.3z"/>
+    <path fill="#ce1126" d="M426.7 0H640v480H426.7z"/>
+    <circle cx="320" cy="240" r="28" fill="#88540b" opacity="0.85"/>
+    <path d="M312 232c4-6 12-6 16 0 2 4-1 9-8 12-7-3-10-8-8-12z" fill="#006847"/>
+  </svg>
+)
+
+const FlagUS = () => (
+  <svg viewBox="0 0 640 480" width="18" height="13" style={{ borderRadius: '2px', display: 'inline-block', flexShrink: 0, boxShadow: '0 0 2px rgba(0,0,0,0.35)', verticalAlign: 'middle' }}>
+    <path fill="#bd3d44" d="M0 0h640v480H0z"/>
+    <path stroke="#fff" strokeWidth="37" d="M0 55.5h640M0 129.5h640M0 203.5h640M0 277.5h640M0 351.5h640M0 425.5h640"/>
+    <path fill="#192f5d" d="M0 0h260v259H0z"/>
+    <circle cx="65" cy="65" r="14" fill="#fff"/>
+    <circle cx="130" cy="65" r="14" fill="#fff"/>
+    <circle cx="195" cy="65" r="14" fill="#fff"/>
+    <circle cx="65" cy="130" r="14" fill="#fff"/>
+    <circle cx="130" cy="130" r="14" fill="#fff"/>
+    <circle cx="195" cy="130" r="14" fill="#fff"/>
+    <circle cx="65" cy="195" r="14" fill="#fff"/>
+    <circle cx="130" cy="195" r="14" fill="#fff"/>
+    <circle cx="195" cy="195" r="14" fill="#fff"/>
+  </svg>
+)
+
+const FlagFR = () => (
+  <svg viewBox="0 0 640 480" width="18" height="13" style={{ borderRadius: '2px', display: 'inline-block', flexShrink: 0, boxShadow: '0 0 2px rgba(0,0,0,0.35)', verticalAlign: 'middle' }}>
+    <path fill="#002654" d="M0 0h213.3v480H0z"/>
+    <path fill="#fff" d="M213.3 0h213.4v480H213.3z"/>
+    <path fill="#ce1126" d="M426.7 0H640v480H426.7z"/>
+  </svg>
+)
+
+const FlagPT = () => (
+  <svg viewBox="0 0 640 480" width="18" height="13" style={{ borderRadius: '2px', display: 'inline-block', flexShrink: 0, boxShadow: '0 0 2px rgba(0,0,0,0.35)', verticalAlign: 'middle' }}>
+    <path fill="#006600" d="M0 0h256v480H0z"/>
+    <path fill="#ff0000" d="M256 0h384v480H256z"/>
+    <circle cx="256" cy="240" r="55" fill="#ffff00"/>
+    <circle cx="256" cy="240" r="40" fill="#ffffff"/>
+    <path fill="#0000ff" d="M246 225h20v30h-20z"/>
+  </svg>
+)
+
+const FlagDE = () => (
+  <svg viewBox="0 0 640 480" width="18" height="13" style={{ borderRadius: '2px', display: 'inline-block', flexShrink: 0, boxShadow: '0 0 2px rgba(0,0,0,0.35)', verticalAlign: 'middle' }}>
+    <path fill="#000" d="M0 0h640v160H0z"/>
+    <path fill="#d00" d="M0 160h640v160H0z"/>
+    <path fill="#ffce00" d="M0 320h640v160H0z"/>
+  </svg>
+)
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -41,12 +94,13 @@ export default function Navbar() {
   const [mobileAlertsOpen, setMobileAlertsOpen] = useState(false)
 
   const LANGUAGES = [
-    { code: 'es', label: 'Español', flag: '🇪🇸' },
-    { code: 'en', label: 'English', flag: '🇺🇸' },
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
-    { code: 'pt', label: 'Português', flag: '🇵🇹' },
-    { code: 'de', label: 'Deutsch', flag: '🇩🇪' }
+    { code: 'es', label: 'Español', flag: <FlagMX /> },
+    { code: 'en', label: 'English', flag: <FlagUS /> },
+    { code: 'fr', label: 'Français', flag: <FlagFR /> },
+    { code: 'pt', label: 'Português', flag: <FlagPT /> },
+    { code: 'de', label: 'Deutsch', flag: <FlagDE /> }
   ]
+
 
   const getLanguageFromCookie = () => {
     const match = document.cookie.match(/googtrans=\/es\/([a-z]{2})/)

@@ -8,7 +8,9 @@ import { useAuth } from '../../context/AuthContext'
 import WearableSection from '../dashboard/WearableSection'
 import { useTheme } from '../../context/ThemeContext'
 import api from '../../services/api'
-import logo from '../../assets/logo.png'
+import logoLight from '../../assets/logo-light.png'
+import logoDark from '../../assets/logo-dark.png'
+
 
 const formatTimeTo12h = (timeStr) => {
   if (!timeStr) return ''
@@ -310,7 +312,7 @@ export default function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '4rem' }}>
           {/* Logo */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', flexShrink: 0 }}>
-            <img src={logo} alt="Logo" style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'contain' }} />
+            <img src={dark ? logoDark : logoLight} alt="Logo" style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'contain' }} />
             <span style={{
               fontSize: '1.25rem',
               fontWeight: '700',

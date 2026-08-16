@@ -3,9 +3,13 @@ import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { FaEnvelope, FaArrowLeft, FaCheckCircle } from 'react-icons/fa'
 import api from '../services/api'
-import logo from '../assets/logo.png'
+import { useTheme } from '../context/ThemeContext'
+import logoLight from '../assets/logo-light.png'
+import logoDark from '../assets/logo-dark.png'
 
 export default function ForgotPassword() {
+  const { dark } = useTheme()
+
   const [apiError, setApiError] = useState('')
   const [apiSuccess, setApiSuccess] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -45,13 +49,13 @@ export default function ForgotPassword() {
       }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img src={logo} alt="Jóvenes con Salud" style={{
+          <img src={dark ? logoDark : logoLight} alt="Jóvenes con Salud" style={{
             height: '72px',
             width: 'auto',
             maxWidth: '180px',
             margin: '0 auto 1rem',
             objectFit: 'contain',
-            filter: 'drop-shadow(0 4px 12px rgba(135,18,51,0.2))'
+            filter: 'drop-shadow(0 4px 12px rgba(135,18,51,0.15))'
           }} />
           <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-surface-900)' }}>
             Recuperar Cuenta

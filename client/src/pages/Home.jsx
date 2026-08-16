@@ -5,7 +5,9 @@ import { HiArrowRight } from 'react-icons/hi'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import api, { getApiBaseUrl } from '../services/api'
-import logo from '../assets/logo.png'
+import logoLight from '../assets/logo-light.png'
+import logoDark from '../assets/logo-dark.png'
+
 
 
 const API_BASE = getApiBaseUrl()
@@ -209,25 +211,31 @@ export default function Home() {
               aspectRatio: '1/1',
               borderRadius: '2rem',
               overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.55), 0 0 35px rgba(135, 18, 51, 0.3)',
-              border: `2px solid ${dark ? 'rgba(214, 92, 126, 0.3)' : 'rgba(255, 255, 255, 0.2)'}`,
+              boxShadow: dark
+                ? '0 25px 50px -12px rgba(0, 0, 0, 0.55), 0 0 35px rgba(135, 18, 51, 0.3)'
+                : '0 25px 50px -12px rgba(135, 18, 51, 0.18), 0 0 30px rgba(135, 18, 51, 0.12)',
+              border: `2px solid ${dark ? 'rgba(214, 92, 126, 0.3)' : 'rgba(255, 255, 255, 0.4)'}`,
               transition: 'transform 0.3s ease, box-shadow 0.3s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#0a0a0c',
+              background: dark ? '#0a0a0c' : '#ffffff',
             }}
             onMouseEnter={e => {
               e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)'
-              e.currentTarget.style.boxShadow = '0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 0 45px rgba(135, 18, 51, 0.45)'
+              e.currentTarget.style.boxShadow = dark
+                ? '0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 0 45px rgba(135, 18, 51, 0.45)'
+                : '0 30px 60px -12px rgba(135, 18, 51, 0.25), 0 0 40px rgba(135, 18, 51, 0.2)'
             }}
             onMouseLeave={e => {
               e.currentTarget.style.transform = 'translateY(0) scale(1)'
-              e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.55), 0 0 35px rgba(135, 18, 51, 0.3)'
+              e.currentTarget.style.boxShadow = dark
+                ? '0 25px 50px -12px rgba(0, 0, 0, 0.55), 0 0 35px rgba(135, 18, 51, 0.3)'
+                : '0 25px 50px -12px rgba(135, 18, 51, 0.18), 0 0 30px rgba(135, 18, 51, 0.12)'
             }}
             >
               <img
-                src={logo}
+                src={dark ? logoDark : logoLight}
                 alt="Jóvenes con Salud"
                 style={{
                   width: '100%',

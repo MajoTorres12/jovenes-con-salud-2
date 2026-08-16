@@ -3,9 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { FaHeartbeat, FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCalendar, FaCheck, FaTimes } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
-import logo from '../assets/logo.png'
+import { useTheme } from '../context/ThemeContext'
+import logoLight from '../assets/logo-light.png'
+import logoDark from '../assets/logo-dark.png'
 
 export default function Register() {
+  const { dark } = useTheme()
+
   const [showPassword, setShowPassword] = useState(false)
   const [apiError, setApiError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -78,13 +82,13 @@ export default function Register() {
         boxShadow: 'var(--shadow-elevated)', border: '1px solid var(--color-surface-200)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img src={logo} alt="Jóvenes con Salud" style={{
+          <img src={dark ? logoDark : logoLight} alt="Jóvenes con Salud" style={{
             height: '72px',
             width: 'auto',
             maxWidth: '180px',
             margin: '0 auto 1rem',
             objectFit: 'contain',
-            filter: 'drop-shadow(0 4px 12px rgba(135,18,51,0.2))'
+            filter: 'drop-shadow(0 4px 12px rgba(135,18,51,0.15))'
           }} />
           <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-surface-900)' }}>
             Crear Cuenta

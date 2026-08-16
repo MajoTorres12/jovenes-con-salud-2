@@ -205,28 +205,25 @@ export default function Home() {
             <div style={{
               position: 'relative',
               width: '100%',
-              maxWidth: '380px',
+              maxWidth: '360px',
               aspectRatio: '1/1',
+              borderRadius: '2rem',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.55), 0 0 35px rgba(135, 18, 51, 0.3)',
+              border: `2px solid ${dark ? 'rgba(214, 92, 126, 0.3)' : 'rgba(255, 255, 255, 0.2)'}`,
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: dark ? 'rgba(20, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.12)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              borderRadius: '2.5rem',
-              border: `2px solid ${dark ? 'rgba(214, 92, 126, 0.3)' : 'rgba(255, 255, 255, 0.25)'}`,
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(135, 18, 51, 0.2)',
-              padding: '2rem',
-              overflow: 'hidden',
-              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              background: '#0a0a0c',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-6px)'
-              e.currentTarget.style.boxShadow = '0 25px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(135, 18, 51, 0.3)'
+              e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)'
+              e.currentTarget.style.boxShadow = '0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 0 45px rgba(135, 18, 51, 0.45)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(135, 18, 51, 0.2)'
+              e.currentTarget.style.transform = 'translateY(0) scale(1)'
+              e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.55), 0 0 35px rgba(135, 18, 51, 0.3)'
             }}
             >
               <img
@@ -235,8 +232,8 @@ export default function Home() {
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.35))',
+                  objectFit: 'cover',
+                  display: 'block',
                 }}
               />
             </div>

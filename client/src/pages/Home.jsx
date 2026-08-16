@@ -5,6 +5,8 @@ import { HiArrowRight } from 'react-icons/hi'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import api, { getApiBaseUrl } from '../services/api'
+import logo from '../assets/logo.png'
+
 
 const API_BASE = getApiBaseUrl()
 const newsImgSrc = (p) => !p ? null : p.startsWith('http') ? p : `${API_BASE}/${p}`
@@ -200,83 +202,43 @@ export default function Home() {
 
           {/* Right Logo Column */}
           <div className="animate-fade-in-up stagger-3" style={{ flex: '1 1 300px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
-            <div style={{ position: 'relative', width: '100%', maxWidth: '420px', aspectRatio: '1/1' }}>
-              <svg viewBox="0 0 400 400" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
-                <defs>
-                  {/* Background Gradient */}
-                  <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor={dark ? '#1E1F28' : '#faf8f5'} />
-                    <stop offset="100%" stopColor={dark ? '#0E0F14' : '#f4efe7'} />
-                  </linearGradient>
-                  
-                  {/* Heart Gradient */}
-                  <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="var(--color-primary-400)" />
-                    <stop offset="100%" stopColor="var(--color-primary-600)" />
-                  </linearGradient>
-                  
-                  {/* Glow Filter */}
-                  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="6" result="blur" />
-                    <feMerge>
-                      <feMergeNode in="blur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                  
-                  {/* Subtle Shadow for Plate */}
-                  <filter id="plateShadow" x="-10%" y="-10%" width="120%" height="120%">
-                    <feDropShadow dx="0" dy="16" stdDeviation="20" floodColor={dark ? '#000000' : '#4e0413'} floodOpacity={dark ? '0.5' : '0.12'} />
-                  </filter>
-                </defs>
-
-                {/* Outer Plate / Glassmorphism Container */}
-                <rect 
-                  x="20" y="20" width="360" height="360" rx="40" 
-                  fill="url(#bgGrad)" 
-                  stroke={dark ? 'rgba(196, 61, 90, 0.25)' : 'rgba(135, 18, 51, 0.15)'} 
-                  strokeWidth="2"
-                  filter="url(#plateShadow)"
-                  style={{ transition: 'all 0.3s ease' }}
-                />
-
-                {/* Brand Text */}
-                <text 
-                  x="200" 
-                  y="322" 
-                  textAnchor="middle" 
-                  fontFamily="var(--font-sans)" 
-                  fontSize="22" 
-                  fontWeight="800" 
-                  fill={dark ? '#EDEEF2' : 'var(--color-primary-500)'} 
-                  letterSpacing="2"
-                  style={{ transition: 'all 0.3s ease' }}
-                >
-                  Jóvenes con Salud
-                </text>
-
-                <g transform="translate(100, 75) scale(2)">
-                  {/* Heart Shape */}
-                  <path 
-                    d="M 50 15 C 35 -5, 0 0, 0 35 C 0 60, 30 80, 50 95 C 70 80, 100 60, 100 35 C 100 0, 65 -5, 50 15 Z" 
-                    fill="url(#heartGrad)" 
-                    opacity="0.95"
-                    style={{ transition: 'all 0.3s ease' }}
-                  />
-                  
-                  {/* Heartbeat Pulse Line (ECG) */}
-                  <path 
-                    d="M -15 50 L 20 50 L 28 45 L 35 55 L 45 10 L 55 85 L 63 45 L 70 52 L 78 50 L 115 50" 
-                    fill="none" 
-                    stroke={dark ? '#ffffff' : 'var(--color-accent-400)'} 
-                    strokeWidth="4" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                    filter="url(#glow)"
-                    style={{ transition: 'all 0.3s ease' }}
-                  />
-                </g>
-              </svg>
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: '380px',
+              aspectRatio: '1/1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: dark ? 'rgba(20, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.12)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              borderRadius: '2.5rem',
+              border: `2px solid ${dark ? 'rgba(214, 92, 126, 0.3)' : 'rgba(255, 255, 255, 0.25)'}`,
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(135, 18, 51, 0.2)',
+              padding: '2rem',
+              overflow: 'hidden',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-6px)'
+              e.currentTarget.style.boxShadow = '0 25px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(135, 18, 51, 0.3)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(135, 18, 51, 0.2)'
+            }}
+            >
+              <img
+                src={logo}
+                alt="Jóvenes con Salud"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.35))',
+                }}
+              />
             </div>
           </div>
         </div>

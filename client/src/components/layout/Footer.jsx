@@ -20,7 +20,7 @@ export default function Footer() {
           {/* About */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <img src={logo} alt="Logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
+              <img src={logo} alt="Logo" style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'contain' }} />
               <span style={{ fontSize: '1.125rem', fontWeight: '700', color: 'white' }}>
                 Jóvenes con Salud
               </span>

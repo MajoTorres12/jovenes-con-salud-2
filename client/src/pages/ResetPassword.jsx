@@ -102,11 +102,12 @@ export default function ResetPassword() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <img src={logo} alt="Jóvenes con Salud" style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: 'var(--radius-xl)',
+            height: '72px',
+            width: 'auto',
+            maxWidth: '180px',
             margin: '0 auto 1rem',
-            objectFit: 'cover'
+            objectFit: 'contain',
+            filter: 'drop-shadow(0 4px 12px rgba(135,18,51,0.2))'
           }} />
           <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-surface-900)' }}>
             Restablecer Contraseña

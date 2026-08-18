@@ -121,9 +121,11 @@ export default function Profile() {
 
   const inputStyle = {
     width: '100%', padding: '0.75rem 1rem',
-    borderRadius: 'var(--radius-lg)', border: '2px solid var(--color-surface-200)',
+    borderRadius: 'var(--radius-lg)',
+    border: dark ? '2px solid var(--color-surface-300)' : '2px solid var(--color-surface-200)',
     fontSize: '0.9rem', outline: 'none', fontFamily: 'inherit',
-    background: 'white',
+    background: dark ? 'var(--color-surface-200)' : 'white',
+    color: dark ? '#ffffff' : 'inherit',
     transition: 'border-color 0.2s',
   }
 
@@ -317,8 +319,9 @@ export default function Profile() {
       {/* Tabs */}
       <div style={{
         display: 'flex', gap: '0.5rem', marginBottom: '1.5rem',
-        background: 'var(--color-surface-100)',
-        padding: '0.3rem', borderRadius: 'var(--radius-xl)',
+        background: dark ? 'var(--color-surface-200)' : 'var(--color-surface-100)',
+        padding: '0.35rem', borderRadius: 'var(--radius-xl)',
+        border: dark ? '1px solid var(--color-surface-300)' : '1px solid var(--color-surface-200)',
       }}>
         {tabs.map(t => (
           <button
@@ -329,10 +332,14 @@ export default function Profile() {
               padding: '0.7rem 1rem',
               borderRadius: 'var(--radius-lg)',
               border: 'none',
-              background: activeTab === t.key ? 'white' : 'transparent',
+              background: activeTab === t.key
+                ? (dark ? 'var(--color-primary-500)' : 'white')
+                : 'transparent',
               boxShadow: activeTab === t.key ? 'var(--shadow-card)' : 'none',
-              color: activeTab === t.key ? 'var(--color-primary-500)' : 'var(--color-surface-400)',
-              fontWeight: '600', fontSize: '0.85rem',
+              color: activeTab === t.key
+                ? (dark ? '#ffffff' : 'var(--color-primary-500)')
+                : (dark ? 'var(--color-surface-500)' : 'var(--color-surface-500)'),
+              fontWeight: '700', fontSize: '0.85rem',
               cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
               transition: 'all 0.2s',

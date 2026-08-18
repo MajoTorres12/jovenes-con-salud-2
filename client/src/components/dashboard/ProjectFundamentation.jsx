@@ -17,10 +17,12 @@ import {
   FaFileAlt,
   FaLayerGroup
 } from 'react-icons/fa'
+import { useTheme } from '../../context/ThemeContext'
 
 const STORAGE_KEY = 'jcs_admin_custom_dashboards'
 
 export default function ProjectFundamentation() {
+  const { dark } = useTheme()
   const [selectedDashboard, setSelectedDashboard] = useState('general')
   const [customDashboards, setCustomDashboards] = useState([])
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -149,16 +151,27 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
 
   const currentCustomDash = customDashboards.find(d => d.id === selectedDashboard)
 
+  // Style tokens based on dark mode
+  const cardBg = dark ? 'var(--color-surface-100)' : 'white'
+  const cardBorder = dark ? '1px solid var(--color-surface-300)' : '1px solid var(--color-surface-200)'
+  const innerBg = dark ? 'var(--color-surface-200)' : 'var(--color-surface-50)'
+  const innerBorder = dark ? '1px solid var(--color-surface-300)' : '1px solid var(--color-surface-200)'
+  const headingColor = dark ? '#ffffff' : 'var(--color-surface-900)'
+  const textColor = dark ? 'var(--color-surface-600)' : 'var(--color-surface-600)'
+
   return (
     <div className="animate-fade-in" style={{ width: '100%' }}>
       {/* Banner Principal / Header */}
       <div style={{
-        background: 'linear-gradient(135deg, var(--color-primary-800) 0%, var(--color-primary-600) 60%, var(--color-accent-700) 100%)',
+        background: dark
+          ? 'linear-gradient(135deg, #18080f 0%, #300614 60%, #1e1308 100%)'
+          : 'linear-gradient(135deg, #750f2c 0%, #871233 60%, #9a7a4e 100%)',
         borderRadius: 'var(--radius-2xl)',
         padding: '2rem',
         color: 'white',
         marginBottom: '1.75rem',
-        boxShadow: 'var(--shadow-elevated)',
+        boxShadow: dark ? '0 10px 30px rgba(0,0,0,0.6)' : 'var(--shadow-elevated)',
+        border: dark ? '1px solid rgba(224, 59, 96, 0.35)' : 'none',
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -167,11 +180,11 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
           position: 'absolute',
           top: '-40px',
           right: '-40px',
-          width: '200px',
-          height: '200px',
+          width: '220px',
+          height: '220px',
           borderRadius: '50%',
-          background: 'rgba(194, 163, 120, 0.25)',
-          filter: 'blur(40px)',
+          background: dark ? 'rgba(212, 169, 106, 0.15)' : 'rgba(194, 163, 120, 0.25)',
+          filter: 'blur(45px)',
           pointerEvents: 'none'
         }} />
 
@@ -194,10 +207,10 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
             }}>
               <span>🏛️ Panel Exclusivo de Administración</span>
             </div>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', margin: '0 0 0.5rem', lineHeight: 1.2 }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', margin: '0 0 0.5rem', lineHeight: 1.2, color: 'white' }}>
               Fundamentación Estratégica del Proyecto
             </h2>
-            <p style={{ fontSize: '0.9rem', opacity: 0.92, margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.92)', margin: 0, lineHeight: 1.5 }}>
               Diagnóstico sociodemográfico, penetración tecnológica, necesidades epidemiológicas y modelo multiplicador familiar en el Estado de Tamaulipas (Fuentes: INEGI, ENSANUT, ENDUTIH).
             </p>
           </div>
@@ -210,11 +223,11 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                background: 'white',
-                color: 'var(--color-primary-800)',
+                background: dark ? 'var(--color-surface-200)' : 'white',
+                color: dark ? 'var(--color-primary-500)' : 'var(--color-primary-800)',
                 padding: '0.65rem 1.1rem',
                 borderRadius: 'var(--radius-lg)',
-                border: 'none',
+                border: dark ? '1px solid rgba(224, 59, 96, 0.4)' : '1px solid rgba(135,18,51,0.15)',
                 fontWeight: '700',
                 fontSize: '0.85rem',
                 cursor: 'pointer',
@@ -224,7 +237,7 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
               onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
             >
-              {copiedToast ? <FaCheck style={{ color: '#059669' }} /> : <FaCopy />}
+              {copiedToast ? <FaCheck style={{ color: '#10b981' }} /> : <FaCopy />}
               {copiedToast ? '¡Copiado!' : 'Copiar para Canva / Pitch'}
             </button>
 
@@ -234,15 +247,15 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                background: 'var(--color-accent-400)',
-                color: 'var(--color-primary-900)',
+                background: dark ? 'var(--color-primary-500)' : 'var(--color-accent-400)',
+                color: dark ? 'white' : 'var(--color-primary-900)',
                 padding: '0.65rem 1.1rem',
                 borderRadius: 'var(--radius-lg)',
                 border: 'none',
                 fontWeight: '700',
                 fontSize: '0.85rem',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                 transition: 'all 0.2s',
               }}
               onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
@@ -278,9 +291,15 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 gap: '0.5rem',
                 padding: '0.65rem 1rem',
                 borderRadius: 'var(--radius-xl)',
-                border: isSelected ? '2px solid var(--color-primary-500)' : '1px solid var(--color-surface-200)',
-                background: isSelected ? 'var(--color-primary-50)' : 'white',
-                color: isSelected ? 'var(--color-primary-700)' : 'var(--color-surface-600)',
+                border: isSelected
+                  ? (dark ? '1.5px solid var(--color-primary-500)' : '2px solid var(--color-primary-500)')
+                  : (dark ? '1px solid var(--color-surface-300)' : '1px solid var(--color-surface-200)'),
+                background: isSelected
+                  ? (dark ? 'rgba(224, 59, 96, 0.18)' : 'var(--color-primary-50)')
+                  : (dark ? 'var(--color-surface-100)' : 'white'),
+                color: isSelected
+                  ? (dark ? '#ffffff' : 'var(--color-primary-700)')
+                  : (dark ? 'var(--color-surface-500)' : 'var(--color-surface-600)'),
                 fontWeight: isSelected ? '700' : '600',
                 fontSize: '0.84rem',
                 cursor: 'pointer',
@@ -288,15 +307,19 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 transition: 'all 0.2s',
               }}
             >
-              <Icon size={14} color={isSelected ? 'var(--color-primary-600)' : '#9ca3af'} />
+              <Icon size={14} color={isSelected ? (dark ? '#fca5b7' : 'var(--color-primary-600)') : (dark ? '#6b7280' : '#9ca3af')} />
               <span>{dash.label}</span>
               <span style={{
                 fontSize: '0.7rem',
-                background: isSelected ? 'var(--color-primary-200)' : 'var(--color-surface-100)',
-                color: isSelected ? 'var(--color-primary-800)' : 'var(--color-surface-500)',
+                background: isSelected
+                  ? (dark ? 'rgba(224, 59, 96, 0.3)' : 'var(--color-primary-200)')
+                  : (dark ? 'var(--color-surface-200)' : 'var(--color-surface-100)'),
+                color: isSelected
+                  ? (dark ? '#fca5b7' : 'var(--color-primary-800)')
+                  : (dark ? 'var(--color-surface-500)' : 'var(--color-surface-500)'),
                 padding: '0.15rem 0.45rem',
                 borderRadius: 'var(--radius-full)',
-                fontWeight: '600',
+                fontWeight: '700',
               }}>
                 {dash.badge}
               </span>
@@ -318,9 +341,15 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 gap: '0.5rem',
                 padding: '0.65rem 1rem',
                 borderRadius: 'var(--radius-xl)',
-                border: isSelected ? '2px solid var(--color-accent-500)' : '1px dashed var(--color-accent-300)',
-                background: isSelected ? 'var(--color-accent-50)' : 'white',
-                color: isSelected ? 'var(--color-accent-800)' : 'var(--color-surface-600)',
+                border: isSelected
+                  ? (dark ? '1.5px solid var(--color-accent-500)' : '2px solid var(--color-accent-500)')
+                  : (dark ? '1px dashed var(--color-surface-300)' : '1px dashed var(--color-accent-300)'),
+                background: isSelected
+                  ? (dark ? 'rgba(212, 169, 106, 0.18)' : 'var(--color-accent-50)')
+                  : (dark ? 'var(--color-surface-100)' : 'white'),
+                color: isSelected
+                  ? (dark ? '#fde68a' : 'var(--color-accent-800)')
+                  : (dark ? 'var(--color-surface-500)' : 'var(--color-surface-600)'),
                 fontWeight: isSelected ? '700' : '600',
                 fontSize: '0.84rem',
                 cursor: 'pointer',
@@ -328,7 +357,7 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 transition: 'all 0.2s',
               }}
             >
-              <FaFileAlt size={13} color="var(--color-accent-600)" />
+              <FaFileAlt size={13} color={dark ? '#d4a96a' : 'var(--color-accent-600)'} />
               <span>{custom.title}</span>
               <span
                 onClick={(e) => handleDeleteDashboard(custom.id, e)}
@@ -353,49 +382,49 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
       {/* Render Custom Dashboard Content if selected */}
       {currentCustomDash ? (
         <div className="animate-fade-in" style={{
-          background: 'white',
+          background: cardBg,
           borderRadius: 'var(--radius-2xl)',
           padding: '2rem',
           boxShadow: 'var(--shadow-card)',
-          border: '1px solid var(--color-surface-200)',
+          border: cardBorder,
           marginBottom: '1.75rem'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-surface-200)', paddingBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', borderBottom: dark ? '1px solid var(--color-surface-300)' : '1px solid var(--color-surface-200)', paddingBottom: '1rem' }}>
             <div>
-              <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-accent-600)', letterSpacing: '0.05em' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#d4a96a' : 'var(--color-accent-600)', letterSpacing: '0.05em' }}>
                 Dashboard Personalizado • Creado el {currentCustomDash.createdAt}
               </span>
-              <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: '0.35rem 0' }}>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: headingColor, margin: '0.35rem 0' }}>
                 {currentCustomDash.title}
               </h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--color-surface-500)', margin: 0 }}>
+              <p style={{ fontSize: '0.9rem', color: textColor, margin: 0 }}>
                 {currentCustomDash.description || 'Sin descripción adicional.'}
               </p>
             </div>
             <div style={{
-              background: 'var(--color-primary-50)',
-              color: 'var(--color-primary-700)',
+              background: dark ? 'rgba(224, 59, 96, 0.2)' : 'var(--color-primary-50)',
+              color: dark ? '#fca5b7' : 'var(--color-primary-700)',
               padding: '0.4rem 0.85rem',
               borderRadius: 'var(--radius-full)',
               fontSize: '0.8rem',
               fontWeight: '700',
-              border: '1px solid var(--color-primary-200)'
+              border: dark ? '1px solid rgba(224, 59, 96, 0.4)' : '1px solid var(--color-primary-200)'
             }}>
               🎯 {currentCustomDash.target}
             </div>
           </div>
 
           <div style={{
-            background: 'var(--color-surface-50)',
+            background: innerBg,
             borderRadius: 'var(--radius-xl)',
             padding: '1.5rem',
-            border: '1px solid var(--color-surface-200)',
+            border: innerBorder,
             marginBottom: '1.5rem'
           }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-surface-800)', marginTop: 0, marginBottom: '0.5rem' }}>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: headingColor, marginTop: 0, marginBottom: '0.5rem' }}>
               Notas Estratégicas y Puntos Clave
             </h4>
-            <p style={{ fontSize: '0.88rem', color: 'var(--color-surface-600)', whiteSpace: 'pre-wrap', lineHeight: 1.6, margin: 0 }}>
+            <p style={{ fontSize: '0.88rem', color: textColor, whiteSpace: 'pre-wrap', lineHeight: 1.6, margin: 0 }}>
               {currentCustomDash.notes || 'No se han agregado notas para este dashboard aún.'}
             </p>
           </div>
@@ -406,9 +435,9 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
               style={{
                 padding: '0.6rem 1.2rem',
                 borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-surface-300)',
-                background: 'white',
-                color: 'var(--color-surface-700)',
+                border: dark ? '1px solid var(--color-surface-300)' : '1px solid var(--color-surface-300)',
+                background: dark ? 'var(--color-surface-200)' : 'white',
+                color: headingColor,
                 fontSize: '0.85rem',
                 fontWeight: '600',
                 cursor: 'pointer'
@@ -428,11 +457,11 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
           {/* TARJETA 1: KPIs DEMOGRÁFICOS */}
           {(selectedDashboard === 'general') && (
             <div className="animate-fade-in" style={{
-              background: 'white',
+              background: cardBg,
               borderRadius: 'var(--radius-2xl)',
               padding: '1.75rem',
               boxShadow: 'var(--shadow-card)',
-              border: '1px solid var(--color-surface-200)',
+              border: cardBorder,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -442,23 +471,26 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <div style={{
                       width: '36px', height: '36px', borderRadius: '10px',
-                      background: 'var(--color-primary-50)', color: 'var(--color-primary-600)',
+                      background: dark ? 'rgba(224, 59, 96, 0.2)' : 'var(--color-primary-50)',
+                      color: dark ? '#fca5b7' : 'var(--color-primary-600)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem'
                     }}>
                       <FaUsers />
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-primary-500)', letterSpacing: '0.04em' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#fca5b7' : 'var(--color-primary-500)', letterSpacing: '0.04em' }}>
                         Tarjeta 1 • Demografía INEGI
                       </span>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0 }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: headingColor, margin: 0 }}>
                         KPIs Demográficos Generales
                       </h3>
                     </div>
                   </div>
                   <span style={{
                     fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.55rem',
-                    borderRadius: 'var(--radius-full)', background: 'var(--color-surface-100)', color: 'var(--color-surface-600)'
+                    borderRadius: 'var(--radius-full)',
+                    background: dark ? 'var(--color-surface-200)' : 'var(--color-surface-100)',
+                    color: dark ? 'var(--color-surface-500)' : 'var(--color-surface-600)'
                   }}>
                     Tamaulipas
                   </span>
@@ -466,57 +498,59 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
 
                 {/* Big Number KPI */}
                 <div style={{
-                  background: 'linear-gradient(135deg, var(--color-surface-50) 0%, var(--color-primary-50) 100%)',
+                  background: dark
+                    ? 'linear-gradient(135deg, var(--color-surface-200) 0%, rgba(224, 59, 96, 0.12) 100%)'
+                    : 'linear-gradient(135deg, var(--color-surface-50) 0%, var(--color-primary-50) 100%)',
                   padding: '1.25rem',
                   borderRadius: 'var(--radius-xl)',
-                  border: '1px solid var(--color-primary-100)',
+                  border: dark ? '1px solid rgba(224, 59, 96, 0.25)' : '1px solid var(--color-primary-100)',
                   textAlign: 'center',
                   marginBottom: '1.25rem',
                 }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-surface-500)', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '600', color: textColor, textTransform: 'uppercase' }}>
                     Población Total del Estado
                   </span>
-                  <div style={{ fontSize: '2.4rem', fontWeight: '900', color: 'var(--color-primary-700)', lineHeight: 1.1, margin: '0.25rem 0' }}>
+                  <div style={{ fontSize: '2.4rem', fontWeight: '900', color: dark ? '#ffffff' : 'var(--color-primary-700)', lineHeight: 1.1, margin: '0.25rem 0' }}>
                     3,527,735
                   </div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--color-surface-600)' }}>
+                  <span style={{ fontSize: '0.8rem', color: textColor }}>
                     Habitantes en los 43 municipios
                   </span>
                 </div>
 
                 {/* Demographic Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-                  <div style={{ background: 'var(--color-surface-50)', padding: '0.85rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-surface-200)' }}>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--color-surface-500)', display: 'block' }}>Población Joven (12-29)</span>
-                    <strong style={{ fontSize: '1.2rem', color: 'var(--color-surface-900)', display: 'block' }}>1,028,023</strong>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-primary-600)', display: 'block' }}>29.1% del estado</span>
+                  <div style={{ background: innerBg, padding: '0.85rem', borderRadius: 'var(--radius-lg)', border: innerBorder }}>
+                    <span style={{ fontSize: '0.74rem', color: textColor, display: 'block' }}>Población Joven (12-29)</span>
+                    <strong style={{ fontSize: '1.2rem', color: headingColor }}>1,028,023</strong>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: dark ? '#fca5b7' : 'var(--color-primary-600)', display: 'block' }}>29.1% del estado</span>
                   </div>
 
-                  <div style={{ background: 'var(--color-surface-50)', padding: '0.85rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-surface-200)' }}>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--color-surface-500)', display: 'block' }}>Edad Mediana</span>
-                    <strong style={{ fontSize: '1.2rem', color: 'var(--color-surface-900)', display: 'block' }}>30 Años</strong>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-accent-700)', display: 'block' }}>Bono Demográfico</span>
+                  <div style={{ background: innerBg, padding: '0.85rem', borderRadius: 'var(--radius-lg)', border: innerBorder }}>
+                    <span style={{ fontSize: '0.74rem', color: textColor, display: 'block' }}>Edad Mediana</span>
+                    <strong style={{ fontSize: '1.2rem', color: headingColor }}>30 Años</strong>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: dark ? '#d4a96a' : 'var(--color-accent-700)', display: 'block' }}>Bono Demográfico</span>
                   </div>
                 </div>
 
                 {/* Proportions & Urban Population */}
-                <div style={{ fontSize: '0.82rem', color: 'var(--color-surface-600)', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div style={{ fontSize: '0.82rem', color: textColor, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontWeight: '600' }}>
                       <span>Distribución por Sexo:</span>
-                      <span>50.8% Mujeres • 49.2% Hombres</span>
+                      <span style={{ color: headingColor }}>50.8% Mujeres • 49.2% Hombres</span>
                     </div>
-                    <div style={{ height: '8px', width: '100%', background: '#3b82f630', borderRadius: '4px', overflow: 'hidden', display: 'flex' }}>
+                    <div style={{ height: '8px', width: '100%', background: dark ? 'var(--color-surface-300)' : '#3b82f630', borderRadius: '4px', overflow: 'hidden', display: 'flex' }}>
                       <div style={{ width: '50.8%', background: '#ec4899' }} title="50.8% Mujeres" />
                       <div style={{ width: '49.2%', background: '#3b82f6' }} title="49.2% Hombres" />
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--color-surface-100)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: innerBg, padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', border: innerBorder }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '600' }}>
-                      <FaCity color="var(--color-primary-600)" /> Población Urbana:
+                      <FaCity color={dark ? '#fca5b7' : 'var(--color-primary-600)'} /> Población Urbana:
                     </span>
-                    <strong style={{ color: 'var(--color-surface-900)' }}>87.8% (Alta concentración)</strong>
+                    <strong style={{ color: headingColor }}>87.8% (Alta concentración)</strong>
                   </div>
                 </div>
               </div>
@@ -525,11 +559,11 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
 
           {/* TARJETA 2: CONECTIVIDAD E INCLUSIÓN DIGITAL */}
           <div className="animate-fade-in" style={{
-            background: 'white',
+            background: cardBg,
             borderRadius: 'var(--radius-2xl)',
             padding: '1.75rem',
             boxShadow: 'var(--shadow-card)',
-            border: '1px solid var(--color-surface-200)',
+            border: cardBorder,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -539,23 +573,26 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <div style={{
                     width: '36px', height: '36px', borderRadius: '10px',
-                    background: '#3b82f615', color: '#2563eb',
+                    background: dark ? 'rgba(59, 130, 246, 0.2)' : '#3b82f615',
+                    color: dark ? '#60a5fa' : '#2563eb',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem'
                   }}>
                     <FaWifi />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: '#2563eb', letterSpacing: '0.04em' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#60a5fa' : '#2563eb', letterSpacing: '0.04em' }}>
                       Tarjeta 2 • Adopción ENDUTIH
                     </span>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0 }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: headingColor, margin: 0 }}>
                       Conectividad e Inclusión Digital
                     </h3>
                   </div>
                 </div>
                 <span style={{
                   fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.55rem',
-                  borderRadius: 'var(--radius-full)', background: '#2563eb15', color: '#2563eb'
+                  borderRadius: 'var(--radius-full)',
+                  background: dark ? 'rgba(59, 130, 246, 0.2)' : '#2563eb15',
+                  color: dark ? '#60a5fa' : '#2563eb'
                 }}>
                   Alta Adopción
                 </span>
@@ -566,10 +603,10 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 display: 'flex',
                 alignItems: 'center',
                 gap: '1.25rem',
-                background: 'var(--color-surface-50)',
+                background: innerBg,
                 padding: '1.1rem',
                 borderRadius: 'var(--radius-xl)',
-                border: '1px solid var(--color-surface-200)',
+                border: innerBorder,
                 marginBottom: '1rem'
               }}>
                 {/* SVG Donut */}
@@ -578,31 +615,32 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
-                      stroke="#e5e7eb"
+                      stroke={dark ? 'var(--color-surface-300)' : '#e5e7eb'}
                       strokeWidth="4"
                     />
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
-                      stroke="#2563eb"
+                      stroke="#3b82f6"
                       strokeWidth="4"
                       strokeDasharray="87.7, 100"
                     />
                   </svg>
                   <div style={{
                     position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.85rem', color: '#1e40af'
+                    alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '0.85rem',
+                    color: dark ? '#60a5fa' : '#1e40af'
                   }}>
                     87.7%
                   </div>
                 </div>
 
                 <div>
-                  <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.92rem', fontWeight: '800', color: 'var(--color-surface-900)' }}>
+                  <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.92rem', fontWeight: '800', color: headingColor }}>
                     Usuarios de Internet (6+ años)
                   </h4>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-surface-500)', lineHeight: 1.4 }}>
-                    <strong>2.87 millones de personas</strong> conectadas. 97.8% tienen acceso desde su propio hogar.
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: textColor, lineHeight: 1.4 }}>
+                    <strong style={{ color: headingColor }}>2.87 millones de personas</strong> conectadas. 97.8% tienen acceso desde su propio hogar.
                   </p>
                 </div>
               </div>
@@ -614,37 +652,37 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 justifyContent: 'space-between',
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--radius-lg)',
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
+                background: dark ? 'rgba(16, 185, 129, 0.12)' : 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))',
+                border: dark ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(16, 185, 129, 0.25)',
                 marginBottom: '1rem'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <FaMobileAlt size={18} color="#059669" />
+                  <FaMobileAlt size={18} color={dark ? '#34d399' : '#059669'} />
                   <div>
-                    <strong style={{ fontSize: '0.84rem', color: '#065f46', display: 'block' }}>Uso de Smartphone en Jóvenes</strong>
-                    <span style={{ fontSize: '0.72rem', color: '#047857' }}>Penetración móvil casi total</span>
+                    <strong style={{ fontSize: '0.84rem', color: dark ? '#6ee7b7' : '#065f46', display: 'block' }}>Uso de Smartphone en Jóvenes</strong>
+                    <span style={{ fontSize: '0.72rem', color: dark ? '#34d399' : '#047857' }}>Penetración móvil casi total</span>
                   </div>
                 </div>
-                <span style={{ fontSize: '1.25rem', fontWeight: '900', color: '#059669' }}>+95.0%</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: '900', color: dark ? '#34d399' : '#059669' }}>+95.0%</span>
               </div>
 
               {/* Daily time in internet */}
               <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-surface-500)', display: 'block', marginBottom: '0.4rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: textColor, display: 'block', marginBottom: '0.4rem' }}>
                   <FaClock style={{ marginRight: '4px', verticalAlign: 'middle' }} /> TIEMPO DIARIO EN INTERNET (JÓVENES)
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', background: 'var(--color-surface-50)', padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', background: innerBg, padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)', border: innerBorder }}>
                     <span>18 a 24 años:</span>
-                    <strong style={{ color: 'var(--color-primary-700)' }}>5.7 - 5.9 horas / día</strong>
+                    <strong style={{ color: dark ? '#fca5b7' : 'var(--color-primary-700)' }}>5.7 - 5.9 horas / día</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', background: 'var(--color-surface-50)', padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', background: innerBg, padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)', border: innerBorder }}>
                     <span>25 a 34 años:</span>
-                    <strong style={{ color: 'var(--color-surface-800)' }}>5.6 horas / día</strong>
+                    <strong style={{ color: headingColor }}>5.6 horas / día</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', background: 'var(--color-surface-50)', padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', background: innerBg, padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)', border: innerBorder }}>
                     <span>12 a 17 años:</span>
-                    <strong style={{ color: 'var(--color-surface-800)' }}>4.5 - 4.7 horas / día</strong>
+                    <strong style={{ color: headingColor }}>4.5 - 4.7 horas / día</strong>
                   </div>
                 </div>
               </div>
@@ -656,11 +694,11 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
       {/* TARJETA 3: ALCANCE DEL PROYECTO Y EFECTO MULTIPLICADOR (FUNNEL) */}
       {(selectedDashboard === 'general' || selectedDashboard === 'digital') && (
         <div className="animate-fade-in" style={{
-          background: 'white',
+          background: cardBg,
           borderRadius: 'var(--radius-2xl)',
           padding: '1.75rem',
           boxShadow: 'var(--shadow-card)',
-          border: '1px solid var(--color-surface-200)',
+          border: cardBorder,
           marginBottom: '1.5rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -673,10 +711,10 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 <FaRocket />
               </div>
               <div>
-                <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-primary-500)', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#fca5b7' : 'var(--color-primary-500)', letterSpacing: '0.04em' }}>
                   Tarjeta 3 • Modelo de Impacto Social
                 </span>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0 }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: headingColor, margin: 0 }}>
                   Alcance del Proyecto y Efecto Multiplicador
                 </h3>
               </div>
@@ -687,13 +725,13 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
-              background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-              color: '#92400e',
+              background: dark ? 'rgba(245, 158, 11, 0.18)' : 'linear-gradient(135deg, #fef3c7, #fde68a)',
+              color: dark ? '#fbbf24' : '#92400e',
               padding: '0.4rem 0.85rem',
               borderRadius: 'var(--radius-full)',
               fontWeight: '800',
               fontSize: '0.85rem',
-              border: '1px solid #fcd34d'
+              border: dark ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid #fcd34d'
             }}>
               ⚡ Factor Multiplicador Familiar: 2.26x
             </div>
@@ -703,66 +741,82 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
             {/* Step 1: Direct */}
             <div style={{
-              background: 'linear-gradient(135deg, var(--color-primary-50), white)',
-              border: '2px solid var(--color-primary-200)',
+              background: dark
+                ? 'linear-gradient(135deg, rgba(224, 59, 96, 0.14) 0%, var(--color-surface-200) 100%)'
+                : 'linear-gradient(135deg, var(--color-primary-50), white)',
+              border: dark ? '1.5px solid rgba(224, 59, 96, 0.4)' : '2px solid var(--color-primary-200)',
               borderRadius: 'var(--radius-xl)',
               padding: '1.25rem',
               position: 'relative'
             }}>
               <span style={{
                 position: 'absolute', top: '-10px', right: '15px',
-                background: 'var(--color-primary-600)', color: 'white',
+                background: dark ? 'var(--color-primary-500)' : 'var(--color-primary-600)', color: 'white',
                 fontSize: '0.7rem', fontWeight: '800', padding: '0.15rem 0.6rem', borderRadius: 'var(--radius-full)'
               }}>
                 CÚSPIDE DEL EMBUDO
               </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-primary-600)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#fca5b7' : 'var(--color-primary-600)' }}>
                 Beneficiarios Directos
               </span>
-              <div style={{ fontSize: '1.9rem', fontWeight: '900', color: 'var(--color-primary-800)', margin: '0.2rem 0' }}>
+              <div style={{ fontSize: '1.9rem', fontWeight: '900', color: headingColor, margin: '0.2rem 0' }}>
                 976,622
               </div>
-              <div style={{ display: 'inline-block', background: 'var(--color-primary-100)', color: 'var(--color-primary-800)', fontWeight: '700', fontSize: '0.8rem', padding: '0.1rem 0.5rem', borderRadius: '4px', marginBottom: '0.5rem' }}>
+              <div style={{
+                display: 'inline-block',
+                background: dark ? 'rgba(224, 59, 96, 0.25)' : 'var(--color-primary-100)',
+                color: dark ? '#fca5b7' : 'var(--color-primary-800)',
+                fontWeight: '700', fontSize: '0.8rem', padding: '0.1rem 0.5rem', borderRadius: '4px', marginBottom: '0.5rem'
+              }}>
                 27.7% de la población estatal
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--color-surface-600)', margin: 0, lineHeight: 1.4 }}>
+              <p style={{ fontSize: '0.8rem', color: textColor, margin: 0, lineHeight: 1.4 }}>
                 Jóvenes (12-29 años) digitalmente activos que interactúan y gestionan su salud directamente desde la app.
               </p>
             </div>
 
             {/* Step 2: Indirect */}
             <div style={{
-              background: 'linear-gradient(135deg, var(--color-accent-50), white)',
-              border: '2px solid var(--color-accent-300)',
+              background: dark
+                ? 'linear-gradient(135deg, rgba(212, 169, 106, 0.14) 0%, var(--color-surface-200) 100%)'
+                : 'linear-gradient(135deg, var(--color-accent-50), white)',
+              border: dark ? '1.5px solid rgba(212, 169, 106, 0.4)' : '2px solid var(--color-accent-300)',
               borderRadius: 'var(--radius-xl)',
               padding: '1.25rem',
               position: 'relative'
             }}>
               <span style={{
                 position: 'absolute', top: '-10px', right: '15px',
-                background: 'var(--color-accent-600)', color: 'white',
+                background: dark ? 'var(--color-accent-500)' : 'var(--color-accent-600)', color: dark ? '#1a1715' : 'white',
                 fontSize: '0.7rem', fontWeight: '800', padding: '0.15rem 0.6rem', borderRadius: 'var(--radius-full)'
               }}>
                 BASE MULTIPLICADORA
               </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-accent-700)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#fde68a' : 'var(--color-accent-700)' }}>
                 Beneficiarios Indirectos
               </span>
-              <div style={{ fontSize: '1.9rem', fontWeight: '900', color: 'var(--color-accent-900)', margin: '0.2rem 0' }}>
+              <div style={{ fontSize: '1.9rem', fontWeight: '900', color: headingColor, margin: '0.2rem 0' }}>
                 2,246,230
               </div>
-              <div style={{ display: 'inline-block', background: 'var(--color-accent-200)', color: 'var(--color-accent-900)', fontWeight: '700', fontSize: '0.8rem', padding: '0.1rem 0.5rem', borderRadius: '4px', marginBottom: '0.5rem' }}>
+              <div style={{
+                display: 'inline-block',
+                background: dark ? 'rgba(212, 169, 106, 0.25)' : 'var(--color-accent-200)',
+                color: dark ? '#fde68a' : 'var(--color-accent-900)',
+                fontWeight: '700', fontSize: '0.8rem', padding: '0.1rem 0.5rem', borderRadius: '4px', marginBottom: '0.5rem'
+              }}>
                 63.6% de la población estatal
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--color-surface-600)', margin: 0, lineHeight: 1.4 }}>
+              <p style={{ fontSize: '0.8rem', color: textColor, margin: 0, lineHeight: 1.4 }}>
                 Familiares (padres, abuelos, tutores) monitoreados y asistidos tecnológicamente por el joven en el hogar.
               </p>
             </div>
 
             {/* Step 3: Total Reach */}
             <div style={{
-              background: 'linear-gradient(135deg, #ecfdf5, white)',
-              border: '2px solid #a7f3d0',
+              background: dark
+                ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, var(--color-surface-200) 100%)'
+                : 'linear-gradient(135deg, #ecfdf5, white)',
+              border: dark ? '1.5px solid rgba(16, 185, 129, 0.4)' : '2px solid #a7f3d0',
               borderRadius: 'var(--radius-xl)',
               padding: '1.25rem',
               position: 'relative'
@@ -774,16 +828,21 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
               }}>
                 COBERTURA TOTAL
               </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#047857' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#6ee7b7' : '#047857' }}>
                 Alcance Potencial Combinado
               </span>
-              <div style={{ fontSize: '1.9rem', fontWeight: '900', color: '#065f46', margin: '0.2rem 0' }}>
+              <div style={{ fontSize: '1.9rem', fontWeight: '900', color: headingColor, margin: '0.2rem 0' }}>
                 3,222,852
               </div>
-              <div style={{ display: 'inline-block', background: '#d1fae5', color: '#065f46', fontWeight: '700', fontSize: '0.8rem', padding: '0.1rem 0.5rem', borderRadius: '4px', marginBottom: '0.5rem' }}>
+              <div style={{
+                display: 'inline-block',
+                background: dark ? 'rgba(16, 185, 129, 0.25)' : '#d1fae5',
+                color: dark ? '#6ee7b7' : '#065f46',
+                fontWeight: '700', fontSize: '0.8rem', padding: '0.1rem 0.5rem', borderRadius: '4px', marginBottom: '0.5rem'
+              }}>
                 91.3% Cobertura Familiar Estatal
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--color-surface-600)', margin: 0, lineHeight: 1.4 }}>
+              <p style={{ fontSize: '0.8rem', color: textColor, margin: 0, lineHeight: 1.4 }}>
                 Impacto social masivo e intergeneracional: Por cada joven, se beneficia a 1.8 familiares adicionales.
               </p>
             </div>
@@ -793,7 +852,7 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
               <thead>
-                <tr style={{ background: 'var(--color-surface-100)', color: 'var(--color-surface-700)' }}>
+                <tr style={{ background: innerBg, color: dark ? '#e5dfef' : 'var(--color-surface-700)' }}>
                   <th style={{ padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm) 0 0 var(--radius-sm)' }}>Clasificación del Impacto</th>
                   <th style={{ padding: '0.65rem 0.85rem' }}>Cifra de Población</th>
                   <th style={{ padding: '0.65rem 0.85rem' }}>% Estatal</th>
@@ -801,23 +860,23 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: '1px solid var(--color-surface-200)' }}>
-                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '700', color: 'var(--color-primary-700)' }}>Beneficiarios Directos</td>
-                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '700' }}>976,622</td>
-                  <td style={{ padding: '0.65rem 0.85rem' }}>27.7%</td>
-                  <td style={{ padding: '0.65rem 0.85rem', color: 'var(--color-surface-600)' }}>Jóvenes (12-29 años) con uso activo y autónomo de la aplicación.</td>
+                <tr style={{ borderBottom: innerBorder }}>
+                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '700', color: dark ? '#fca5b7' : 'var(--color-primary-700)' }}>Beneficiarios Directos</td>
+                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '700', color: headingColor }}>976,622</td>
+                  <td style={{ padding: '0.65rem 0.85rem', color: headingColor }}>27.7%</td>
+                  <td style={{ padding: '0.65rem 0.85rem', color: textColor }}>Jóvenes (12-29 años) con uso activo y autónomo de la aplicación.</td>
                 </tr>
-                <tr style={{ borderBottom: '1px solid var(--color-surface-200)' }}>
-                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '700', color: 'var(--color-accent-800)' }}>Beneficiarios Indirectos</td>
-                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '700' }}>2,246,230</td>
-                  <td style={{ padding: '0.65rem 0.85rem' }}>63.6%</td>
-                  <td style={{ padding: '0.65rem 0.85rem', color: 'var(--color-surface-600)' }}>Familiares (padres, abuelos) asistidos mediante el módulo de Núcleo Familiar.</td>
+                <tr style={{ borderBottom: innerBorder }}>
+                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '700', color: dark ? '#fde68a' : 'var(--color-accent-800)' }}>Beneficiarios Indirectos</td>
+                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '700', color: headingColor }}>2,246,230</td>
+                  <td style={{ padding: '0.65rem 0.85rem', color: headingColor }}>63.6%</td>
+                  <td style={{ padding: '0.65rem 0.85rem', color: textColor }}>Familiares (padres, abuelos) asistidos mediante el módulo de Núcleo Familiar.</td>
                 </tr>
-                <tr style={{ background: 'var(--color-surface-50)' }}>
-                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '800', color: '#059669' }}>Alcance Potencial Total</td>
-                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '800', color: '#059669' }}>3,222,852</td>
-                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '800', color: '#059669' }}>91.3%</td>
-                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '600', color: 'var(--color-surface-800)' }}>Cobertura familiar combinada en Tamaulipas (Efecto multiplicador 2.26x).</td>
+                <tr style={{ background: dark ? 'rgba(16, 185, 129, 0.08)' : 'var(--color-surface-50)' }}>
+                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '800', color: dark ? '#34d399' : '#059669' }}>Alcance Potencial Total</td>
+                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '800', color: dark ? '#34d399' : '#059669' }}>3,222,852</td>
+                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '800', color: dark ? '#34d399' : '#059669' }}>91.3%</td>
+                  <td style={{ padding: '0.65rem 0.85rem', fontWeight: '600', color: headingColor }}>Cobertura familiar combinada en Tamaulipas (Efecto multiplicador 2.26x).</td>
                 </tr>
               </tbody>
             </table>
@@ -828,27 +887,28 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
       {/* TARJETA 4: NECESIDAD EPIDEMIOLÓGICA */}
       {(selectedDashboard === 'general' || selectedDashboard === 'epidemiology') && (
         <div className="animate-fade-in" style={{
-          background: 'white',
+          background: cardBg,
           borderRadius: 'var(--radius-2xl)',
           padding: '1.75rem',
           boxShadow: 'var(--shadow-card)',
-          border: '1px solid var(--color-surface-200)',
+          border: cardBorder,
           marginBottom: '1.5rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{
                 width: '36px', height: '36px', borderRadius: '10px',
-                background: '#fee2e2', color: '#dc2626',
+                background: dark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+                color: dark ? '#fca5a5' : '#dc2626',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem'
               }}>
                 <FaHeartbeat />
               </div>
               <div>
-                <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: '#dc2626', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#fca5a5' : '#dc2626', letterSpacing: '0.04em' }}>
                   Tarjeta 4 • Urgencia en Salud Pública (ENSANUT)
                 </span>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0 }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: headingColor, margin: 0 }}>
                   Necesidad Epidemiológica en Tamaulipas
                 </h3>
               </div>
@@ -858,13 +918,13 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.35rem',
-              background: '#fef2f2',
-              color: '#991b1b',
+              background: dark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+              color: dark ? '#fca5a5' : '#991b1b',
               padding: '0.35rem 0.75rem',
               borderRadius: 'var(--radius-full)',
               fontSize: '0.78rem',
               fontWeight: '700',
-              border: '1px solid #fecaca'
+              border: dark ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid #fecaca'
             }}>
               💔 Causas #1 de Mortalidad: Enfermedades del Corazón y Diabetes
             </div>
@@ -873,65 +933,65 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
           {/* Indicators Progress Bars */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
             {/* 1. Sobrepeso Adultos */}
-            <div style={{ background: 'var(--color-surface-50)', padding: '1.1rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)' }}>
+            <div style={{ background: innerBg, padding: '1.1rem', borderRadius: 'var(--radius-xl)', border: innerBorder }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-surface-800)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: headingColor, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   ⚖️ Sobrepeso y Obesidad en Adultos (20+ años)
                 </span>
                 <strong style={{ fontSize: '1.15rem', color: '#dc2626' }}>75.0%</strong>
               </div>
-              <div style={{ height: '10px', width: '100%', background: '#e5e7eb', borderRadius: '5px', overflow: 'hidden', marginBottom: '0.4rem' }}>
+              <div style={{ height: '10px', width: '100%', background: dark ? 'var(--color-surface-300)' : '#e5e7eb', borderRadius: '5px', overflow: 'hidden', marginBottom: '0.4rem' }}>
                 <div style={{ width: '75.0%', height: '100%', background: 'linear-gradient(90deg, #f59e0b, #dc2626)', borderRadius: '5px' }} />
               </div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--color-surface-500)' }}>
+              <span style={{ fontSize: '0.74rem', color: textColor }}>
                 3 de cada 4 adultos en el estado padecen exceso de peso.
               </span>
             </div>
 
             {/* 2. Sobrepeso Adolescentes */}
-            <div style={{ background: 'var(--color-surface-50)', padding: '1.1rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)' }}>
+            <div style={{ background: innerBg, padding: '1.1rem', borderRadius: 'var(--radius-xl)', border: innerBorder }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-surface-800)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: headingColor, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   🎒 Sobrepeso y Obesidad en Adolescentes (12-17 años)
                 </span>
                 <strong style={{ fontSize: '1.15rem', color: '#ea580c' }}>40.0%</strong>
               </div>
-              <div style={{ height: '10px', width: '100%', background: '#e5e7eb', borderRadius: '5px', overflow: 'hidden', marginBottom: '0.4rem' }}>
+              <div style={{ height: '10px', width: '100%', background: dark ? 'var(--color-surface-300)' : '#e5e7eb', borderRadius: '5px', overflow: 'hidden', marginBottom: '0.4rem' }}>
                 <div style={{ width: '40.0%', height: '100%', background: 'linear-gradient(90deg, #fbbf24, #ea580c)', borderRadius: '5px' }} />
               </div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--color-surface-500)' }}>
+              <span style={{ fontSize: '0.74rem', color: textColor }}>
                 4 de cada 10 jóvenes en etapa escolar en riesgo metabólico.
               </span>
             </div>
 
             {/* 3. Hipertensión */}
-            <div style={{ background: 'var(--color-surface-50)', padding: '1.1rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)' }}>
+            <div style={{ background: innerBg, padding: '1.1rem', borderRadius: 'var(--radius-xl)', border: innerBorder }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-surface-800)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: headingColor, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   ❤️ Hipertensión Arterial (Adultos)
                 </span>
                 <strong style={{ fontSize: '1.15rem', color: '#b91c1c' }}>30.0%</strong>
               </div>
-              <div style={{ height: '10px', width: '100%', background: '#e5e7eb', borderRadius: '5px', overflow: 'hidden', marginBottom: '0.4rem' }}>
+              <div style={{ height: '10px', width: '100%', background: dark ? 'var(--color-surface-300)' : '#e5e7eb', borderRadius: '5px', overflow: 'hidden', marginBottom: '0.4rem' }}>
                 <div style={{ width: '30.0%', height: '100%', background: 'linear-gradient(90deg, #f87171, #b91c1c)', borderRadius: '5px' }} />
               </div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--color-surface-500)' }}>
+              <span style={{ fontSize: '0.74rem', color: textColor }}>
                 Alta incidencia asintomática en etapa temprana.
               </span>
             </div>
 
             {/* 4. Diabetes Mellitus */}
-            <div style={{ background: 'var(--color-surface-50)', padding: '1.1rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--color-surface-200)' }}>
+            <div style={{ background: innerBg, padding: '1.1rem', borderRadius: 'var(--radius-xl)', border: innerBorder }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-surface-800)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: headingColor, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   🩸 Diabetes Mellitus Tipo 2 (Adultos)
                 </span>
-                <strong style={{ fontSize: '1.15rem', color: 'var(--color-primary-700)' }}>18.3%</strong>
+                <strong style={{ fontSize: '1.15rem', color: dark ? '#fca5b7' : 'var(--color-primary-700)' }}>18.3%</strong>
               </div>
-              <div style={{ height: '10px', width: '100%', background: '#e5e7eb', borderRadius: '5px', overflow: 'hidden', marginBottom: '0.4rem' }}>
-                <div style={{ width: '18.3%', height: '100%', background: 'linear-gradient(90deg, var(--color-primary-400), var(--color-primary-700))', borderRadius: '5px' }} />
+              <div style={{ height: '10px', width: '100%', background: dark ? 'var(--color-surface-300)' : '#e5e7eb', borderRadius: '5px', overflow: 'hidden', marginBottom: '0.4rem' }}>
+                <div style={{ width: '18.3%', height: '100%', background: 'linear-gradient(90deg, #d65c7e, #871233)', borderRadius: '5px' }} />
               </div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--color-surface-500)' }}>
+              <span style={{ fontSize: '0.74rem', color: textColor }}>
                 Por encima de la media nacional, demanda intervención y tamizaje preventivo.
               </span>
             </div>
@@ -942,27 +1002,28 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
       {/* TARJETA 5: REGIONES Y MUNICIPIOS CLAVE (MAPA DE OPORTUNIDAD) */}
       {(selectedDashboard === 'general' || selectedDashboard === 'territory') && (
         <div className="animate-fade-in" style={{
-          background: 'white',
+          background: cardBg,
           borderRadius: 'var(--radius-2xl)',
           padding: '1.75rem',
           boxShadow: 'var(--shadow-card)',
-          border: '1px solid var(--color-surface-200)',
+          border: cardBorder,
           marginBottom: '1.5rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{
                 width: '36px', height: '36px', borderRadius: '10px',
-                background: 'var(--color-accent-100)', color: 'var(--color-accent-800)',
+                background: dark ? 'rgba(212, 169, 106, 0.2)' : 'var(--color-accent-100)',
+                color: dark ? '#d4a96a' : 'var(--color-accent-800)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem'
               }}>
                 <FaMapMarkedAlt />
               </div>
               <div>
-                <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-accent-700)', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#d4a96a' : 'var(--color-accent-700)', letterSpacing: '0.04em' }}>
                   Tarjeta 5 • Despliegue Geográfico
                 </span>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0 }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: headingColor, margin: 0 }}>
                   Regiones y Municipios Clave (Mapa de Oportunidad)
                 </h3>
               </div>
@@ -982,8 +1043,12 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                     padding: '0.35rem 0.75rem',
                     borderRadius: 'var(--radius-md)',
                     border: 'none',
-                    background: activeRegion === tab.id ? 'var(--color-primary-600)' : 'var(--color-surface-100)',
-                    color: activeRegion === tab.id ? 'white' : 'var(--color-surface-600)',
+                    background: activeRegion === tab.id
+                      ? (dark ? 'var(--color-primary-500)' : 'var(--color-primary-600)')
+                      : (dark ? 'var(--color-surface-200)' : 'var(--color-surface-100)'),
+                    color: activeRegion === tab.id
+                      ? 'white'
+                      : (dark ? 'var(--color-surface-500)' : 'var(--color-surface-600)'),
                     fontSize: '0.76rem',
                     fontWeight: '700',
                     cursor: 'pointer',
@@ -999,22 +1064,31 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
             {/* Frontera Norte */}
             <div style={{
-              background: activeRegion === 'norte' ? 'var(--color-primary-50)' : 'var(--color-surface-50)',
-              border: activeRegion === 'norte' ? '2px solid var(--color-primary-300)' : '1px solid var(--color-surface-200)',
+              background: activeRegion === 'norte'
+                ? (dark ? 'rgba(224, 59, 96, 0.15)' : 'var(--color-primary-50)')
+                : innerBg,
+              border: activeRegion === 'norte'
+                ? (dark ? '1.5px solid var(--color-primary-500)' : '2px solid var(--color-primary-300)')
+                : innerBorder,
               borderRadius: 'var(--radius-xl)',
               padding: '1.25rem',
               transition: 'all 0.2s'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <strong style={{ fontSize: '0.95rem', color: 'var(--color-surface-900)' }}>Zona Fronteriza Norte</strong>
-                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--color-primary-700)', background: 'var(--color-primary-100)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                <strong style={{ fontSize: '0.95rem', color: headingColor }}>Zona Fronteriza Norte</strong>
+                <span style={{
+                  fontSize: '0.75rem', fontWeight: '800',
+                  color: dark ? '#fca5b7' : 'var(--color-primary-700)',
+                  background: dark ? 'rgba(224, 59, 96, 0.25)' : 'var(--color-primary-100)',
+                  padding: '0.15rem 0.5rem', borderRadius: '4px'
+                }}>
                   51.1% Estatal
                 </span>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--color-surface-500)', marginBottom: '0.75rem' }}>
+              <p style={{ fontSize: '0.78rem', color: textColor, marginBottom: '0.75rem' }}>
                 Mayor concentración industrial y de población joven del estado.
               </p>
-              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'var(--color-surface-800)', lineHeight: 1.6 }}>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: headingColor, lineHeight: 1.6 }}>
                 <li><strong>Reynosa:</strong> 704,767 habitantes.</li>
                 <li><strong>Matamoros:</strong> 541,979 habitantes.</li>
                 <li><strong>Nuevo Laredo:</strong> 425,058 habitantes.</li>
@@ -1023,44 +1097,62 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
 
             {/* Zona Sur */}
             <div style={{
-              background: activeRegion === 'sur' ? 'var(--color-accent-50)' : 'var(--color-surface-50)',
-              border: activeRegion === 'sur' ? '2px solid var(--color-accent-400)' : '1px solid var(--color-surface-200)',
+              background: activeRegion === 'sur'
+                ? (dark ? 'rgba(212, 169, 106, 0.15)' : 'var(--color-accent-50)')
+                : innerBg,
+              border: activeRegion === 'sur'
+                ? (dark ? '1.5px solid var(--color-accent-500)' : '2px solid var(--color-accent-400)')
+                : innerBorder,
               borderRadius: 'var(--radius-xl)',
               padding: '1.25rem',
               transition: 'all 0.2s'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <strong style={{ fontSize: '0.95rem', color: 'var(--color-surface-900)' }}>Zona Sur Metropolitana</strong>
-                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--color-accent-900)', background: 'var(--color-accent-200)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                <strong style={{ fontSize: '0.95rem', color: headingColor }}>Zona Sur Metropolitana</strong>
+                <span style={{
+                  fontSize: '0.75rem', fontWeight: '800',
+                  color: dark ? '#fde68a' : 'var(--color-accent-900)',
+                  background: dark ? 'rgba(212, 169, 106, 0.25)' : 'var(--color-accent-200)',
+                  padding: '0.15rem 0.5rem', borderRadius: '4px'
+                }}>
                   21.8% Estatal
                 </span>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--color-surface-500)', marginBottom: '0.75rem' }}>
+              <p style={{ fontSize: '0.78rem', color: textColor, marginBottom: '0.75rem' }}>
                 Conurbación de alta densidad comercial, portuaria y académica.
               </p>
-              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'var(--color-surface-800)', lineHeight: 1.6 }}>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: headingColor, lineHeight: 1.6 }}>
                 <li><strong>Tampico, Altamira y Cd. Madero:</strong> 773,285 habitantes en conjunto.</li>
               </ul>
             </div>
 
             {/* Región Centro */}
             <div style={{
-              background: activeRegion === 'centro' ? 'var(--color-primary-50)' : 'var(--color-surface-50)',
-              border: activeRegion === 'centro' ? '2px solid var(--color-primary-300)' : '1px solid var(--color-surface-200)',
+              background: activeRegion === 'centro'
+                ? (dark ? 'rgba(224, 59, 96, 0.15)' : 'var(--color-primary-50)')
+                : innerBg,
+              border: activeRegion === 'centro'
+                ? (dark ? '1.5px solid var(--color-primary-500)' : '2px solid var(--color-primary-300)')
+                : innerBorder,
               borderRadius: 'var(--radius-xl)',
               padding: '1.25rem',
               transition: 'all 0.2s'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <strong style={{ fontSize: '0.95rem', color: 'var(--color-surface-900)' }}>Región Centro (Capital)</strong>
-                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--color-primary-700)', background: 'var(--color-primary-100)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                <strong style={{ fontSize: '0.95rem', color: headingColor }}>Región Centro (Capital)</strong>
+                <span style={{
+                  fontSize: '0.75rem', fontWeight: '800',
+                  color: dark ? '#fca5b7' : 'var(--color-primary-700)',
+                  background: dark ? 'rgba(224, 59, 96, 0.25)' : 'var(--color-primary-100)',
+                  padding: '0.15rem 0.5rem', borderRadius: '4px'
+                }}>
                   Sede de Gobierno
                 </span>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--color-surface-500)', marginBottom: '0.75rem' }}>
+              <p style={{ fontSize: '0.78rem', color: textColor, marginBottom: '0.75rem' }}>
                 Centro neurálgico institucional y universitario del estado.
               </p>
-              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: 'var(--color-surface-800)', lineHeight: 1.6 }}>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: headingColor, lineHeight: 1.6 }}>
                 <li><strong>Ciudad Victoria:</strong> 349,688 habitantes.</li>
               </ul>
             </div>
@@ -1071,11 +1163,11 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
       {/* TARJETA 6: ESCENARIOS DE ADOPCIÓN A 3 AÑOS (PROYECCIÓN) */}
       {(selectedDashboard === 'general' || selectedDashboard === 'digital') && (
         <div className="animate-fade-in" style={{
-          background: 'white',
+          background: cardBg,
           borderRadius: 'var(--radius-2xl)',
           padding: '1.75rem',
           boxShadow: 'var(--shadow-card)',
-          border: '1px solid var(--color-surface-200)',
+          border: cardBorder,
           marginBottom: '1.5rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -1088,17 +1180,17 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                 <FaChartLine />
               </div>
               <div>
-                <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: '#059669', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: '#10b981', letterSpacing: '0.04em' }}>
                   Tarjeta 6 • Metas y Escalabilidad
                 </span>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0 }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: headingColor, margin: 0 }}>
                   Escenarios de Adopción a 3 Años (Proyección)
                 </h3>
               </div>
             </div>
 
             {/* Scenario toggle */}
-            <div style={{ display: 'flex', gap: '0.35rem', background: 'var(--color-surface-100)', padding: '0.25rem', borderRadius: 'var(--radius-lg)' }}>
+            <div style={{ display: 'flex', gap: '0.35rem', background: innerBg, padding: '0.25rem', borderRadius: 'var(--radius-lg)', border: innerBorder }}>
               {[
                 { id: 'conservador', label: 'Conservador (5%)' },
                 { id: 'moderado', label: 'Moderado (15%)' },
@@ -1111,12 +1203,17 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                     padding: '0.35rem 0.75rem',
                     borderRadius: 'var(--radius-md)',
                     border: 'none',
-                    background: activeAdoptionScenario === sc.id ? 'white' : 'transparent',
-                    color: activeAdoptionScenario === sc.id ? 'var(--color-primary-700)' : 'var(--color-surface-600)',
+                    background: activeAdoptionScenario === sc.id
+                      ? (dark ? 'var(--color-primary-500)' : 'white')
+                      : 'transparent',
+                    color: activeAdoptionScenario === sc.id
+                      ? (dark ? 'white' : 'var(--color-primary-700)')
+                      : textColor,
                     fontWeight: activeAdoptionScenario === sc.id ? '700' : '600',
                     fontSize: '0.78rem',
                     cursor: 'pointer',
                     boxShadow: activeAdoptionScenario === sc.id ? 'var(--shadow-card)' : 'none',
+                    transition: 'all 0.15s'
                   }}
                 >
                   {sc.label}
@@ -1129,84 +1226,111 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
             {/* Conservador */}
             <div style={{
-              background: activeAdoptionScenario === 'conservador' ? 'linear-gradient(135deg, var(--color-surface-50), white)' : 'white',
-              border: activeAdoptionScenario === 'conservador' ? '2px solid var(--color-surface-400)' : '1px solid var(--color-surface-200)',
+              background: activeAdoptionScenario === 'conservador'
+                ? (dark ? 'var(--color-surface-200)' : 'linear-gradient(135deg, var(--color-surface-50), white)')
+                : (dark ? 'var(--color-surface-200)' : 'white'),
+              border: activeAdoptionScenario === 'conservador'
+                ? (dark ? '1.5px solid var(--color-surface-400)' : '2px solid var(--color-surface-400)')
+                : innerBorder,
               borderRadius: 'var(--radius-xl)',
               padding: '1.25rem',
               boxShadow: activeAdoptionScenario === 'conservador' ? 'var(--shadow-card)' : 'none',
               transition: 'all 0.2s'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-surface-500)', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: textColor, textTransform: 'uppercase' }}>
                   Escenario 1 • 5% Adopción
                 </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-surface-700)', background: 'var(--color-surface-100)', padding: '0.1rem 0.45rem', borderRadius: '4px' }}>
+                <span style={{
+                  fontSize: '0.75rem', fontWeight: '700',
+                  color: headingColor,
+                  background: dark ? 'var(--color-surface-300)' : 'var(--color-surface-100)',
+                  padding: '0.1rem 0.45rem', borderRadius: '4px'
+                }}>
                   Base
                 </span>
               </div>
-              <div style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--color-surface-800)', margin: '0.35rem 0' }}>
+              <div style={{ fontSize: '1.75rem', fontWeight: '900', color: headingColor, margin: '0.35rem 0' }}>
                 122,078
               </div>
-              <strong style={{ fontSize: '0.85rem', color: 'var(--color-surface-600)', display: 'block', marginBottom: '0.35rem' }}>
+              <strong style={{ fontSize: '0.85rem', color: textColor, display: 'block', marginBottom: '0.35rem' }}>
                 Personas Beneficiadas (3.5% estatal)
               </strong>
-              <p style={{ fontSize: '0.76rem', color: 'var(--color-surface-500)', margin: 0 }}>
+              <p style={{ fontSize: '0.76rem', color: textColor, margin: 0 }}>
                 Cobertura alcanzable con despliegue orgánico en escuelas de nivel superior y media superior.
               </p>
             </div>
 
             {/* Moderado */}
             <div style={{
-              background: activeAdoptionScenario === 'moderado' ? 'linear-gradient(135deg, var(--color-primary-50), white)' : 'white',
-              border: activeAdoptionScenario === 'moderado' ? '2px solid var(--color-primary-400)' : '1px solid var(--color-surface-200)',
+              background: activeAdoptionScenario === 'moderado'
+                ? (dark ? 'rgba(224, 59, 96, 0.15)' : 'linear-gradient(135deg, var(--color-primary-50), white)')
+                : (dark ? 'var(--color-surface-200)' : 'white'),
+              border: activeAdoptionScenario === 'moderado'
+                ? (dark ? '1.5px solid var(--color-primary-500)' : '2px solid var(--color-primary-400)')
+                : innerBorder,
               borderRadius: 'var(--radius-xl)',
               padding: '1.25rem',
               boxShadow: activeAdoptionScenario === 'moderado' ? 'var(--shadow-card)' : 'none',
               transition: 'all 0.2s'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--color-primary-600)', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: dark ? '#fca5b7' : 'var(--color-primary-600)', textTransform: 'uppercase' }}>
                   Escenario 2 • 15% Adopción
                 </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--color-primary-700)', background: 'var(--color-primary-100)', padding: '0.1rem 0.45rem', borderRadius: '4px' }}>
+                <span style={{
+                  fontSize: '0.75rem', fontWeight: '800',
+                  color: dark ? '#fca5b7' : 'var(--color-primary-700)',
+                  background: dark ? 'rgba(224, 59, 96, 0.25)' : 'var(--color-primary-100)',
+                  padding: '0.1rem 0.45rem', borderRadius: '4px'
+                }}>
                   Recomendado
                 </span>
               </div>
-              <div style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--color-primary-700)', margin: '0.35rem 0' }}>
+              <div style={{ fontSize: '1.75rem', fontWeight: '900', color: dark ? '#ffffff' : 'var(--color-primary-700)', margin: '0.35rem 0' }}>
                 410,180
               </div>
-              <strong style={{ fontSize: '0.85rem', color: 'var(--color-primary-800)', display: 'block', marginBottom: '0.35rem' }}>
+              <strong style={{ fontSize: '0.85rem', color: dark ? '#fca5b7' : 'var(--color-primary-800)', display: 'block', marginBottom: '0.35rem' }}>
                 Personas Beneficiadas (11.6% estatal)
               </strong>
-              <p style={{ fontSize: '0.76rem', color: 'var(--color-surface-600)', margin: 0 }}>
+              <p style={{ fontSize: '0.76rem', color: textColor, margin: 0 }}>
                 Integración con programas estatales del IJT, Secretaría de Salud y universidades públicas.
               </p>
             </div>
 
             {/* Optimista */}
             <div style={{
-              background: activeAdoptionScenario === 'optimista' ? 'linear-gradient(135deg, #ecfdf5, white)' : 'white',
-              border: activeAdoptionScenario === 'optimista' ? '2px solid #34d399' : '1px solid var(--color-surface-200)',
+              background: activeAdoptionScenario === 'optimista'
+                ? (dark ? 'rgba(16, 185, 129, 0.15)' : 'linear-gradient(135deg, #ecfdf5, white)')
+                : (dark ? 'var(--color-surface-200)' : 'white'),
+              border: activeAdoptionScenario === 'optimista'
+                ? (dark ? '1.5px solid #10b981' : '2px solid #34d399')
+                : innerBorder,
               borderRadius: 'var(--radius-xl)',
               padding: '1.25rem',
               boxShadow: activeAdoptionScenario === 'optimista' ? 'var(--shadow-card)' : 'none',
               transition: 'all 0.2s'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#047857', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: dark ? '#6ee7b7' : '#047857', textTransform: 'uppercase' }}>
                   Escenario 3 • 30% Adopción
                 </span>
-                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#065f46', background: '#d1fae5', padding: '0.1rem 0.45rem', borderRadius: '4px' }}>
+                <span style={{
+                  fontSize: '0.75rem', fontWeight: '800',
+                  color: dark ? '#6ee7b7' : '#065f46',
+                  background: dark ? 'rgba(16, 185, 129, 0.25)' : '#d1fae5',
+                  padding: '0.1rem 0.45rem', borderRadius: '4px'
+                }}>
                   Alto Impacto
                 </span>
               </div>
-              <div style={{ fontSize: '1.75rem', fontWeight: '900', color: '#047857', margin: '0.35rem 0' }}>
+              <div style={{ fontSize: '1.75rem', fontWeight: '900', color: dark ? '#ffffff' : '#047857', margin: '0.35rem 0' }}>
                 937,558
               </div>
-              <strong style={{ fontSize: '0.85rem', color: '#065f46', display: 'block', marginBottom: '0.35rem' }}>
+              <strong style={{ fontSize: '0.85rem', color: dark ? '#34d399' : '#065f46', display: 'block', marginBottom: '0.35rem' }}>
                 Personas Beneficiadas (26.6% estatal)
               </strong>
-              <p style={{ fontSize: '0.76rem', color: 'var(--color-surface-600)', margin: 0 }}>
+              <p style={{ fontSize: '0.76rem', color: textColor, margin: 0 }}>
                 Campaña institucional masiva con soporte en ferias de salud y credencialización juvenil estatal.
               </p>
             </div>
@@ -1216,55 +1340,56 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
 
       {/* TARJETA 7 / TOOLBOX: SUGERENCIAS VISUALES PARA CANVA Y PITCH */}
       <div className="animate-fade-in" style={{
-        background: 'linear-gradient(135deg, var(--color-surface-50) 0%, white 100%)',
+        background: dark ? 'var(--color-surface-100)' : 'linear-gradient(135deg, var(--color-surface-50) 0%, white 100%)',
         borderRadius: 'var(--radius-2xl)',
         padding: '1.75rem',
         boxShadow: 'var(--shadow-card)',
-        border: '1px dashed var(--color-accent-400)',
+        border: dark ? '1px dashed rgba(212, 169, 106, 0.4)' : '1px dashed var(--color-accent-400)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
           <div style={{
             width: '32px', height: '32px', borderRadius: '8px',
-            background: 'var(--color-accent-200)', color: 'var(--color-accent-900)',
+            background: dark ? 'rgba(212, 169, 106, 0.2)' : 'var(--color-accent-200)',
+            color: dark ? '#d4a96a' : 'var(--color-accent-900)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem'
           }}>
             <FaLightbulb />
           </div>
           <div>
-            <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0 }}>
+            <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: headingColor, margin: 0 }}>
               Sugerencias de Elementos Visuales para Diseñar en Canva / Presentaciones
             </h4>
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-surface-500)' }}>
+            <span style={{ fontSize: '0.75rem', color: textColor }}>
               Recomendaciones para transformar estos datos en diapositivas de alto impacto visual.
             </span>
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', fontSize: '0.82rem' }}>
-          <div style={{ background: 'white', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-surface-200)' }}>
-            <strong style={{ color: 'var(--color-primary-700)', display: 'block', marginBottom: '0.3rem' }}>
+          <div style={{ background: innerBg, padding: '1rem', borderRadius: 'var(--radius-lg)', border: innerBorder }}>
+            <strong style={{ color: dark ? '#fca5b7' : 'var(--color-primary-700)', display: 'block', marginBottom: '0.3rem' }}>
               🍩 1. Gráfica de Dona (Conectividad)
             </strong>
-            <p style={{ color: 'var(--color-surface-600)', margin: 0, lineHeight: 1.4 }}>
-              Usar para la distribución de internet (<strong>87.7% conectados</strong> vs. <strong>12.3% no conectados</strong>). Resalta el 97.8% de acceso en hogares.
+            <p style={{ color: textColor, margin: 0, lineHeight: 1.4 }}>
+              Usar para la distribución de internet (<strong style={{ color: headingColor }}>87.7% conectados</strong> vs. <strong style={{ color: headingColor }}>12.3% no conectados</strong>). Resalta el 97.8% de acceso en hogares.
             </p>
           </div>
 
-          <div style={{ background: 'white', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-surface-200)' }}>
-            <strong style={{ color: 'var(--color-accent-800)', display: 'block', marginBottom: '0.3rem' }}>
+          <div style={{ background: innerBg, padding: '1rem', borderRadius: 'var(--radius-lg)', border: innerBorder }}>
+            <strong style={{ color: dark ? '#fde68a' : 'var(--color-accent-800)', display: 'block', marginBottom: '0.3rem' }}>
               🔻 2. Diagrama de Embudo / Pirámide
             </strong>
-            <p style={{ color: 'var(--color-surface-600)', margin: 0, lineHeight: 1.4 }}>
-              Colocar en la cúspide a los <strong>976k jóvenes</strong> y abajo a los <strong>2.24M de familiares indirectos</strong> para evidenciar el factor multiplicador 2.26x.
+            <p style={{ color: textColor, margin: 0, lineHeight: 1.4 }}>
+              Colocar en la cúspide a los <strong style={{ color: headingColor }}>976k jóvenes</strong> y abajo a los <strong style={{ color: headingColor }}>2.24M de familiares indirectos</strong> para evidenciar el factor multiplicador 2.26x.
             </p>
           </div>
 
-          <div style={{ background: 'white', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-surface-200)' }}>
-            <strong style={{ color: '#dc2626', display: 'block', marginBottom: '0.3rem' }}>
+          <div style={{ background: innerBg, padding: '1rem', borderRadius: 'var(--radius-lg)', border: innerBorder }}>
+            <strong style={{ color: dark ? '#f87171' : '#dc2626', display: 'block', marginBottom: '0.3rem' }}>
               📊 3. Indicadores de Barra Progresiva
             </strong>
-            <p style={{ color: 'var(--color-surface-600)', margin: 0, lineHeight: 1.4 }}>
-              Para los porcentajes de sobrepeso/obesidad (<strong>75%</strong> en adultos, <strong>40%</strong> en adolescentes) y diabetes (<strong>18.3%</strong>).
+            <p style={{ color: textColor, margin: 0, lineHeight: 1.4 }}>
+              Para los porcentajes de sobrepeso/obesidad (<strong style={{ color: headingColor }}>75%</strong> en adultos, <strong style={{ color: headingColor }}>40%</strong> en adolescentes) y diabetes (<strong style={{ color: headingColor }}>18.3%</strong>).
             </p>
           </div>
         </div>
@@ -1275,8 +1400,8 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
         <div style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(4px)',
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1284,25 +1409,26 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
           padding: '1rem',
         }}>
           <div className="animate-scale-in" style={{
-            background: 'white',
+            background: cardBg,
             borderRadius: 'var(--radius-2xl)',
             width: '100%',
             maxWidth: '520px',
             padding: '2rem',
             boxShadow: 'var(--shadow-elevated)',
+            border: cardBorder,
             maxHeight: '90vh',
             overflowY: 'auto',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <FaPlus color="var(--color-primary-600)" />
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--color-surface-900)', margin: 0 }}>
+                <FaPlus color={dark ? '#fca5b7' : 'var(--color-primary-600)'} />
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: headingColor, margin: 0 }}>
                   Crear Nuevo Dashboard
                 </h3>
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--color-surface-400)' }}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: textColor }}
               >
                 ✕
               </button>
@@ -1310,7 +1436,7 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
 
             <form onSubmit={handleCreateDashboard} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: '700', color: 'var(--color-surface-700)', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: '700', color: headingColor, marginBottom: '0.35rem' }}>
                   Nombre del Dashboard *
                 </label>
                 <input
@@ -1321,13 +1447,13 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                   onChange={e => setNewDashTitle(e.target.value)}
                   style={{
                     width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)',
-                    border: '1.5px solid var(--color-surface-200)', fontSize: '0.88rem'
+                    border: innerBorder, fontSize: '0.88rem', background: innerBg, color: headingColor
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: '700', color: 'var(--color-surface-700)', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: '700', color: headingColor, marginBottom: '0.35rem' }}>
                   Objetivo / Meta Clave
                 </label>
                 <input
@@ -1337,13 +1463,13 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                   onChange={e => setNewDashTarget(e.target.value)}
                   style={{
                     width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)',
-                    border: '1.5px solid var(--color-surface-200)', fontSize: '0.88rem'
+                    border: innerBorder, fontSize: '0.88rem', background: innerBg, color: headingColor
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: '700', color: 'var(--color-surface-700)', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: '700', color: headingColor, marginBottom: '0.35rem' }}>
                   Descripción Corta
                 </label>
                 <input
@@ -1353,13 +1479,13 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                   onChange={e => setNewDashDesc(e.target.value)}
                   style={{
                     width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)',
-                    border: '1.5px solid var(--color-surface-200)', fontSize: '0.88rem'
+                    border: innerBorder, fontSize: '0.88rem', background: innerBg, color: headingColor
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: '700', color: 'var(--color-surface-700)', marginBottom: '0.35rem' }}>
+                <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: '700', color: headingColor, marginBottom: '0.35rem' }}>
                   Notas Estratégicas y KPIs Personalizados
                 </label>
                 <textarea
@@ -1369,7 +1495,7 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                   onChange={e => setNewDashNotes(e.target.value)}
                   style={{
                     width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)',
-                    border: '1.5px solid var(--color-surface-200)', fontSize: '0.88rem', fontFamily: 'inherit'
+                    border: innerBorder, fontSize: '0.88rem', fontFamily: 'inherit', background: innerBg, color: headingColor
                   }}
                 />
               </div>
@@ -1380,8 +1506,8 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                   onClick={() => setShowCreateModal(false)}
                   style={{
                     padding: '0.65rem 1rem', borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-surface-300)', background: 'white',
-                    color: 'var(--color-surface-700)', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer'
+                    border: dark ? '1px solid var(--color-surface-300)' : '1px solid var(--color-surface-300)',
+                    background: innerBg, color: headingColor, fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer'
                   }}
                 >
                   Cancelar
@@ -1390,7 +1516,7 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
                   type="submit"
                   style={{
                     padding: '0.65rem 1.25rem', borderRadius: 'var(--radius-md)',
-                    border: 'none', background: 'var(--color-primary-600)',
+                    border: 'none', background: dark ? 'var(--color-primary-500)' : 'var(--color-primary-600)',
                     color: 'white', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer'
                   }}
                 >

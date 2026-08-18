@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { FaUser, FaLock, FaEnvelope, FaCalendar, FaCheck, FaExclamationCircle, FaShieldAlt, FaChevronRight, FaNotesMedical, FaCamera, FaTrash, FaSpinner } from 'react-icons/fa'
+import { FaUser, FaLock, FaEnvelope, FaCalendar, FaCheck, FaExclamationCircle, FaShieldAlt, FaChevronRight, FaNotesMedical, FaCamera, FaTrash, FaSpinner, FaChartPie } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import api, { getApiBaseUrl } from '../services/api'
+import ProjectFundamentation from '../components/dashboard/ProjectFundamentation'
 
 export default function Profile() {
   const { user, setUser } = useAuth()
@@ -129,10 +130,13 @@ export default function Profile() {
   const tabs = [
     { key: 'info', label: 'Información', icon: FaUser },
     { key: 'password', label: 'Contraseña', icon: FaLock },
+    ...(user?.role === 'admin' ? [
+      { key: 'fundamentacion', label: 'Fundamentación del Proyecto', icon: FaChartPie }
+    ] : [])
   ]
 
   return (
-    <div style={{ padding: '2rem 1.5rem', maxWidth: '720px', margin: '0 auto' }}>
+    <div style={{ padding: '2rem 1.5rem', maxWidth: activeTab === 'fundamentacion' ? '1100px' : '720px', margin: '0 auto', transition: 'max-width 0.3s ease' }}>
       {/* Header with Interactive Avatar */}
       <div className="animate-fade-in-up" style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <div style={{ position: 'relative', width: '96px', height: '96px', margin: '0 auto 1rem' }}>
@@ -339,154 +343,165 @@ export default function Profile() {
         ))}
       </div>
 
-      {/* Dark Mode Config Card (always visible below tabs or as part of the profile settings, or inside Info/Settings) */}
-      <div className="animate-fade-in" style={{
-        background: 'white',
-        borderRadius: 'var(--radius-xl)',
-        padding: '1.25rem 2rem',
-        boxShadow: 'var(--shadow-card)',
-        border: '1px solid var(--color-surface-200)',
-        marginBottom: '1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        transition: 'all 0.2s'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '1.5rem' }}>{dark ? '🌙' : '☀️'}</span>
-          <div>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>Modo Oscuro</h3>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-surface-500)', margin: 0 }}>Activa el tema oscuro en toda la plataforma</p>
-          </div>
-        </div>
-        <button
-          onClick={toggleDark}
-          style={{
-            position: 'relative',
-            display: 'inline-block',
-            width: '46px', height: '26px',
-            borderRadius: '13px',
-            background: dark ? 'var(--color-primary-500)' : 'var(--color-surface-300)',
-            transition: 'background 0.25s',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0
-          }}
-        >
-          <span style={{
-            position: 'absolute',
-            top: '3px',
-            left: dark ? '23px' : '3px',
-            width: '20px', height: '20px',
-            borderRadius: '50%',
+      {/* Dark Mode, Privacy and Universal Medical History Cards (visible on info & password tabs) */}
+      {activeTab !== 'fundamentacion' && (
+        <>
+          <div className="animate-fade-in" style={{
             background: 'white',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-            transition: 'left 0.25s',
-          }} />
-        </button>
-      </div>
-
-      {/* Privacy Policy Card */}
-      <div className="animate-fade-in" style={{
-        background: 'white',
-        borderRadius: 'var(--radius-xl)',
-        padding: '1.25rem 2rem',
-        boxShadow: 'var(--shadow-card)',
-        border: '1px solid var(--color-surface-200)',
-        marginBottom: '1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        transition: 'all 0.2s'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', color: 'var(--color-primary-500)' }}>
-            <FaShieldAlt size={20} />
-          </span>
-          <div>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>Aviso de Privacidad</h3>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-surface-500)', margin: 0 }}>Consulta las políticas de protección y seguridad de tus datos</p>
-          </div>
-        </div>
-        <Link
-          to="/aviso-de-privacidad"
-          style={{
-            display: 'inline-flex',
+            borderRadius: 'var(--radius-xl)',
+            padding: '1.25rem 2rem',
+            boxShadow: 'var(--shadow-card)',
+            border: '1px solid var(--color-surface-200)',
+            marginBottom: '1.5rem',
+            display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: 'var(--color-surface-100)',
-            color: 'var(--color-primary-500)',
-            border: 'none',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            textDecoration: 'none'
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'var(--color-primary-50)'
-            e.currentTarget.style.transform = 'translateX(2px)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'var(--color-surface-100)'
-            e.currentTarget.style.transform = 'translateX(0)'
-          }}
-        >
-          <FaChevronRight size={12} />
-        </Link>
-      </div>
-
-      {/* Historial Médico Universal Card */}
-      <div className="animate-fade-in" style={{
-        background: 'white',
-        borderRadius: 'var(--radius-xl)',
-        padding: '1.25rem 2rem',
-        boxShadow: 'var(--shadow-card)',
-        border: '1px solid var(--color-theme-accent-border)',
-        marginBottom: '1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        transition: 'all 0.2s'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', color: '#0369a1' }}>
-            <FaNotesMedical size={22} />
-          </span>
-          <div>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>Historial Médico Universal</h3>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-surface-500)', margin: 0 }}>Consulta tu expediente clínico completo, antecedentes, análisis clínicos y carga de archivos PDF</p>
+            justifyContent: 'space-between',
+            transition: 'all 0.2s'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>{dark ? '🌙' : '☀️'}</span>
+              <div>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>Modo Oscuro</h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-surface-500)', margin: 0 }}>Activa el tema oscuro en toda la plataforma</p>
+              </div>
+            </div>
+            <button
+              onClick={toggleDark}
+              style={{
+                position: 'relative',
+                display: 'inline-block',
+                width: '46px', height: '26px',
+                borderRadius: '13px',
+                background: dark ? 'var(--color-primary-500)' : 'var(--color-surface-300)',
+                transition: 'background 0.25s',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0
+              }}
+            >
+              <span style={{
+                position: 'absolute',
+                top: '3px',
+                left: dark ? '23px' : '3px',
+                width: '20px', height: '20px',
+                borderRadius: '50%',
+                background: 'white',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                transition: 'left 0.25s',
+              }} />
+            </button>
           </div>
-        </div>
-        <Link
-          to="/historial-medico-universal"
-          style={{
-            display: 'inline-flex',
+
+          {/* Privacy Policy Card */}
+          <div className="animate-fade-in" style={{
+            background: 'white',
+            borderRadius: 'var(--radius-xl)',
+            padding: '1.25rem 2rem',
+            boxShadow: 'var(--shadow-card)',
+            border: '1px solid var(--color-surface-200)',
+            marginBottom: '1.5rem',
+            display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: 'var(--color-surface-100)',
-            color: '#0369a1',
-            border: 'none',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            textDecoration: 'none'
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = '#0369a115'
-            e.currentTarget.style.transform = 'translateX(2px)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'var(--color-surface-100)'
-            e.currentTarget.style.transform = 'translateX(0)'
-          }}
-        >
-          <FaChevronRight size={12} />
-        </Link>
-      </div>
+            justifyContent: 'space-between',
+            transition: 'all 0.2s'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', color: 'var(--color-primary-500)' }}>
+                <FaShieldAlt size={20} />
+              </span>
+              <div>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>Aviso de Privacidad</h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-surface-500)', margin: 0 }}>Consulta las políticas de protección y seguridad de tus datos</p>
+              </div>
+            </div>
+            <Link
+              to="/aviso-de-privacidad"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'var(--color-surface-100)',
+                color: 'var(--color-primary-500)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'var(--color-primary-50)'
+                e.currentTarget.style.transform = 'translateX(2px)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'var(--color-surface-100)'
+                e.currentTarget.style.transform = 'translateX(0)'
+              }}
+            >
+              <FaChevronRight size={12} />
+            </Link>
+          </div>
+
+          {/* Historial Médico Universal Card */}
+          <div className="animate-fade-in" style={{
+            background: 'white',
+            borderRadius: 'var(--radius-xl)',
+            padding: '1.25rem 2rem',
+            boxShadow: 'var(--shadow-card)',
+            border: '1px solid var(--color-theme-accent-border)',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            transition: 'all 0.2s'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', color: '#0369a1' }}>
+                <FaNotesMedical size={22} />
+              </span>
+              <div>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--color-surface-900)', margin: 0 }}>Historial Médico Universal</h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-surface-500)', margin: 0 }}>Consulta tu expediente clínico completo, antecedentes, análisis clínicos y carga de archivos PDF</p>
+              </div>
+            </div>
+            <Link
+              to="/historial-medico-universal"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'var(--color-surface-100)',
+                color: '#0369a1',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#0369a115'
+                e.currentTarget.style.transform = 'translateX(2px)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'var(--color-surface-100)'
+                e.currentTarget.style.transform = 'translateX(0)'
+              }}
+            >
+              <FaChevronRight size={12} />
+            </Link>
+          </div>
+        </>
+      )}
+
+      {/* Fundamentación del Proyecto Tab (Admin Only) */}
+      {activeTab === 'fundamentacion' && user?.role === 'admin' && (
+        <div className="animate-fade-in">
+          <ProjectFundamentation />
+        </div>
+      )}
 
       {/* Info Tab */}
       {activeTab === 'info' && (

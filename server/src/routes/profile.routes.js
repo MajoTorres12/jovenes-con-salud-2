@@ -118,12 +118,129 @@ router.put('/onboarding-complete', async (req, res) => {
   }
 })
 
-// Configuración de Multer para archivos PDF de laboratorio
+// Configuración de Multer y rutas de archivos
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
 import MedicalHistory from '../models/MedicalHistory.js'
 
+// Configuración de Multer para fotos de perfil (Avatares)
+const avatarUploadDir = 'public/uploads/avatars'
+if (!fs.existsSync(avatarUploadDir)) {
+  fs.mkdirSync(avatarUploadDir, { recursive: true })
+}
+
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, avatarUploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase()
+    cb(null, `avatar_${req.user.id}_${Date.now()}${ext}`)
+  }
+})
+
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Max 5MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|webp|gif/
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
+    const mimetype = allowedTypes.test(file.mimetype)
+    if (extname && mimetype) {
+      return cb(null, true)
+    }
+    cb(new Error('Solo se permiten imágenes (JPEG, JPG, PNG, WEBP, GIF)'))
+  }
+})
+
+// POST /api/profile/avatar — subir / cambiar foto de perfil
+router.post('/avatar', uploadAvatar.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Se requiere una imagen para la foto de perfil' })
+    }
+
+    const user = await User.findByPk(req.user.id)
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' })
+    }
+
+    // Eliminar avatar anterior si era un archivo local subido
+    if (user.avatar && user.avatar.startsWith('uploads/avatars/')) {
+      const oldAvatarPath = path.join('public', user.avatar)
+      if (fs.existsSync(oldAvatarPath)) {
+        try {
+          fs.unlinkSync(oldAvatarPath)
+        } catch (err) {
+          console.error('Error al eliminar avatar anterior:', err)
+        }
+      }
+    }
+
+    // Guardar nuevo path relativo
+    const relativePath = `uploads/avatars/${req.file.filename}`
+    user.avatar = relativePath
+    await user.save()
+
+    res.json({
+      message: 'Foto de perfil actualizada exitosamente',
+      avatar: user.avatar,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        birthDate: user.birthDate,
+        avatar: user.avatar,
+        themeColor: user.themeColor,
+      }
+    })
+  } catch (error) {
+    console.error('Error al subir foto de perfil:', error)
+    res.status(500).json({ error: error.message || 'Error al subir la foto de perfil' })
+  }
+})
+
+// DELETE /api/profile/avatar — eliminar foto de perfil
+router.delete('/avatar', async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id)
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' })
+    }
+
+    if (user.avatar && user.avatar.startsWith('uploads/avatars/')) {
+      const oldAvatarPath = path.join('public', user.avatar)
+      if (fs.existsSync(oldAvatarPath)) {
+        try {
+          fs.unlinkSync(oldAvatarPath)
+        } catch (err) {
+          console.error('Error al eliminar archivo de avatar:', err)
+        }
+      }
+    }
+
+    user.avatar = null
+    await user.save()
+
+    res.json({
+      message: 'Foto de perfil eliminada exitosamente',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        birthDate: user.birthDate,
+        avatar: null,
+        themeColor: user.themeColor,
+      }
+    })
+  } catch (error) {
+    console.error('Error al eliminar foto de perfil:', error)
+    res.status(500).json({ error: 'Error al eliminar la foto de perfil' })
+  }
+})
+
+// Configuración de Multer para archivos PDF de laboratorio
 const labUploadDir = 'public/uploads/lab-reports'
 if (!fs.existsSync(labUploadDir)) {
   fs.mkdirSync(labUploadDir, { recursive: true })

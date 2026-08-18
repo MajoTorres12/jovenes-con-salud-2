@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { FaUser, FaLock, FaEnvelope, FaCalendar, FaCheck, FaExclamationCircle, FaShieldAlt, FaChevronRight, FaNotesMedical } from 'react-icons/fa'
+import { FaUser, FaLock, FaEnvelope, FaCalendar, FaCheck, FaExclamationCircle, FaShieldAlt, FaChevronRight, FaNotesMedical, FaCamera, FaTrash, FaSpinner } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import api from '../services/api'
+import api, { getApiBaseUrl } from '../services/api'
 
 export default function Profile() {
   const { user, setUser } = useAuth()
@@ -13,6 +13,65 @@ export default function Profile() {
   const [birthDate, setBirthDate] = useState(user?.birthDate?.slice(0, 10) || '')
   const [profileMsg, setProfileMsg] = useState(null)
   const [savingProfile, setSavingProfile] = useState(false)
+
+  // Avatar upload & delete state
+  const API_BASE = getApiBaseUrl()
+  const [avatarLoading, setAvatarLoading] = useState(false)
+  const [avatarMsg, setAvatarMsg] = useState(null)
+  const fileInputRef = useRef(null)
+
+  const handleAvatarSelect = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setAvatarMsg({ type: 'error', text: 'Por favor selecciona un archivo de imagen válido (PNG, JPG, WEBP).' })
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarMsg({ type: 'error', text: 'La imagen excede el tamaño máximo permitido de 5 MB.' })
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    setAvatarLoading(true)
+    setAvatarMsg(null)
+    try {
+      const res = await api.post('/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      setUser(res.data.user)
+      setAvatarMsg({ type: 'success', text: 'Foto de perfil actualizada exitosamente.' })
+      setTimeout(() => setAvatarMsg(null), 4000)
+    } catch (err) {
+      console.error('Error subiendo avatar:', err)
+      setAvatarMsg({ type: 'error', text: err.response?.data?.error || 'Error al subir la imagen.' })
+    } finally {
+      setAvatarLoading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleAvatarDelete = async () => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar tu foto de perfil?')) return
+
+    setAvatarLoading(true)
+    setAvatarMsg(null)
+    try {
+      const res = await api.delete('/profile/avatar')
+      setUser(res.data.user)
+      setAvatarMsg({ type: 'success', text: 'Foto de perfil eliminada.' })
+      setTimeout(() => setAvatarMsg(null), 4000)
+    } catch (err) {
+      console.error('Error eliminando avatar:', err)
+      setAvatarMsg({ type: 'error', text: err.response?.data?.error || 'Error al eliminar la foto.' })
+    } finally {
+      setAvatarLoading(false)
+    }
+  }
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState('')
@@ -74,18 +133,175 @@ export default function Profile() {
 
   return (
     <div style={{ padding: '2rem 1.5rem', maxWidth: '720px', margin: '0 auto' }}>
-      {/* Header */}
+      {/* Header with Interactive Avatar */}
       <div className="animate-fade-in-up" style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <div style={{
-          width: '80px', height: '80px', borderRadius: '50%',
-          background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-accent-400))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 1rem',
-          fontSize: '2rem', color: 'white', fontWeight: '700',
-          boxShadow: 'var(--shadow-glow)',
-        }}>
-          {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+        <div style={{ position: 'relative', width: '96px', height: '96px', margin: '0 auto 1rem' }}>
+          {/* Avatar circle / image */}
+          <div
+            onClick={() => !avatarLoading && fileInputRef.current?.click()}
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-accent-400))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2.5rem',
+              color: 'white',
+              fontWeight: '700',
+              boxShadow: 'var(--shadow-glow)',
+              border: '3px solid white',
+              cursor: avatarLoading ? 'wait' : 'pointer',
+              position: 'relative',
+            }}
+          >
+            {user?.avatar ? (
+              <img
+                src={user.avatar.startsWith('http') ? user.avatar : `${API_BASE}/${user.avatar}`}
+                alt={user.name || 'Avatar'}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+              />
+            ) : (
+              user?.name?.charAt(0)?.toUpperCase() || 'U'
+            )}
+
+            {/* Hover Camera Overlay */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0, 0, 0, 0.45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: avatarLoading ? 1 : 0,
+                transition: 'opacity 0.2s',
+                color: 'white',
+              }}
+              className="avatar-hover-overlay"
+            >
+              {avatarLoading ? <FaSpinner className="animate-spin" size={24} /> : <FaCamera size={22} />}
+            </div>
+          </div>
+
+          {/* Quick Camera Action Badge */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={avatarLoading}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'var(--color-primary-500)',
+              color: 'white',
+              border: '2px solid white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+              transition: 'transform 0.2s, background 0.2s',
+            }}
+            title="Cambiar foto de perfil"
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <FaCamera size={13} />
+          </button>
+
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png, image/jpeg, image/jpg, image/webp, image/gif"
+            style={{ display: 'none' }}
+            onChange={handleAvatarSelect}
+          />
         </div>
+
+        {/* Action Buttons: Subir / Cambiar / Eliminar */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={avatarLoading}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.35rem 0.85rem',
+              borderRadius: 'var(--radius-full)',
+              background: 'var(--color-primary-50)',
+              color: 'var(--color-primary-600)',
+              border: '1px solid var(--color-primary-200)',
+              fontSize: '0.78rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <FaCamera size={12} />
+            {user?.avatar ? 'Cambiar Foto' : 'Subir Foto'}
+          </button>
+
+          {user?.avatar && (
+            <button
+              type="button"
+              onClick={handleAvatarDelete}
+              disabled={avatarLoading}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.35rem 0.85rem',
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(239, 68, 68, 0.08)',
+                color: '#dc2626',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                fontSize: '0.78rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <FaTrash size={11} />
+              Eliminar
+            </button>
+          )}
+        </div>
+
+        {/* Avatar Message Toast */}
+        {avatarMsg && (
+          <div
+            className="animate-fade-in"
+            style={{
+              maxWidth: '380px',
+              margin: '0 auto 0.75rem',
+              padding: '0.45rem 0.85rem',
+              borderRadius: 'var(--radius-lg)',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              background: avatarMsg.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+              color: avatarMsg.type === 'success' ? '#047857' : '#b91c1c',
+              border: `1px solid ${avatarMsg.type === 'success' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+            }}
+          >
+            {avatarMsg.type === 'success' ? <FaCheck size={12} /> : <FaExclamationCircle size={12} />}
+            <span>{avatarMsg.text}</span>
+          </div>
+        )}
+
         <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-surface-900)' }}>
           {user?.name}
         </h1>

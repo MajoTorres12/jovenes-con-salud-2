@@ -7,9 +7,10 @@ import { MdWatch } from 'react-icons/md'
 import { useAuth } from '../../context/AuthContext'
 import WearableSection from '../dashboard/WearableSection'
 import { useTheme } from '../../context/ThemeContext'
-import api from '../../services/api'
+import api, { getApiBaseUrl } from '../../services/api'
 import logoLight from '../../assets/logo-light.png'
 import logoDark from '../../assets/logo-dark.png'
+
 
 
 const formatTimeTo12h = (timeStr) => {
@@ -94,6 +95,8 @@ export default function Navbar() {
   // Mobile specific menu states
   const [mobileMedsOpen, setMobileMedsOpen] = useState(false)
   const [mobileAlertsOpen, setMobileAlertsOpen] = useState(false)
+  const API_BASE = getApiBaseUrl()
+
 
   const LANGUAGES = [
     { code: 'es', label: 'Español', flag: <FlagMX /> },
@@ -271,6 +274,12 @@ export default function Navbar() {
     { to: '/programas', label: 'Programas' },
     { to: '/nutraceuticos', label: 'Nutracéuticos' },
     { to: '/noticias', label: 'Noticias' },
+    { to: '/contacto', label: 'Contacto' },
+    { to: '/faq', label: 'FAQ' },
+  ]
+
+  const mobileLinks = [
+    { to: '/programas', label: 'Programas' },
     { to: '/contacto', label: 'Contacto' },
     { to: '/faq', label: 'FAQ' },
   ]
@@ -829,11 +838,21 @@ export default function Navbar() {
                   >
                     <div style={{
                       width: '28px', height: '28px', borderRadius: '50%',
+                      overflow: 'hidden',
                       background: 'linear-gradient(135deg, var(--color-primary-400), var(--color-accent-400))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: 'white', fontSize: '0.75rem', fontWeight: '700', flexShrink: 0,
                     }}>
-                      {user?.name?.charAt(0)?.toUpperCase()}
+                      {user?.avatar ? (
+                        <img
+                          src={user.avatar.startsWith('http') ? user.avatar : `${API_BASE}/${user.avatar}`}
+                          alt={user.name || 'User'}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => { e.currentTarget.style.display = 'none' }}
+                        />
+                      ) : (
+                        user?.name?.charAt(0)?.toUpperCase() || 'U'
+                      )}
                     </div>
                     <span style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--color-surface-700)', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {user?.name?.split(' ')[0]}
@@ -1001,7 +1020,7 @@ export default function Navbar() {
             maxHeight: 'calc(100vh - 4.5rem)',
             overflowY: 'auto',
           }}>
-            {links.map(link => (
+            {mobileLinks.map(link => (
               <Link
                 key={link.to}
                 to={link.to}
@@ -1022,22 +1041,6 @@ export default function Navbar() {
 
             {isAuthenticated ? (
               <>
-                <Link
-                  to="/dashboard"
-                  onClick={() => setIsOpen(false)}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    textDecoration: 'none',
-                    fontSize: '0.95rem',
-                    fontWeight: '600',
-                    color: 'var(--color-accent-600)',
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  }}
-                >
-                  <FaChartLine size={14} /> Mi Salud
-                </Link>
-
                 {/* Medication Reminders (Mobile Drawer Collapsible) */}
                 <button
                   onClick={() => {
@@ -1308,23 +1311,6 @@ export default function Navbar() {
                 >
                   <FaSignOutAlt /> Cerrar Sesión
                 </button>
-                <Link
-                  to="/perfil"
-                  onClick={() => setIsOpen(false)}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    textDecoration: 'none',
-                    fontSize: '0.95rem',
-                    fontWeight: '600',
-                    color: 'var(--color-primary-500)',
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  }}
-                >
-                  <FaUserCircle size={14} /> Mi Perfil
-                </Link>
-
-
 
                 {/* Doctor link móvil */}
                 {user?.role === 'doctor' && (

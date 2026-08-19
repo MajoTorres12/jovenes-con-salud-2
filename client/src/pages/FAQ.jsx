@@ -4,7 +4,6 @@ import {
   FaQuestionCircle,
   FaChevronDown,
   FaSearch,
-  FaRobot,
   FaHeartbeat,
   FaMobileAlt,
   FaUserFriends,
@@ -12,7 +11,6 @@ import {
   FaStethoscope,
   FaHeadset,
   FaTimes,
-  FaFileMedicalAlt,
   FaPills
 } from 'react-icons/fa'
 import { useTheme } from '../context/ThemeContext'
@@ -26,11 +24,11 @@ const FAQ_SECTIONS = [
     questions: [
       {
         q: '¿Qué es Jóvenes con Salud y cuál es su objetivo?',
-        a: 'Jóvenes con Salud es el ecosistema digital de salud integral y preventiva del Instituto de la Juventud de Tamaulipas (IJT). Su objetivo es empoderar a la juventud de Tamaulipas (12 a 29 años) y a sus familias mediante herramientas de monitoreo fisiológico en tiempo real, inteligencia artificial médica orientativa, expedientes clínicos digitales y acceso a consultas profesionales para prevenir enfermedades cardiometabólicas como diabetes, hipertensión y obesidad.'
+        a: 'Jóvenes con Salud es el ecosistema digital de salud integral y preventiva del Instituto de la Juventud de Tamaulipas (IJT). Su objetivo es empoderar a la juventud de Tamaulipas (12 a 29 años) y a sus familias mediante herramientas de monitoreo fisiológico en tiempo real, expedientes clínicos digitales, guías nutricionales y acceso a consultas profesionales para prevenir enfermedades cardiometabólicas como diabetes, hipertensión y obesidad.'
       },
       {
         q: '¿Es completamente gratuito el uso de la plataforma?',
-        a: 'Sí, el acceso a Jóvenes con Salud es 100% gratuito. Los módulos de monitoreo de signos vitales, registro de medicamentos, asistente de IA, catálogo nutracéutico y expedientes no tienen ningún costo para los ciudadanos.'
+        a: 'Sí, el acceso a Jóvenes con Salud es 100% gratuito. Los módulos de monitoreo de signos vitales, registro de medicamentos, catálogo nutracéutico y expedientes no tienen ningún costo para los ciudadanos.'
       },
       {
         q: '¿La aplicación funciona en mi celular como una App?',
@@ -63,22 +61,6 @@ const FAQ_SECTIONS = [
       {
         q: '¿Cómo funciona el recordatorio de medicamentos y dosis?',
         a: 'En el módulo de "Medicamentos", puedes registrar el nombre del fármaco, dosis prescrita y horarios de toma. La plataforma te enviará recordatorios visuales en la barra superior y notificaciones en tu dispositivo para asegurar la adherencia a tu tratamiento.'
-      }
-    ]
-  },
-  {
-    id: 'ia_medica',
-    category: 'Asistente Médico con Inteligencia Artificial',
-    icon: FaRobot,
-    color: '#8b5cf6',
-    questions: [
-      {
-        q: '¿Cómo me ayuda el Asistente Médico de IA?',
-        a: 'El asistente con IA ubicado en la esquina inferior de la pantalla está entrenado para resolver dudas de salud preventiva las 24 horas del día. Puede orientarte sobre síntomas comunes, nutrición, hábitos saludables, prevención de enfermedades crónicas, preparación para estudios médicos y recomendaciones avaladas por la literatura médica.'
-      },
-      {
-        q: '¿El Asistente de IA puede emitir recetas médicas?',
-        a: 'No. El asistente de IA tiene un rol exclusivamente orientativo y educativo. Las recetas médicas formales y prescripciones farmacológicas oficiales solo pueden ser emitidas por médicos profesionales certificados a través del módulo de consultas y expedientes.'
       }
     ]
   },
@@ -316,7 +298,7 @@ export default function FAQ() {
           }} />
           <input
             type="text"
-            placeholder="Buscar por palabra clave (ej. wearables, glucosa, expediente, IA, citas)..."
+            placeholder="Buscar por palabra clave (ej. wearables, glucosa, expediente, citas, medicamentos)..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             style={{
@@ -554,7 +536,7 @@ export default function FAQ() {
             ¿Tienes alguna otra duda o consulta?
           </h3>
           <p style={{ fontSize: '0.86rem', color: 'rgba(255,255,255,0.9)', margin: 0, lineHeight: 1.5 }}>
-            Nuestro equipo del Instituto de la Juventud de Tamaulipas y el asistente virtual con IA están disponibles para orientarte.
+            Nuestro equipo del Instituto de la Juventud de Tamaulipas y profesionales de salud están disponibles para orientarte.
           </p>
         </div>
 

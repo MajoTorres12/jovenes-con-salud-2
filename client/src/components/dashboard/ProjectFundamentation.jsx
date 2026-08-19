@@ -15,11 +15,37 @@ import {
   FaCity,
   FaClock,
   FaFileAlt,
-  FaLayerGroup
+  FaLayerGroup,
+  FaExpand,
+  FaTimes,
+  FaDownload,
+  FaArrowLeft,
+  FaArrowRight,
+  FaTree,
+  FaSearchPlus
 } from 'react-icons/fa'
 import { useTheme } from '../../context/ThemeContext'
 
 const STORAGE_KEY = 'jcs_admin_custom_dashboards'
+
+const DIAGRAMS = [
+  {
+    id: 'problemas',
+    title: 'Árbol de Problemas: Diagnóstico Causal y Efectos',
+    subtitle: 'Metodología del Marco Lógico • Problemática Central, Causas Raíz y Efectos en la Salud Juvenil',
+    badge: 'Diagnóstico Causal',
+    src: '/images/arbol_problemas.png',
+    description: 'Estructura analítica que desglosa el problema central (limitado acceso a servicios médicos preventivos y monitoreo fisiológico en jóvenes de Tamaulipas), sus causas directas/indirectas y la cadena de efectos sobre la calidad de vida y el sistema de salud estatal.'
+  },
+  {
+    id: 'objetivos',
+    title: 'Árbol de Objetivos: Medios y Fines Estratégicos',
+    subtitle: 'Metodología del Marco Lógico • Alineado con el Plan Estatal de Desarrollo de Tamaulipas y ODS 3',
+    badge: 'Alineación Estratégica',
+    src: '/images/arbol_objetivos.png',
+    description: 'Transformación de los problemas en objetivos estratégicos positivos: Provisión de herramientas digitales, eliminación de barreras geográficas/institucionales y creación del expediente clínico universal para elevar la productividad y bienestar de la juventud tamaulipeca.'
+  }
+]
 
 export default function ProjectFundamentation() {
   const { dark } = useTheme()
@@ -30,11 +56,30 @@ export default function ProjectFundamentation() {
   const [activeAdoptionScenario, setActiveAdoptionScenario] = useState('moderado')
   const [activeRegion, setActiveRegion] = useState('norte')
 
+  // Lightbox Modal State
+  const [activeLightboxIndex, setActiveLightboxIndex] = useState(null)
+
   // Form for new dashboard
   const [newDashTitle, setNewDashTitle] = useState('')
   const [newDashDesc, setNewDashDesc] = useState('')
   const [newDashTarget, setNewDashTarget] = useState('')
   const [newDashNotes, setNewDashNotes] = useState('')
+
+  // Keyboard navigation for Lightbox
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (activeLightboxIndex === null) return
+      if (e.key === 'Escape') {
+        setActiveLightboxIndex(null)
+      } else if (e.key === 'ArrowRight') {
+        setActiveLightboxIndex(prev => (prev === 0 ? 1 : 0))
+      } else if (e.key === 'ArrowLeft') {
+        setActiveLightboxIndex(prev => (prev === 1 ? 0 : 1))
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activeLightboxIndex])
 
   // Load custom dashboards from localStorage
   useEffect(() => {
@@ -1345,6 +1390,7 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
         padding: '1.75rem',
         boxShadow: 'var(--shadow-card)',
         border: dark ? '1px dashed rgba(212, 169, 106, 0.4)' : '1px dashed var(--color-accent-400)',
+        marginBottom: '1.75rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
           <div style={{
@@ -1394,6 +1440,414 @@ Gobierno del Estado de Tamaulipas — Instituto de la Juventud de Tamaulipas (IJ
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN FINAL: DIAGRAMAS DEL MARCO LÓGICO (ÁRBOL DE PROBLEMAS Y OBJETIVOS) */}
+      {/* ========================================================================= */}
+      <div className="animate-fade-in" style={{
+        background: cardBg,
+        borderRadius: 'var(--radius-2xl)',
+        padding: '1.75rem',
+        boxShadow: 'var(--shadow-card)',
+        border: cardBorder,
+        marginBottom: '1.75rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div style={{
+              width: '38px', height: '38px', borderRadius: '10px',
+              background: dark ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5',
+              color: '#059669',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem'
+            }}>
+              <FaTree />
+            </div>
+            <div>
+              <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: '#059669', letterSpacing: '0.04em' }}>
+                Metodología del Marco Lógico • Plan Estatal de Desarrollo
+              </span>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: headingColor, margin: 0 }}>
+                Árbol de Problemas y Árbol de Objetivos
+              </h3>
+            </div>
+          </div>
+
+          <span style={{
+            fontSize: '0.76rem',
+            fontWeight: '700',
+            color: dark ? '#d4a96a' : 'var(--color-accent-800)',
+            background: dark ? 'rgba(212, 169, 106, 0.15)' : 'var(--color-accent-100)',
+            padding: '0.35rem 0.75rem',
+            borderRadius: 'var(--radius-full)',
+            border: dark ? '1px solid rgba(212, 169, 106, 0.35)' : '1px solid var(--color-accent-300)'
+          }}>
+            🔍 Haz clic en cualquier diagrama para ampliarlo a pantalla completa
+          </span>
+        </div>
+
+        <p style={{ fontSize: '0.86rem', color: textColor, margin: '0 0 1.5rem', lineHeight: 1.5 }}>
+          Diagnóstico causal y alineación estratégica estructurados para fundamentar el impacto social, tecnológico y en salud pública del proyecto <strong>Jóvenes con Salud</strong> frente al Gobierno de Tamaulipas y organismos multilaterales.
+        </p>
+
+        {/* Diagram Cards Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+          {DIAGRAMS.map((diag, index) => (
+            <div
+              key={diag.id}
+              onClick={() => setActiveLightboxIndex(index)}
+              style={{
+                background: innerBg,
+                borderRadius: 'var(--radius-xl)',
+                border: innerBorder,
+                overflow: 'hidden',
+                cursor: 'pointer',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: dark ? '0 4px 15px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)'
+                e.currentTarget.style.borderColor = dark ? 'var(--color-primary-500)' : 'var(--color-primary-400)'
+                e.currentTarget.style.boxShadow = dark ? '0 8px 25px rgba(224,59,96,0.25)' : '0 8px 20px rgba(135,18,51,0.12)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.borderColor = dark ? 'var(--color-surface-300)' : 'var(--color-surface-200)'
+                e.currentTarget.style.boxShadow = dark ? '0 4px 15px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)'
+              }}
+            >
+              {/* Image Preview Container */}
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                aspectRatio: '16/9',
+                background: dark ? '#0a090c' : '#f8f9fa',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderBottom: innerBorder
+              }}>
+                <img
+                  src={diag.src}
+                  alt={diag.title}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    transition: 'transform 0.3s ease'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                />
+
+                {/* Hover overlay hint */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(0, 0, 0, 0.45)',
+                  opacity: 0,
+                  transition: 'opacity 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  color: 'white',
+                  fontWeight: '700',
+                  fontSize: '0.85rem'
+                }}
+                className="hover-overlay"
+                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                >
+                  <FaSearchPlus size={18} />
+                  <span>Ver a tamaño completo</span>
+                </div>
+
+                {/* Badge */}
+                <span style={{
+                  position: 'absolute',
+                  top: '12px',
+                  left: '12px',
+                  background: diag.id === 'problemas'
+                    ? (dark ? 'rgba(239, 68, 68, 0.85)' : '#dc2626')
+                    : (dark ? 'rgba(16, 185, 129, 0.85)' : '#059669'),
+                  color: 'white',
+                  fontSize: '0.72rem',
+                  fontWeight: '800',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: 'var(--radius-full)',
+                  backdropFilter: 'blur(4px)',
+                  letterSpacing: '0.03em'
+                }}>
+                  {diag.badge}
+                </span>
+
+                <button
+                  type="button"
+                  title="Ampliar imagen"
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    right: '12px',
+                    background: 'rgba(0,0,0,0.7)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <FaExpand size={13} />
+                </button>
+              </div>
+
+              {/* Card Body */}
+              <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: headingColor, margin: '0 0 0.35rem', lineHeight: 1.3 }}>
+                    {diag.title}
+                  </h4>
+                  <p style={{ fontSize: '0.78rem', color: textColor, margin: '0 0 0.75rem', lineHeight: 1.45 }}>
+                    {diag.description}
+                  </p>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: '0.75rem',
+                  borderTop: innerBorder,
+                  fontSize: '0.78rem'
+                }}>
+                  <span style={{ color: dark ? '#fca5b7' : 'var(--color-primary-600)', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <FaExpand size={11} /> Clic para ampliar
+                  </span>
+                  <span style={{ color: textColor, fontSize: '0.72rem' }}>
+                    1080p HD
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* LIGHTBOX MODAL PARA VER IMÁGENES A TAMAÑO COMPLETO */}
+      {/* ========================================================================= */}
+      {activeLightboxIndex !== null && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.92)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 99999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '1rem',
+          animation: 'fadeIn 0.2s ease-out forwards'
+        }}>
+          {/* Lightbox Header */}
+          <div style={{
+            width: '100%',
+            maxWidth: '1280px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.5rem 1rem',
+            color: 'white',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <div>
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: '700',
+                textTransform: 'uppercase',
+                color: DIAGRAMS[activeLightboxIndex].id === 'problemas' ? '#f87171' : '#34d399',
+                letterSpacing: '0.05em'
+              }}>
+                {DIAGRAMS[activeLightboxIndex].badge} • Diagrama {activeLightboxIndex + 1} de 2
+              </span>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: '0.15rem 0 0', color: 'white' }}>
+                {DIAGRAMS[activeLightboxIndex].title}
+              </h3>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {/* Prev / Next buttons */}
+              <button
+                onClick={() => setActiveLightboxIndex(prev => (prev === 0 ? 1 : 0))}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  color: 'white',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: 'var(--radius-lg)',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.15s'
+                }}
+              >
+                <FaArrowLeft size={11} /> {activeLightboxIndex === 0 ? 'Ver Objetivos' : 'Ver Problemas'}
+              </button>
+
+              <a
+                href={DIAGRAMS[activeLightboxIndex].src}
+                download={`${DIAGRAMS[activeLightboxIndex].id}_jovenes_con_salud.png`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  color: 'white',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: 'var(--radius-lg)',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  textDecoration: 'none',
+                  transition: 'all 0.15s'
+                }}
+              >
+                <FaDownload size={11} /> Descargar
+              </a>
+
+              {/* Close button */}
+              <button
+                onClick={() => setActiveLightboxIndex(null)}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.8)',
+                  color: 'white',
+                  border: 'none',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  transition: 'transform 0.15s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                title="Cerrar (Esc)"
+              >
+                <FaTimes />
+              </button>
+            </div>
+          </div>
+
+          {/* Lightbox Main Image Display */}
+          <div
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setActiveLightboxIndex(null)
+            }}
+            style={{
+              flex: 1,
+              width: '100%',
+              maxWidth: '1360px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+              padding: '0.5rem'
+            }}
+          >
+            {/* Side Navigation Arrow Left */}
+            <button
+              onClick={() => setActiveLightboxIndex(prev => (prev === 0 ? 1 : 0))}
+              style={{
+                position: 'absolute',
+                left: '12px',
+                background: 'rgba(0, 0, 0, 0.65)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10,
+                transition: 'all 0.2s'
+              }}
+              title="Diagrama anterior (Flecha izquierda)"
+            >
+              <FaArrowLeft size={16} />
+            </button>
+
+            <img
+              src={DIAGRAMS[activeLightboxIndex].src}
+              alt={DIAGRAMS[activeLightboxIndex].title}
+              style={{
+                maxWidth: '96%',
+                maxHeight: '82vh',
+                objectFit: 'contain',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.9)',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}
+            />
+
+            {/* Side Navigation Arrow Right */}
+            <button
+              onClick={() => setActiveLightboxIndex(prev => (prev === 0 ? 1 : 0))}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                background: 'rgba(0, 0, 0, 0.65)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10,
+                transition: 'all 0.2s'
+              }}
+              title="Siguiente diagrama (Flecha derecha)"
+            >
+              <FaArrowRight size={16} />
+            </button>
+          </div>
+
+          {/* Lightbox Footer Caption */}
+          <div style={{
+            width: '100%',
+            maxWidth: '1000px',
+            textAlign: 'center',
+            color: 'rgba(255, 255, 255, 0.8)',
+            fontSize: '0.8rem',
+            padding: '0.4rem 1rem 0.8rem'
+          }}>
+            <span>{DIAGRAMS[activeLightboxIndex].subtitle} • Presiona <strong>Esc</strong> para salir o utiliza las flechas para alternar</span>
+          </div>
+        </div>
+      )}
 
       {/* MODAL CREAR NUEVO DASHBOARD */}
       {showCreateModal && (

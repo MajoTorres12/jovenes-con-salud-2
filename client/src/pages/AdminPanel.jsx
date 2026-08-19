@@ -651,9 +651,20 @@ function AppReleaseManager({ dark, isDashboardWidget }) {
       if (fileInputRef.current) fileInputRef.current.value = ''
       loadData()
     } catch (err) {
+      console.error('APK upload error:', err)
+      let msg = 'Ocurrió un error al subir el archivo APK.'
+      if (err.response?.status === 413) {
+        msg = 'Error 413: El archivo supera el tamaño máximo permitido por el servidor web (Nginx). Se debe aumentar client_max_body_size en Nginx.'
+      } else if (err.response?.data?.error) {
+        msg = err.response.data.error
+      } else if (err.response?.data?.message) {
+        msg = err.response.data.message
+      } else if (err.message) {
+        msg = `Error: ${err.message}`
+      }
       setFeedback({
         type: 'error',
-        message: err.response?.data?.error || 'Ocurrió un error al subir el archivo APK.'
+        message: msg
       })
     } finally {
       setUploading(false)

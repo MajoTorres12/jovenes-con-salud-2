@@ -32,6 +32,9 @@ server {
     listen 80;
     server_name $DOMAIN;
 
+    # Permitir subida de archivos grandes (APK hasta 300MB)
+    client_max_body_size 300M;
+
     location / {
         proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
@@ -39,6 +42,10 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host \$host;
         proxy_cache_bypass \$http_upgrade;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        client_max_body_size 300M;
     }
 }
 EOF

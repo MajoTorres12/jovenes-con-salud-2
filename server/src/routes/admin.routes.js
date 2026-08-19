@@ -896,49 +896,60 @@ router.get('/app-release/history', async (_req, res, next) => {
 })
 
 // Upload new APK release
-router.post('/app-release/upload', uploadApk.single('apkFile'), async (req, res, next) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No se ha seleccionado ningún archivo .apk' })
-    }
-
-    const { version, releaseNotes } = req.body
-
-    // Deactivate previous active releases
-    await AppRelease.update({ isActive: false }, { where: {} })
-
-    // Create new release record
-    const release = await AppRelease.create({
-      version: (version && version.trim()) || '1.0.0',
-      fileName: req.file.originalname,
-      filePath: `public/uploads/apk/${req.file.filename}`,
-      fileSize: req.file.size,
-      mimeType: req.file.mimetype || 'application/vnd.android.package-archive',
-      releaseNotes: (releaseNotes && releaseNotes.trim()) || '',
-      isActive: true,
-      downloadCount: 0,
-    })
-
-    res.status(201).json({
-      message: 'APK subido y activado correctamente',
-      release: {
-        id: release.id,
-        version: release.version,
-        fileName: release.fileName,
-        fileSize: Number(release.fileSize),
-        releaseNotes: release.releaseNotes,
-        isActive: release.isActive,
-        downloadCount: release.downloadCount,
-        createdAt: release.createdAt,
+router.post('/app-release/upload', (req, res, next) => {
+  uploadApk.single('apkFile')(req, res, async (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ error: 'El archivo excede el límite máximo permitido de 250 MB.' })
+        }
+        return res.status(400).json({ error: `Error de carga: ${err.message}` })
       }
-    })
-  } catch (err) {
-    // If multer failed or error occurred, remove uploaded temp file
-    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-      try { fs.unlinkSync(req.file.path) } catch (_) {}
+      return res.status(400).json({ error: err.message || 'Error al procesar el archivo APK.' })
     }
-    next(err)
-  }
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No se ha seleccionado ningún archivo .apk' })
+      }
+
+      const { version, releaseNotes } = req.body
+
+      // Deactivate previous active releases
+      await AppRelease.update({ isActive: false }, { where: {} })
+
+      // Create new release record
+      const release = await AppRelease.create({
+        version: (version && version.trim()) || '1.0.0',
+        fileName: req.file.originalname,
+        filePath: `public/uploads/apk/${req.file.filename}`,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype || 'application/vnd.android.package-archive',
+        releaseNotes: (releaseNotes && releaseNotes.trim()) || '',
+        isActive: true,
+        downloadCount: 0,
+      })
+
+      res.status(201).json({
+        message: 'APK subido y activado correctamente',
+        release: {
+          id: release.id,
+          version: release.version,
+          fileName: release.fileName,
+          fileSize: Number(release.fileSize),
+          releaseNotes: release.releaseNotes,
+          isActive: release.isActive,
+          downloadCount: release.downloadCount,
+          createdAt: release.createdAt,
+        }
+      })
+    } catch (innerErr) {
+      if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+        try { fs.unlinkSync(req.file.path) } catch (_) {}
+      }
+      next(innerErr)
+    }
+  })
 })
 
 // Activate an existing release

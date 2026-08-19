@@ -47,7 +47,9 @@ export default function App() {
             <Route path="/noticias/:slug" element={<NewsDetail />} />
             <Route path="/articulos/:slug" element={<ArticleDetail />} />
             <Route path="/chat" element={<Navigate to="/dashboard?chat=true" replace />} />
-            <Route path="/nutraceuticos" element={<Nutraceuticals />} />
+            <Route path="/hecho-en-tamaulipas" element={<Nutraceuticals />} />
+            <Route path="/hecho-en-tamaulipas/:slug" element={<NutraceuticalDetail />} />
+            <Route path="/nutraceuticos" element={<Navigate to="/hecho-en-tamaulipas" replace />} />
             <Route path="/nutraceuticos/:slug" element={<NutraceuticalDetail />} />
             <Route path="/contacto" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />

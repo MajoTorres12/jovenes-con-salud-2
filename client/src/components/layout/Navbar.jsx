@@ -271,18 +271,24 @@ export default function Navbar() {
   const links = [
     { to: '/', label: 'Inicio' },
     { to: '/enfermedades', label: 'Enfermedades' },
-    { to: '/nutraceuticos', label: 'Nutracéuticos' },
+    { to: '/hecho-en-tamaulipas', label: 'Hecho en Tamaulipas' },
     { to: '/noticias', label: 'Noticias' },
     { to: '/contacto', label: 'Contacto' },
     { to: '/faq', label: 'FAQ' },
   ]
 
   const mobileLinks = [
+    { to: '/hecho-en-tamaulipas', label: 'Hecho en Tamaulipas' },
     { to: '/contacto', label: 'Contacto' },
     { to: '/faq', label: 'FAQ' },
   ]
 
-  const isActive = (path) => location.pathname === path
+  const isActive = (path) => {
+    if (path === '/hecho-en-tamaulipas') {
+      return location.pathname.startsWith('/hecho-en-tamaulipas') || location.pathname.startsWith('/nutraceuticos')
+    }
+    return location.pathname === path
+  }
 
   const handleLogout = () => {
     logout()

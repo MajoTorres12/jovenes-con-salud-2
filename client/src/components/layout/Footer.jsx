@@ -57,7 +57,7 @@ export default function Footer() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {[
                 { to: '/enfermedades', label: 'Enfermedades Crónicas' },
-                { to: '/programas', label: 'Programas Sociales' },
+                { to: '/hecho-en-tamaulipas', label: 'Hecho en Tamaulipas' },
                 { to: '/faq', label: 'Preguntas Frecuentes' },
                 { to: '/contacto', label: 'Contacto' },
               ].map(link => (

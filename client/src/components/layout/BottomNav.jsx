@@ -57,7 +57,7 @@ export default function BottomNav() {
 
   const isHomeActive = location.pathname === '/'
   const isDiseasesActive = location.pathname.startsWith('/enfermedades')
-  const isNutraceuticalsActive = location.pathname.startsWith('/nutraceuticos')
+  const isNutraceuticalsActive = location.pathname.startsWith('/hecho-en-tamaulipas') || location.pathname.startsWith('/nutraceuticos')
   const isNewsActive = location.pathname.startsWith('/noticias') || location.pathname.startsWith('/articulos')
   const isHealthActive = ['/dashboard', '/analytics', '/citas-virtuales', '/historial-medico-universal'].some(p => location.pathname.startsWith(p))
   const isProfileActive = ['/perfil', '/login', '/registro', '/recuperar', '/reset-password'].some(p => location.pathname.startsWith(p))
@@ -80,8 +80,8 @@ export default function BottomNav() {
       badge: null
     },
     {
-      to: '/nutraceuticos',
-      label: 'Nutracéuticos',
+      to: '/hecho-en-tamaulipas',
+      label: 'Hecho en Tam.',
       active: isNutraceuticalsActive,
       iconActive: <RiCapsuleFill size={22} />,
       iconInactive: <RiCapsuleLine size={22} />,

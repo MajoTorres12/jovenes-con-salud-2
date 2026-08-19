@@ -271,7 +271,6 @@ export default function Navbar() {
   const links = [
     { to: '/', label: 'Inicio' },
     { to: '/enfermedades', label: 'Enfermedades' },
-    { to: '/programas', label: 'Programas' },
     { to: '/nutraceuticos', label: 'Nutracéuticos' },
     { to: '/noticias', label: 'Noticias' },
     { to: '/contacto', label: 'Contacto' },
@@ -279,7 +278,6 @@ export default function Navbar() {
   ]
 
   const mobileLinks = [
-    { to: '/programas', label: 'Programas' },
     { to: '/contacto', label: 'Contacto' },
     { to: '/faq', label: 'FAQ' },
   ]

@@ -10,7 +10,7 @@ import {
   FaEnvelope, FaCog, FaSignOutAlt, FaExternalLinkAlt,
   FaPlus, FaEdit, FaTrash, FaTimes, FaSearch, FaCheck,
   FaEye, FaEyeSlash, FaThumbtack, FaSave, FaCamera, FaMapMarkerAlt,
-  FaBookOpen,
+  FaBookOpen, FaAndroid, FaDownload, FaCloudUploadAlt, FaMobileAlt,
 } from 'react-icons/fa'
 import { HiMenu } from 'react-icons/hi'
 
@@ -30,6 +30,7 @@ const CARD_RADIUS = '16px'
 
 const NAV = [
   { key: 'dashboard',      icon: FaChartBar,   label: 'Dashboard' },
+  { key: 'app',            icon: FaAndroid,    label: 'App Móvil (APK)' },
   { key: 'users',          icon: FaUsers,      label: 'Usuarios' },
   { key: 'diseases',       icon: FaHeartbeat,  label: 'Enfermedades' },
   { key: 'articles',       icon: FaBookOpen,   label: 'Artículos' },
@@ -196,6 +197,7 @@ export default function AdminPanel() {
         {/* Content area */}
         <div style={{ flex: 1, padding: '1.5rem 2rem', overflowY: 'auto' }}>
           {section === 'dashboard' && <DashboardSection dark={dark} />}
+          {section === 'app' && <AppReleaseManager dark={dark} isDashboardWidget={false} />}
           {section === 'users' && <UsersSection dark={dark} />}
           {section === 'diseases' && <CrudSection dark={dark} entity="diseases" title="Enfermedades" />}
           {section === 'articles' && <CrudSection dark={dark} entity="articles" title="Artículos" />}
@@ -544,6 +546,534 @@ function MultiImageUploader({ value = [], onChange, dark }) {
 }
 
 // ═══════════════════════════════════════════════════════
+// APP RELEASE (APK) MANAGEMENT COMPONENT
+// ═══════════════════════════════════════════════════════
+
+function AppReleaseManager({ dark, isDashboardWidget }) {
+  const [current, setCurrent] = useState(null)
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [version, setVersion] = useState('')
+  const [releaseNotes, setReleaseNotes] = useState('')
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [feedback, setFeedback] = useState({ type: '', message: '' })
+  const [showHistory, setShowHistory] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [dragActive, setDragActive] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const loadData = useCallback(() => {
+    setLoading(true)
+    Promise.all([
+      api.get('/admin/app-release/current'),
+      api.get('/admin/app-release/history'),
+    ])
+      .then(([resCurr, resHist]) => {
+        setCurrent(resCurr.data?.release || null)
+        setHistory(resHist.data?.releases || [])
+      })
+      .catch((err) => {
+        console.error('Error fetching APK releases:', err)
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  const handleFileSelect = (file) => {
+    if (!file) return
+    if (!file.name.toLowerCase().endsWith('.apk')) {
+      setFeedback({ type: 'error', message: 'Por favor selecciona un archivo válido con extensión .apk' })
+      return
+    }
+    setSelectedFile(file)
+    setFeedback({ type: '', message: '' })
+    if (!version) {
+      const match = file.name.match(/v?(\d+\.\d+(\.\d+)?)/i)
+      setVersion(match ? match[1] : '1.0.0')
+    }
+  }
+
+  const handleDrag = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelect(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleUpload = async (e) => {
+    e.preventDefault()
+    if (!selectedFile) {
+      setFeedback({ type: 'error', message: 'Selecciona un archivo .apk para subir.' })
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('apkFile', selectedFile)
+    formData.append('version', version.trim() || '1.0.0')
+    formData.append('releaseNotes', releaseNotes.trim())
+
+    setUploading(true)
+    setUploadProgress(0)
+    setFeedback({ type: '', message: '' })
+
+    try {
+      await api.post('/admin/app-release/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            setUploadProgress(percent)
+          }
+        }
+      })
+
+      setFeedback({ type: 'success', message: '¡Archivo APK subido y activado exitosamente!' })
+      setSelectedFile(null)
+      setVersion('')
+      setReleaseNotes('')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      loadData()
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        message: err.response?.data?.error || 'Ocurrió un error al subir el archivo APK.'
+      })
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleActivate = async (id) => {
+    try {
+      await api.put(`/admin/app-release/${id}/activate`)
+      setFeedback({ type: 'success', message: 'Versión activada exitosamente.' })
+      loadData()
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.response?.data?.error || 'Error al activar versión.' })
+    }
+  }
+
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/admin/app-release/${id}`)
+      setFeedback({ type: 'success', message: 'Versión eliminada correctamente.' })
+      setDeleteConfirm(null)
+      loadData()
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.response?.data?.error || 'Error al eliminar versión.' })
+    }
+  }
+
+  const handleTestDownload = () => {
+    const downloadUrl = `${API_BASE}/api/app/download-apk`
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.setAttribute('download', current?.fileName || 'jovenes-con-salud.apk')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const fmtFileSize = (bytes) => {
+    if (!bytes) return '0 MB'
+    const mb = bytes / (1024 * 1024)
+    return `${mb.toFixed(2)} MB`
+  }
+
+  const fmtDate = (d) => {
+    if (!d) return '-'
+    return new Date(d).toLocaleDateString('es-MX', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Title block */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>
+            <FaAndroid size={14} /> Distribución Mobile
+          </div>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', margin: 0 }}>
+            Gestión de Aplicación Móvil (APK Android)
+          </h2>
+          <p style={{ fontSize: '0.85rem', color: dark ? '#a89580' : '#736b63', margin: '0.25rem 0 0' }}>
+            Sube el archivo APK compilado para que los usuarios puedan descargarlo directamente desde el botón "Descargar Apk" del Home.
+          </p>
+        </div>
+
+        {history.length > 0 && (
+          <Btn variant="ghost" onClick={() => setShowHistory(!showHistory)} small>
+            <FaMobileAlt size={13} /> {showHistory ? 'Ocultar Historial' : `Ver Historial (${history.length})`}
+          </Btn>
+        )}
+      </div>
+
+      {/* Feedback alerts */}
+      {feedback.message && (
+        <div style={{
+          padding: '0.875rem 1.25rem',
+          borderRadius: '12px',
+          fontSize: '0.85rem',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          background: feedback.type === 'success'
+            ? (dark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5')
+            : (dark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2'),
+          color: feedback.type === 'success' ? '#10b981' : '#ef4444',
+          border: `1px solid ${feedback.type === 'success' ? '#10b98140' : '#ef444440'}`,
+        }}>
+          {feedback.type === 'success' ? <FaCheck size={14} /> : <FaTimes size={14} />}
+          <span style={{ flex: 1 }}>{feedback.message}</span>
+          <button onClick={() => setFeedback({ type: '', message: '' })} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.9rem' }}>
+            <FaTimes />
+          </button>
+        </div>
+      )}
+
+      {/* Grid: Current status + Upload form */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+        {/* Card 1: Estado del APK Actual */}
+        <div style={{ ...cardStyle(dark), padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.06em', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580' }}>
+                ESTADO ACTUAL DEL APK
+              </span>
+              {current ? (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                  padding: '0.25rem 0.65rem', borderRadius: '20px',
+                  background: 'rgba(16, 185, 129, 0.15)', color: '#10b981',
+                  fontSize: '0.72rem', fontWeight: '800'
+                }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                  ACTIVO Y DISPONIBLE
+                </span>
+              ) : (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                  padding: '0.25rem 0.65rem', borderRadius: '20px',
+                  background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b',
+                  fontSize: '0.72rem', fontWeight: '800'
+                }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b' }} />
+                  SIN APK SUBIDO
+                </span>
+              )}
+            </div>
+
+            {current ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '1rem',
+                  padding: '1rem', borderRadius: '12px',
+                  background: dark ? '#1e1c25' : '#faf8f5',
+                  border: `1px solid ${dark ? '#272530' : '#e8ddd0'}`
+                }}>
+                  <div style={{
+                    width: '48px', height: '48px', borderRadius: '12px',
+                    background: 'rgba(16, 185, 129, 0.15)', color: '#10b981',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '1.5rem', flexShrink: 0
+                  }}>
+                    <FaAndroid />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715' }}>
+                        Versión {current.version}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.15rem 0.5rem', borderRadius: '6px', background: dark ? '#272530' : '#e2d8cc', color: dark ? '#c5bfae' : '#5c5248' }}>
+                        {fmtFileSize(current.fileSize)}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: dark ? '#7e7a8c' : '#a89580', marginTop: '0.2rem', wordBreak: 'break-all' }}>
+                      📄 {current.fileName}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div style={{ padding: '0.75rem', borderRadius: '10px', background: dark ? '#1a1822' : '#f5f1ea', border: `1px solid ${dark ? '#272530' : '#ece5dc'}` }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580' }}>Descargas Totales</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#10b981', marginTop: '0.2rem' }}>
+                      ⬇️ {current.downloadCount}
+                    </div>
+                  </div>
+                  <div style={{ padding: '0.75rem', borderRadius: '10px', background: dark ? '#1a1822' : '#f5f1ea', border: `1px solid ${dark ? '#272530' : '#ece5dc'}` }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: '700', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580' }}>Actualizado</div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: '700', color: dark ? '#fff' : '#1a1715', marginTop: '0.35rem' }}>
+                      {fmtDate(current.updatedAt)}
+                    </div>
+                  </div>
+                </div>
+
+                {current.releaseNotes && (
+                  <div style={{ fontSize: '0.8rem', color: dark ? '#c5bfae' : '#5c5248', padding: '0.75rem', borderRadius: '8px', background: dark ? '#1a1822' : '#fbf9f6', border: `1px dashed ${dark ? '#272530' : '#e0d6cb'}` }}>
+                    <strong style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', marginBottom: '0.2rem' }}>Notas de Versión:</strong>
+                    {current.releaseNotes}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{
+                textAlign: 'center', padding: '2rem 1rem',
+                color: dark ? '#7e7a8c' : '#a89580',
+                border: `2px dashed ${dark ? '#272530' : '#e8ddd0'}`,
+                borderRadius: '12px'
+              }}>
+                <FaAndroid size={36} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
+                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: '600' }}>No hay ningún APK activo actualmente.</p>
+                <p style={{ margin: '0.4rem 0 0', fontSize: '0.78rem' }}>Sube tu archivo .apk en el panel contiguo para activarlo de inmediato.</p>
+              </div>
+            )}
+          </div>
+
+          {current && (
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+              <Btn variant="success" onClick={handleTestDownload} small style={{ flex: 1 }}>
+                <FaDownload size={12} /> Probar Descarga
+              </Btn>
+              <Btn variant="danger" onClick={() => setDeleteConfirm(current)} small>
+                <FaTrash size={12} /> Eliminar APK
+              </Btn>
+            </div>
+          )}
+        </div>
+
+        {/* Card 2: Subir Nueva Versión de APK */}
+        <div style={{ ...cardStyle(dark), padding: '1.5rem' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: '800', letterSpacing: '0.06em', textTransform: 'uppercase', color: dark ? '#7e7a8c' : '#a89580', display: 'block', marginBottom: '1.25rem' }}>
+            SUBIR NUEVO ARCHIVO APK (.apk)
+          </span>
+
+          <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Dropzone */}
+            <div
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                border: `2px dashed ${dragActive ? '#10b981' : selectedFile ? '#10b981' : dark ? '#272530' : '#e0d6cb'}`,
+                borderRadius: '14px',
+                padding: '1.5rem 1rem',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: dragActive
+                  ? (dark ? 'rgba(16, 185, 129, 0.1)' : '#ecfdf5')
+                  : selectedFile
+                    ? (dark ? 'rgba(16, 185, 129, 0.05)' : '#f0fdf4')
+                    : (dark ? '#1a1822' : '#faf8f5'),
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".apk,application/vnd.android.package-archive"
+                onChange={(e) => handleFileSelect(e.target.files[0])}
+                style={{ display: 'none' }}
+              />
+
+              {selectedFile ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <FaCheck size={18} />
+                  </div>
+                  <span style={{ fontSize: '0.9rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', wordBreak: 'break-all' }}>
+                    {selectedFile.name}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '700' }}>
+                    {fmtFileSize(selectedFile.size)} • Listo para subir
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: dark ? '#7e7a8c' : '#a89580', marginTop: '0.2rem' }}>
+                    Haz clic para cambiar de archivo
+                  </span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                  <FaCloudUploadAlt size={34} style={{ color: dark ? '#e03b60' : '#871233', opacity: 0.8 }} />
+                  <span style={{ fontSize: '0.88rem', fontWeight: '700', color: dark ? '#fff' : '#1a1715' }}>
+                    Arrastra y suelta el archivo .apk aquí
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: dark ? '#7e7a8c' : '#a89580' }}>
+                    o haz clic para explorar en tu equipo (hasta 250 MB)
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Inputs */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: dark ? '#9ea4b0' : '#5c5248', marginBottom: '0.25rem' }}>
+                  Versión *
+                </label>
+                <input
+                  type="text"
+                  value={version}
+                  onChange={e => setVersion(e.target.value)}
+                  placeholder="ej. 1.0.0"
+                  required
+                  style={{
+                    width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px',
+                    border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`,
+                    background: dark ? '#1e1c25' : '#faf8f5', color: dark ? '#fff' : '#1a1715',
+                    fontSize: '0.85rem', outline: 'none'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: dark ? '#9ea4b0' : '#5c5248', marginBottom: '0.25rem' }}>
+                  Notas de Versión (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={releaseNotes}
+                  onChange={e => setReleaseNotes(e.target.value)}
+                  placeholder="ej. Primera versión oficial de Jóvenes con Salud"
+                  style={{
+                    width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px',
+                    border: `1.5px solid ${dark ? '#272530' : '#e8ddd0'}`,
+                    background: dark ? '#1e1c25' : '#faf8f5', color: dark ? '#fff' : '#1a1715',
+                    fontSize: '0.85rem', outline: 'none'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            {uploading && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '700', color: dark ? '#fff' : '#1a1715', marginBottom: '0.35rem' }}>
+                  <span>Subiendo APK al servidor...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: dark ? '#272530' : '#e2d8cc', overflow: 'hidden' }}>
+                  <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'linear-gradient(90deg, #871233, #10b981)', transition: 'width 0.2s ease' }} />
+                </div>
+              </div>
+            )}
+
+            {/* Submit button */}
+            <Btn
+              variant="primary"
+              disabled={uploading || !selectedFile}
+              style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem', padding: '0.75rem 1rem' }}
+            >
+              <FaCloudUploadAlt size={16} />
+              {uploading ? `Subiendo (${uploadProgress}%)...` : 'Subir y Activar APK'}
+            </Btn>
+          </form>
+        </div>
+      </div>
+
+      {/* Historial de Versiones (Collapsible) */}
+      {showHistory && history.length > 0 && (
+        <div style={{ ...cardStyle(dark), padding: '1.5rem', overflow: 'hidden' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', margin: '0 0 1rem' }}>
+            Historial de Versiones APK
+          </h3>
+          <div className="admin-table-container" style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ background: dark ? '#1e1c25' : '#faf8f5', borderBottom: `1px solid ${dark ? '#272530' : '#e8ddd0'}` }}>
+                  {['VERSIÓN', 'ARCHIVO', 'TAMAÑO', 'DESCARGAS', 'FECHA DE SUBIDA', 'ESTADO', 'ACCIONES'].map(h => (
+                    <th key={h} style={{ padding: '0.7rem 0.9rem', textAlign: 'left', fontSize: '0.68rem', fontWeight: '800', letterSpacing: '0.06em', color: dark ? '#e03b60' : '#871233' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {history.map(item => (
+                  <tr key={item.id} style={{ borderBottom: `1px solid ${dark ? '#1e1c25' : '#f0e8de'}` }}>
+                    <td style={{ padding: '0.75rem 0.9rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715' }}>
+                      v{item.version}
+                    </td>
+                    <td style={{ padding: '0.75rem 0.9rem', color: dark ? '#c5bfae' : '#5c5248', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.fileName}
+                    </td>
+                    <td style={{ padding: '0.75rem 0.9rem', color: dark ? '#a89580' : '#736b63', fontWeight: '600' }}>
+                      {fmtFileSize(item.fileSize)}
+                    </td>
+                    <td style={{ padding: '0.75rem 0.9rem', fontWeight: '700', color: '#10b981' }}>
+                      ⬇️ {item.downloadCount}
+                    </td>
+                    <td style={{ padding: '0.75rem 0.9rem', color: dark ? '#7e7a8c' : '#a89580', fontSize: '0.75rem' }}>
+                      {fmtDate(item.createdAt)}
+                    </td>
+                    <td style={{ padding: '0.75rem 0.9rem' }}>
+                      {item.isActive ? (
+                        <span style={{ padding: '0.2rem 0.55rem', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '0.7rem', fontWeight: '800' }}>
+                          ACTIVO
+                        </span>
+                      ) : (
+                        <span style={{ padding: '0.2rem 0.55rem', borderRadius: '12px', background: dark ? '#272530' : '#ece5dc', color: dark ? '#7e7a8c' : '#8c8074', fontSize: '0.7rem', fontWeight: '700' }}>
+                          Inactivo
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: '0.75rem 0.9rem' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        {!item.isActive && (
+                          <Btn variant="ghost" onClick={() => handleActivate(item.id)} small title="Establecer como versión activa para descargas">
+                            <FaCheck size={11} /> Activar
+                          </Btn>
+                        )}
+                        <Btn variant="danger" onClick={() => setDeleteConfirm(item)} small title="Eliminar archivo">
+                          <FaTrash size={11} />
+                        </Btn>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteConfirm && (
+        <ConfirmModal
+          dark={dark}
+          title="Eliminar Versión de APK"
+          message={`¿Estás seguro de que deseas eliminar la versión ${deleteConfirm.version} (${deleteConfirm.fileName})? Esta acción borrará el archivo físico del servidor.`}
+          onConfirm={() => handleDelete(deleteConfirm.id)}
+          onCancel={() => setDeleteConfirm(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════
 // DASHBOARD SECTION
 // ═══════════════════════════════════════════════════════
 
@@ -584,6 +1114,11 @@ function DashboardSection({ dark }) {
             {c.sub && <span style={{ fontSize: '0.72rem', color: dark ? '#7e7a8c' : '#a89580' }}>{c.sub}</span>}
           </div>
         ))}
+      </div>
+
+      {/* APK Management Widget on Main Dashboard */}
+      <div style={{ marginTop: '2.5rem' }}>
+        <AppReleaseManager dark={dark} isDashboardWidget={true} />
       </div>
     </div>
   )

@@ -23,3 +23,7 @@ npm-debug.log*
 
 # Codebase Memory MCP
 codebase-memory-mcp/
+
+# Uploaded files
+server/public/uploads/apk/*.apk
+public/uploads/apk/*.apk

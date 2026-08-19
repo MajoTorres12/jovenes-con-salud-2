@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { FaHeartbeat, FaBookMedical, FaHandsHelping, FaChartLine, FaTimes, FaNewspaper, FaThumbtack, FaGlobe, FaMapMarkerAlt } from 'react-icons/fa'
+import { FaHeartbeat, FaBookMedical, FaHandsHelping, FaChartLine, FaTimes, FaNewspaper, FaThumbtack, FaGlobe, FaMapMarkerAlt, FaAndroid, FaDownload } from 'react-icons/fa'
 import { HiArrowRight } from 'react-icons/hi'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -58,10 +58,49 @@ export default function Home() {
   const { isAuthenticated, user } = useAuth()
   const { dark } = useTheme()
   const [featuredNews, setFeaturedNews] = useState([])
+  const [apkInfo, setApkInfo] = useState(null)
+  const [downloadingApk, setDownloadingApk] = useState(false)
+  const [apkNotice, setApkNotice] = useState('')
 
   useEffect(() => {
     api.get('/news/featured').then(r => setFeaturedNews(r.data.posts || [])).catch(() => { })
+    api.get('/app/latest-apk').then(r => {
+      if (r.data?.available) {
+        setApkInfo(r.data)
+      }
+    }).catch(() => { })
   }, [])
+
+  const handleDownloadApk = (e) => {
+    e?.preventDefault?.()
+    setDownloadingApk(true)
+    setApkNotice('')
+
+    const downloadUrl = `${API_BASE}/api/app/download-apk`
+
+    api.get('/app/latest-apk')
+      .then(res => {
+        if (res.data?.available) {
+          setApkInfo(res.data)
+          const link = document.createElement('a')
+          link.href = downloadUrl
+          link.setAttribute('download', res.data.fileName || 'jovenes-con-salud.apk')
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          setApkNotice('Descarga de APK iniciada.')
+        } else {
+          setApkNotice('El archivo APK estará disponible próximamente.')
+        }
+      })
+      .catch(() => {
+        window.location.href = downloadUrl
+      })
+      .finally(() => {
+        setTimeout(() => setDownloadingApk(false), 2000)
+        setTimeout(() => setApkNotice(''), 4500)
+      })
+  }
 
   return (
     <div>
@@ -182,24 +221,64 @@ export default function Home() {
                   <HiArrowRight />
                 </Link>
               )}
-              <Link to="/enfermedades" style={{
+              <button
+                type="button"
+                onClick={handleDownloadApk}
+                disabled={downloadingApk}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  padding: '0.875rem 2rem',
+                  borderRadius: 'var(--radius-xl)',
+                  background: 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: 'white',
+                  fontWeight: '700',
+                  fontSize: '1rem',
+                  cursor: downloadingApk ? 'wait' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.22)'
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)'
+                }}
+                title={apkInfo?.version ? `Descargar APK v${apkInfo.version} (${(apkInfo.fileSize / (1024 * 1024)).toFixed(1)} MB)` : 'Descargar instalador APK para Android'}
+              >
+                <FaAndroid style={{ fontSize: '1.25rem', color: '#4ade80' }} />
+                <span>{downloadingApk ? 'Descargando...' : 'Descargar Apk'}</span>
+                <FaDownload style={{ fontSize: '0.85rem', opacity: 0.8 }} />
+              </button>
+            </div>
+
+            {apkNotice && (
+              <div style={{
+                marginTop: '0.75rem',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '0.875rem 2rem',
-                borderRadius: 'var(--radius-xl)',
-                background: 'rgba(255,255,255,0.1)',
-                backdropFilter: 'blur(10px)',
+                padding: '0.4rem 1rem',
+                borderRadius: '8px',
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(8px)',
                 border: '1px solid rgba(255,255,255,0.2)',
-                color: 'white',
-                textDecoration: 'none',
+                color: '#fff',
+                fontSize: '0.82rem',
                 fontWeight: '600',
-                fontSize: '1rem',
-                transition: 'all 0.3s ease',
+                animation: 'fadeIn 0.3s ease',
               }}>
-                Explorar Información
-              </Link>
-            </div>
+                <FaAndroid style={{ color: '#4ade80' }} />
+                {apkNotice}
+              </div>
+            )}
           </div>
 
           {/* Right Logo Column */}

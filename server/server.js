@@ -20,6 +20,7 @@ import './src/models/MedicalAlert.js'
 import './src/models/DoctorSchedule.js'
 import './src/models/Appointment.js'
 import './src/models/Prescription.js'
+import './src/models/AppRelease.js'
 
 
 

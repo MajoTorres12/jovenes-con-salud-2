@@ -12,6 +12,7 @@ import HealthRecord from '../models/HealthRecord.js'
 import Location from '../models/Location.js'
 import Article from '../models/Article.js'
 import DiseaseVariant from '../models/DiseaseVariant.js'
+import AppRelease from '../models/AppRelease.js'
 import { sendMulticastNotification } from '../services/pushNotification.service.js'
 
 import multer from 'multer'
@@ -23,7 +24,7 @@ const router = Router()
 // All routes require admin
 router.use(authenticate, requireAdmin)
 
-// Multer storage configuration for uploads
+// Multer storage configuration for images
 const uploadDir = 'public/images/uploads'
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true })
@@ -51,6 +52,35 @@ const upload = multer({
       return cb(null, true)
     }
     cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, webp, gif)'))
+  }
+})
+
+// Multer storage configuration for APK files
+const apkUploadDir = 'public/uploads/apk'
+if (!fs.existsSync(apkUploadDir)) {
+  fs.mkdirSync(apkUploadDir, { recursive: true })
+}
+
+const apkStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, apkUploadDir)
+  },
+  filename: function (req, file, cb) {
+    const cleanName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9)
+    cb(null, 'app-' + uniqueSuffix + '-' + cleanName)
+  }
+})
+
+const uploadApk = multer({
+  storage: apkStorage,
+  limits: { fileSize: 250 * 1024 * 1024 }, // 250MB
+  fileFilter: (req, file, cb) => {
+    const extname = path.extname(file.originalname).toLowerCase()
+    if (extname === '.apk') {
+      return cb(null, true)
+    }
+    cb(new Error('Solo se permiten archivos de aplicación Android (.apk)'))
   }
 })
 
@@ -790,6 +820,175 @@ router.delete('/locations/:id', async (req, res, next) => {
     if (!location) return res.status(404).json({ error: 'Sede no encontrada' })
     await location.destroy()
     res.json({ message: 'Sede eliminada' })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// APP RELEASE (APK) MANAGEMENT
+// ══════════════════════════════════════════════════════
+
+// Get active APK and statistics
+router.get('/app-release/current', async (_req, res, next) => {
+  try {
+    const release = await AppRelease.findOne({
+      where: { isActive: true },
+      order: [['createdAt', 'DESC']],
+    })
+
+    if (!release) {
+      return res.json({ release: null })
+    }
+
+    const fullPath = path.resolve(release.filePath)
+    const exists = fs.existsSync(fullPath)
+
+    res.json({
+      release: {
+        id: release.id,
+        version: release.version,
+        fileName: release.fileName,
+        filePath: release.filePath,
+        fileSize: Number(release.fileSize),
+        mimeType: release.mimeType,
+        releaseNotes: release.releaseNotes,
+        isActive: release.isActive,
+        downloadCount: release.downloadCount,
+        createdAt: release.createdAt,
+        updatedAt: release.updatedAt,
+        fileExists: exists,
+      }
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Get all APK releases (history)
+router.get('/app-release/history', async (_req, res, next) => {
+  try {
+    const releases = await AppRelease.findAll({
+      order: [['createdAt', 'DESC']],
+    })
+
+    const formatted = releases.map(r => {
+      const fullPath = path.resolve(r.filePath)
+      return {
+        id: r.id,
+        version: r.version,
+        fileName: r.fileName,
+        filePath: r.filePath,
+        fileSize: Number(r.fileSize),
+        releaseNotes: r.releaseNotes,
+        isActive: r.isActive,
+        downloadCount: r.downloadCount,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        fileExists: fs.existsSync(fullPath),
+      }
+    })
+
+    res.json({ releases: formatted })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Upload new APK release
+router.post('/app-release/upload', uploadApk.single('apkFile'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se ha seleccionado ningún archivo .apk' })
+    }
+
+    const { version, releaseNotes } = req.body
+
+    // Deactivate previous active releases
+    await AppRelease.update({ isActive: false }, { where: {} })
+
+    // Create new release record
+    const release = await AppRelease.create({
+      version: (version && version.trim()) || '1.0.0',
+      fileName: req.file.originalname,
+      filePath: `public/uploads/apk/${req.file.filename}`,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype || 'application/vnd.android.package-archive',
+      releaseNotes: (releaseNotes && releaseNotes.trim()) || '',
+      isActive: true,
+      downloadCount: 0,
+    })
+
+    res.status(201).json({
+      message: 'APK subido y activado correctamente',
+      release: {
+        id: release.id,
+        version: release.version,
+        fileName: release.fileName,
+        fileSize: Number(release.fileSize),
+        releaseNotes: release.releaseNotes,
+        isActive: release.isActive,
+        downloadCount: release.downloadCount,
+        createdAt: release.createdAt,
+      }
+    })
+  } catch (err) {
+    // If multer failed or error occurred, remove uploaded temp file
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path) } catch (_) {}
+    }
+    next(err)
+  }
+})
+
+// Activate an existing release
+router.put('/app-release/:id/activate', async (req, res, next) => {
+  try {
+    const release = await AppRelease.findByPk(req.params.id)
+    if (!release) {
+      return res.status(404).json({ error: 'Versión de APK no encontrada' })
+    }
+
+    await AppRelease.update({ isActive: false }, { where: {} })
+    release.isActive = true
+    await release.save()
+
+    res.json({ message: `Versión ${release.version} activada para descarga`, release })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Delete a release
+router.delete('/app-release/:id', async (req, res, next) => {
+  try {
+    const release = await AppRelease.findByPk(req.params.id)
+    if (!release) {
+      return res.status(404).json({ error: 'Versión de APK no encontrada' })
+    }
+
+    // Delete physical file
+    const fullPath = path.resolve(release.filePath)
+    if (fs.existsSync(fullPath)) {
+      try {
+        fs.unlinkSync(fullPath)
+      } catch (fErr) {
+        console.warn('Could not delete physical APK file:', fErr.message)
+      }
+    }
+
+    await release.destroy()
+
+    // If deleted release was active, activate the latest remaining release if one exists
+    if (release.isActive) {
+      const latest = await AppRelease.findOne({ order: [['createdAt', 'DESC']] })
+      if (latest) {
+        latest.isActive = true
+        await latest.save()
+      }
+    }
+
+    res.json({ message: 'Versión de APK eliminada correctamente' })
   } catch (err) {
     next(err)
   }

@@ -13,6 +13,7 @@ import Location from '../models/Location.js'
 import Article from '../models/Article.js'
 import DiseaseVariant from '../models/DiseaseVariant.js'
 import AppRelease from '../models/AppRelease.js'
+import ModuleVisibility, { DEFAULT_MODULES, ensureDefaultModules } from '../models/ModuleVisibility.js'
 import { sendMulticastNotification } from '../services/pushNotification.service.js'
 
 import multer from 'multer'
@@ -1000,6 +1001,97 @@ router.delete('/app-release/:id', async (req, res, next) => {
     }
 
     res.json({ message: 'Versión de APK eliminada correctamente' })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ══════════════════════════════════════════════════════
+// MODULE VISIBILITY MANAGEMENT
+// ══════════════════════════════════════════════════════
+
+// Get all modules configuration
+router.get('/modules', async (_req, res, next) => {
+  try {
+    let modules = await ModuleVisibility.findAll({
+      order: [['sortOrder', 'ASC'], ['key', 'ASC']]
+    })
+
+    if (modules.length === 0) {
+      await ensureDefaultModules()
+      modules = await ModuleVisibility.findAll({
+        order: [['sortOrder', 'ASC'], ['key', 'ASC']]
+      })
+    }
+
+    res.json({ modules })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Toggle or update a specific module
+router.put('/modules/:key/toggle', async (req, res, next) => {
+  try {
+    const { key } = req.params
+    let moduleItem = await ModuleVisibility.findByPk(key)
+
+    if (!moduleItem) {
+      const defaultDef = DEFAULT_MODULES.find(m => m.key === key)
+      if (defaultDef) {
+        moduleItem = await ModuleVisibility.create(defaultDef)
+      } else {
+        return res.status(404).json({ error: 'Módulo no encontrado' })
+      }
+    }
+
+    if (typeof req.body.isEnabled === 'boolean') {
+      moduleItem.isEnabled = req.body.isEnabled
+    } else {
+      moduleItem.isEnabled = !moduleItem.isEnabled
+    }
+
+    await moduleItem.save()
+
+    res.json({
+      message: `Módulo "${moduleItem.name}" ${moduleItem.isEnabled ? 'activado' : 'desactivado'} exitosamente`,
+      module: moduleItem,
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Batch update modules (e.g. enable all, disable all, reset, or custom dictionary)
+router.put('/modules/batch', async (req, res, next) => {
+  try {
+    const { action, modules } = req.body
+
+    if (action === 'enable_all') {
+      await ModuleVisibility.update({ isEnabled: true }, { where: {} })
+    } else if (action === 'disable_all') {
+      await ModuleVisibility.update({ isEnabled: false }, { where: {} })
+    } else if (action === 'reset') {
+      for (const def of DEFAULT_MODULES) {
+        await ModuleVisibility.upsert(def)
+      }
+    } else if (modules && typeof modules === 'object') {
+      for (const [key, isEnabled] of Object.entries(modules)) {
+        await ModuleVisibility.update(
+          { isEnabled: Boolean(isEnabled) },
+          { where: { key } }
+        )
+      }
+    }
+
+    const updated = await ModuleVisibility.findAll({
+      order: [['sortOrder', 'ASC'], ['key', 'ASC']]
+    })
+
+    res.json({
+      message: 'Configuración de módulos actualizada correctamente',
+      modules: updated,
+    })
   } catch (err) {
     next(err)
   }

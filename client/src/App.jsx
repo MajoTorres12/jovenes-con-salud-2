@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { ModuleProvider } from './context/ModuleContext'
 import Layout from './components/layout/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
@@ -37,71 +38,73 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/enfermedades" element={<Diseases />} />
-            <Route path="/enfermedades/:id" element={<DiseaseDetail />} />
-            <Route path="/programas" element={<Programs />} />
-            <Route path="/noticias" element={<News />} />
-            <Route path="/noticias/:slug" element={<NewsDetail />} />
-            <Route path="/articulos/:slug" element={<ArticleDetail />} />
-            <Route path="/chat" element={<Navigate to="/dashboard?chat=true" replace />} />
-            <Route path="/hecho-en-tamaulipas" element={<Nutraceuticals />} />
-            <Route path="/hecho-en-tamaulipas/:slug" element={<NutraceuticalDetail />} />
-            <Route path="/nutraceuticos" element={<Navigate to="/hecho-en-tamaulipas" replace />} />
-            <Route path="/nutraceuticos/:slug" element={<NutraceuticalDetail />} />
-            <Route path="/contacto" element={<Contact />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/aviso-de-privacidad" element={<PrivacyPolicy />} />
-            <Route path="/herramientas/imc" element={<BMICalculator />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
+        <ModuleProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/enfermedades" element={<Diseases />} />
+              <Route path="/enfermedades/:id" element={<DiseaseDetail />} />
+              <Route path="/programas" element={<Programs />} />
+              <Route path="/noticias" element={<News />} />
+              <Route path="/noticias/:slug" element={<NewsDetail />} />
+              <Route path="/articulos/:slug" element={<ArticleDetail />} />
+              <Route path="/chat" element={<Navigate to="/dashboard?chat=true" replace />} />
+              <Route path="/hecho-en-tamaulipas" element={<Nutraceuticals />} />
+              <Route path="/hecho-en-tamaulipas/:slug" element={<NutraceuticalDetail />} />
+              <Route path="/nutraceuticos" element={<Navigate to="/hecho-en-tamaulipas" replace />} />
+              <Route path="/nutraceuticos/:slug" element={<NutraceuticalDetail />} />
+              <Route path="/contacto" element={<Contact />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/aviso-de-privacidad" element={<PrivacyPolicy />} />
+              <Route path="/herramientas/imc" element={<BMICalculator />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <AdvancedAnalytics />
+                </ProtectedRoute>
+              } />
+              <Route path="/citas-virtuales" element={
+                <ProtectedRoute>
+                  <VirtualAppointments />
+                </ProtectedRoute>
+              } />
+              <Route path="/perfil" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/historial-medico-universal" element={
+                <ProtectedRoute>
+                  <UniversalMedicalHistory />
+                </ProtectedRoute>
+              } />
+            </Route>
+            {/* Auth pages without layout (full-screen) */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/registro" element={<Register />} />
+            <Route path="/recuperar" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Admin panel (full-screen, own layout) */}
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminPanel />
+              </AdminRoute>
             } />
-            <Route path="/analytics" element={
-              <ProtectedRoute>
-                <AdvancedAnalytics />
-              </ProtectedRoute>
+            {/* Doctor panel (full-screen, own layout) */}
+            <Route path="/doctor" element={
+              <DoctorRoute>
+                <DoctorPanel />
+              </DoctorRoute>
             } />
-            <Route path="/citas-virtuales" element={
-              <ProtectedRoute>
-                <VirtualAppointments />
-              </ProtectedRoute>
-            } />
-            <Route path="/perfil" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
-            <Route path="/historial-medico-universal" element={
-              <ProtectedRoute>
-                <UniversalMedicalHistory />
-              </ProtectedRoute>
-            } />
-          </Route>
-          {/* Auth pages without layout (full-screen) */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/registro" element={<Register />} />
-          <Route path="/recuperar" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          {/* Admin panel (full-screen, own layout) */}
-          <Route path="/admin" element={
-            <AdminRoute>
-              <AdminPanel />
-            </AdminRoute>
-          } />
-          {/* Doctor panel (full-screen, own layout) */}
-          <Route path="/doctor" element={
-            <DoctorRoute>
-              <DoctorPanel />
-            </DoctorRoute>
-          } />
-        </Routes>
-        <ChatBubble />
-        <CookieConsent />
-        <OfflineBanner />
+          </Routes>
+          <ChatBubble />
+          <CookieConsent />
+          <OfflineBanner />
+        </ModuleProvider>
       </AuthProvider>
     </BrowserRouter>
   )

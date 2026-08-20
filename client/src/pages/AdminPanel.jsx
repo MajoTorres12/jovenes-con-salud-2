@@ -11,8 +11,12 @@ import {
   FaPlus, FaEdit, FaTrash, FaTimes, FaSearch, FaCheck,
   FaEye, FaEyeSlash, FaThumbtack, FaSave, FaCamera, FaMapMarkerAlt,
   FaBookOpen, FaAndroid, FaDownload, FaCloudUploadAlt, FaMobileAlt,
+  FaSlidersH, FaToggleOn, FaToggleOff, FaHandsHelping, FaCalculator,
+  FaCalendarCheck, FaChartLine, FaComments, FaFileMedical, FaQuestionCircle,
+  FaCheckCircle, FaTimesCircle, FaUndo, FaShieldAlt, FaLayerGroup,
 } from 'react-icons/fa'
 import { HiMenu } from 'react-icons/hi'
+import { useModules } from '../context/ModuleContext'
 
 // ═══════════════════════════════════════════════════════
 // STYLE CONSTANTS
@@ -30,6 +34,7 @@ const CARD_RADIUS = '16px'
 
 const NAV = [
   { key: 'dashboard',      icon: FaChartBar,   label: 'Dashboard' },
+  { key: 'modules',        icon: FaSlidersH,   label: 'Control de Módulos' },
   { key: 'app',            icon: FaAndroid,    label: 'App Móvil (APK)' },
   { key: 'users',          icon: FaUsers,      label: 'Usuarios' },
   { key: 'diseases',       icon: FaHeartbeat,  label: 'Enfermedades' },
@@ -196,7 +201,8 @@ export default function AdminPanel() {
 
         {/* Content area */}
         <div style={{ flex: 1, padding: '1.5rem 2rem', overflowY: 'auto' }}>
-          {section === 'dashboard' && <DashboardSection dark={dark} />}
+          {section === 'dashboard' && <DashboardSection dark={dark} onNavigate={setSection} />}
+          {section === 'modules' && <ModulesSection dark={dark} />}
           {section === 'app' && <AppReleaseManager dark={dark} isDashboardWidget={false} />}
           {section === 'users' && <UsersSection dark={dark} />}
           {section === 'diseases' && <CrudSection dark={dark} entity="diseases" title="Enfermedades" />}
@@ -1085,6 +1091,565 @@ function AppReleaseManager({ dark, isDashboardWidget }) {
 }
 
 // ═══════════════════════════════════════════════════════
+// MODULE VISIBILITY MANAGEMENT SECTION
+// ═══════════════════════════════════════════════════════
+
+const MODULE_META = {
+  diseases: {
+    icon: FaHeartbeat,
+    color: '#ef4444',
+    gradient: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+    tag: 'Catálogo ECNT'
+  },
+  hecho_en_tamaulipas: {
+    icon: FaCapsules,
+    color: '#10b981',
+    gradient: 'linear-gradient(135deg, #10b981, #047857)',
+    tag: 'Nutracéuticos'
+  },
+  news: {
+    icon: FaNewspaper,
+    color: '#3b82f6',
+    gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+    tag: 'Comunicados'
+  },
+  programs: {
+    icon: FaHandsHelping,
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+    tag: 'Bienestar Social'
+  },
+  contact: {
+    icon: FaEnvelope,
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg, #f59e0b, #b45309)',
+    tag: 'Sedes y Mapa'
+  },
+  faq: {
+    icon: FaQuestionCircle,
+    color: '#06b6d4',
+    gradient: 'linear-gradient(135deg, #06b6d4, #0e7490)',
+    tag: 'Ayuda y Preguntas'
+  },
+  bmi_calculator: {
+    icon: FaCalculator,
+    color: '#ec4899',
+    gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
+    tag: 'Tamizaje IMC'
+  },
+  health_tracking: {
+    icon: FaChartLine,
+    color: '#14b8a6',
+    gradient: 'linear-gradient(135deg, #14b8a6, #0f766e)',
+    tag: 'Mi Salud'
+  },
+  virtual_appointments: {
+    icon: FaCalendarCheck,
+    color: '#6366f1',
+    gradient: 'linear-gradient(135deg, #6366f1, #4338ca)',
+    tag: 'Telemedicina'
+  },
+  universal_medical_history: {
+    icon: FaFileMedical,
+    color: '#84cc16',
+    gradient: 'linear-gradient(135deg, #84cc16, #4d7c0f)',
+    tag: 'Expediente Único'
+  },
+  chat_assistant: {
+    icon: FaComments,
+    color: '#0ea5e9',
+    gradient: 'linear-gradient(135deg, #0ea5e9, #0369a1)',
+    tag: 'Asistente IA'
+  },
+  download_apk: {
+    icon: FaAndroid,
+    color: '#22c55e',
+    gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
+    tag: 'Descarga Móvil'
+  },
+}
+
+const CATEGORY_TABS = [
+  { id: 'all', label: 'Todos los Apartados', icon: FaLayerGroup },
+  { id: 'public', label: 'Páginas Públicas', icon: FaHeartbeat },
+  { id: 'health', label: 'Salud y Pacientes', icon: FaChartLine },
+  { id: 'services', label: 'Servicios Especiales', icon: FaMobileAlt },
+]
+
+function ModulesSection({ dark }) {
+  const { refreshModules } = useModules()
+  const [modules, setModules] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [togglingKey, setTogglingKey] = useState(null)
+  const [batchLoading, setBatchLoading] = useState(false)
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('all')
+  const [toast, setToast] = useState(null)
+
+  const showToast = (type, message) => {
+    setToast({ type, message })
+    setTimeout(() => setToast(null), 4000)
+  }
+
+  const loadModules = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await api.get('/admin/modules')
+      setModules(res.data.modules || [])
+    } catch (err) {
+      showToast('error', 'Error al cargar los módulos: ' + (err.response?.data?.error || err.message))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadModules()
+  }, [loadModules])
+
+  const handleToggle = async (mod) => {
+    if (togglingKey) return
+    const newStatus = !mod.isEnabled
+    setTogglingKey(mod.key)
+
+    // Optimistic UI update
+    setModules(prev => prev.map(m => m.key === mod.key ? { ...m, isEnabled: newStatus } : m))
+
+    try {
+      const res = await api.put(`/admin/modules/${mod.key}/toggle`, { isEnabled: newStatus })
+      showToast('success', res.data.message || `Módulo "${mod.name}" actualizado`)
+      refreshModules()
+    } catch (err) {
+      // Revert optimistic update on error
+      setModules(prev => prev.map(m => m.key === mod.key ? { ...m, isEnabled: mod.isEnabled } : m))
+      showToast('error', 'Error al actualizar módulo: ' + (err.response?.data?.error || err.message))
+    } finally {
+      setTogglingKey(null)
+    }
+  }
+
+  const handleBatch = async (action, actionName) => {
+    if (!window.confirm(`¿Estás seguro de que deseas ${actionName.toLowerCase()}?`)) return
+    setBatchLoading(true)
+    try {
+      const res = await api.put('/admin/modules/batch', { action })
+      setModules(res.data.modules || [])
+      showToast('success', res.data.message || 'Configuración de módulos actualizada')
+      refreshModules()
+    } catch (err) {
+      showToast('error', 'Error en acción grupal: ' + (err.response?.data?.error || err.message))
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  const filtered = modules.filter(m => {
+    const matchCategory = category === 'all' || m.category === category
+    const matchSearch = search.trim() === '' ||
+      m.name.toLowerCase().includes(search.toLowerCase()) ||
+      (m.description && m.description.toLowerCase().includes(search.toLowerCase())) ||
+      m.key.toLowerCase().includes(search.toLowerCase())
+    return matchCategory && matchSearch
+  })
+
+  const totalCount = modules.length
+  const activeCount = modules.filter(m => m.isEnabled).length
+  const inactiveCount = totalCount - activeCount
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* ── Top Header ────────────────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+            padding: '0.25rem 0.75rem', borderRadius: '20px',
+            background: dark ? 'rgba(224, 59, 96, 0.15)' : 'rgba(135, 18, 51, 0.08)',
+            color: dark ? '#e03b60' : '#871233',
+            fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em',
+            marginBottom: '0.5rem'
+          }}>
+            <FaSlidersH size={12} /> Control de Visualización
+          </div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', margin: 0, letterSpacing: '-0.02em' }}>
+            Visibilidad de Apartados y Módulos
+          </h2>
+          <p style={{ fontSize: '0.875rem', color: dark ? '#7e7a8c' : '#a89580', margin: '0.25rem 0 0' }}>
+            Activa o desactiva de forma inmediata qué secciones, páginas y servicios son visibles para los usuarios en la plataforma.
+          </p>
+        </div>
+
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => handleBatch('enable_all', 'Activar todos los módulos')}
+            disabled={batchLoading || activeCount === totalCount}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.55rem 0.9rem', borderRadius: '10px',
+              border: 'none', cursor: (batchLoading || activeCount === totalCount) ? 'not-allowed' : 'pointer',
+              background: '#10b981', color: '#fff', fontSize: '0.8rem', fontWeight: '700',
+              opacity: (batchLoading || activeCount === totalCount) ? 0.6 : 1,
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <FaCheckCircle size={13} /> Activar Todos
+          </button>
+          <button
+            onClick={() => handleBatch('disable_all', 'Desactivar todos los módulos')}
+            disabled={batchLoading || inactiveCount === totalCount}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.55rem 0.9rem', borderRadius: '10px',
+              border: 'none', cursor: (batchLoading || inactiveCount === totalCount) ? 'not-allowed' : 'pointer',
+              background: '#ef4444', color: '#fff', fontSize: '0.8rem', fontWeight: '700',
+              opacity: (batchLoading || inactiveCount === totalCount) ? 0.6 : 1,
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <FaTimesCircle size={13} /> Desactivar Todos
+          </button>
+          <button
+            onClick={() => handleBatch('reset', 'Restablecer configuración predeterminada')}
+            disabled={batchLoading}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.55rem 0.9rem', borderRadius: '10px',
+              border: `1.5px solid ${dark ? '#272530' : '#d5c7b8'}`,
+              background: dark ? '#1e1c25' : '#fff',
+              color: dark ? '#fff' : '#1a1715',
+              cursor: batchLoading ? 'not-allowed' : 'pointer',
+              fontSize: '0.8rem', fontWeight: '700',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <FaUndo size={12} /> Restablecer
+          </button>
+        </div>
+      </div>
+
+      {/* ── Toast Alert ────────────────────────────────────────── */}
+      {toast && (
+        <div style={{
+          padding: '0.875rem 1.25rem',
+          borderRadius: '12px',
+          fontSize: '0.85rem',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          background: toast.type === 'success'
+            ? (dark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5')
+            : (dark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2'),
+          color: toast.type === 'success' ? '#10b981' : '#ef4444',
+          border: `1px solid ${toast.type === 'success' ? '#10b98140' : '#ef444440'}`,
+          animation: 'slideDown 0.2s ease',
+        }}>
+          {toast.type === 'success' ? <FaCheck size={14} /> : <FaTimes size={14} />}
+          <span style={{ flex: 1 }}>{toast.message}</span>
+          <button onClick={() => setToast(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.9rem' }}>
+            <FaTimes />
+          </button>
+        </div>
+      )}
+
+      {/* ── KPI Stats Cards ───────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+        <div style={{
+          ...cardStyle(dark),
+          padding: '1.25rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: dark ? '#7e7a8c' : '#a89580', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Total Módulos
+            </span>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715', marginTop: '0.25rem' }}>
+              {totalCount}
+            </div>
+          </div>
+          <div style={{
+            width: '48px', height: '48px', borderRadius: '12px',
+            background: dark ? 'rgba(135,18,51,0.15)' : '#87123315',
+            color: dark ? '#e03b60' : '#871233',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <FaSlidersH size={22} />
+          </div>
+        </div>
+
+        <div style={{
+          ...cardStyle(dark),
+          padding: '1.25rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Apartados Activos (Visibles)
+            </span>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#10b981', marginTop: '0.25rem' }}>
+              {activeCount}
+            </div>
+          </div>
+          <div style={{
+            width: '48px', height: '48px', borderRadius: '12px',
+            background: 'rgba(16, 185, 129, 0.15)',
+            color: '#10b981',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <FaCheckCircle size={22} />
+          </div>
+        </div>
+
+        <div style={{
+          ...cardStyle(dark),
+          padding: '1.25rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: inactiveCount > 0 ? '#ef4444' : (dark ? '#7e7a8c' : '#a89580'), textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Apartados Desactivados (Ocultos)
+            </span>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: inactiveCount > 0 ? '#ef4444' : (dark ? '#fff' : '#1a1715'), marginTop: '0.25rem' }}>
+              {inactiveCount}
+            </div>
+          </div>
+          <div style={{
+            width: '48px', height: '48px', borderRadius: '12px',
+            background: inactiveCount > 0 ? 'rgba(239, 68, 68, 0.15)' : (dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
+            color: inactiveCount > 0 ? '#ef4444' : (dark ? '#7e7a8c' : '#a89580'),
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <FaEyeSlash size={22} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Filter Bar: Tabs & Search ──────────────────────────── */}
+      <div style={{
+        ...cardStyle(dark),
+        padding: '0.875rem 1.25rem',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1rem',
+      }}>
+        {/* Category tabs */}
+        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+          {CATEGORY_TABS.map(tab => {
+            const isSelected = category === tab.id
+            const TabIcon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setCategory(tab.id)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
+                  padding: '0.45rem 0.85rem', borderRadius: '8px',
+                  border: isSelected ? 'none' : `1px solid ${dark ? '#272530' : '#e0d6cb'}`,
+                  background: isSelected
+                    ? (dark ? '#e03b60' : '#871233')
+                    : (dark ? '#1e1c25' : '#faf8f5'),
+                  color: isSelected ? '#fff' : (dark ? '#9ea4b0' : '#5c5248'),
+                  fontSize: '0.8rem', fontWeight: isSelected ? '700' : '600',
+                  cursor: 'pointer', transition: 'all 0.2s ease',
+                }}
+              >
+                <TabIcon size={12} />
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Search */}
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar apartado o módulo..."
+          dark={dark}
+        />
+      </div>
+
+      {/* ── Modules Grid ──────────────────────────────────────── */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '3rem', color: dark ? '#7e7a8c' : '#a89580' }}>
+          <p style={{ fontWeight: '600' }}>Cargando catálogo de módulos...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div style={{
+          ...cardStyle(dark),
+          padding: '3rem',
+          textAlign: 'center',
+          color: dark ? '#7e7a8c' : '#a89580'
+        }}>
+          <FaSlidersH size={36} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: dark ? '#fff' : '#1a1715', margin: '0 0 0.5rem' }}>
+            No se encontraron apartados
+          </h3>
+          <p style={{ fontSize: '0.875rem', margin: 0 }}>
+            Intenta con otro término de búsqueda o selecciona otra categoría.
+          </p>
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+          gap: '1.25rem'
+        }}>
+          {filtered.map(mod => {
+            const meta = MODULE_META[mod.key] || {
+              icon: FaLayerGroup,
+              color: '#871233',
+              gradient: 'linear-gradient(135deg, #871233, #5e0c23)',
+              tag: 'Módulo General'
+            }
+            const IconComponent = meta.icon
+            const isSaving = togglingKey === mod.key
+
+            return (
+              <div
+                key={mod.key}
+                style={{
+                  ...cardStyle(dark),
+                  padding: '1.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '1.25rem',
+                  transition: 'all 0.25s ease',
+                  borderLeft: `4px solid ${mod.isEnabled ? meta.color : (dark ? '#272530' : '#d5c7b8')}`,
+                  opacity: mod.isEnabled ? 1 : 0.82,
+                  boxShadow: mod.isEnabled
+                    ? (dark ? `0 4px 20px ${meta.color}15` : '0 2px 10px rgba(0,0,0,0.05)')
+                    : 'none'
+                }}
+              >
+                {/* Header: Icon, Titles and Tag */}
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                  <div style={{
+                    width: '46px', height: '46px', borderRadius: '12px',
+                    background: mod.isEnabled ? meta.gradient : (dark ? '#272530' : '#e0d6cb'),
+                    color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: mod.isEnabled ? `0 4px 12px ${meta.color}40` : 'none',
+                    transition: 'all 0.3s ease',
+                  }}>
+                    <IconComponent size={20} />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+                      <span style={{
+                        fontSize: '0.68rem', fontWeight: '800', textTransform: 'uppercase',
+                        letterSpacing: '0.05em', padding: '2px 7px', borderRadius: '4px',
+                        background: mod.isEnabled ? `${meta.color}20` : (dark ? '#272530' : '#e8ddd0'),
+                        color: mod.isEnabled ? meta.color : (dark ? '#7e7a8c' : '#7d6e5e'),
+                      }}>
+                        {meta.tag}
+                      </span>
+                    </div>
+
+                    <h3 style={{
+                      fontSize: '1rem', fontWeight: '800',
+                      color: dark ? '#fff' : '#1a1715',
+                      margin: '0 0 0.4rem',
+                      lineHeight: '1.3'
+                    }}>
+                      {mod.name}
+                    </h3>
+
+                    <p style={{
+                      fontSize: '0.8rem',
+                      color: dark ? '#9ea4b0' : '#5c5248',
+                      lineHeight: '1.45',
+                      margin: 0
+                    }}>
+                      {mod.description || 'Controla la visualización de este apartado en la plataforma.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer: Status Badge and Switch Toggle */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: '1rem',
+                  borderTop: `1px solid ${dark ? '#1e1c25' : '#f0e8de'}`,
+                }}>
+                  {/* Status badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{
+                      width: '8px', height: '8px', borderRadius: '50%',
+                      background: mod.isEnabled ? '#10b981' : '#ef4444',
+                      boxShadow: mod.isEnabled ? '0 0 8px #10b981' : 'none',
+                    }} />
+                    <span style={{
+                      fontSize: '0.78rem', fontWeight: '700',
+                      color: mod.isEnabled ? '#10b981' : (dark ? '#ef4444' : '#dc2626')
+                    }}>
+                      {mod.isEnabled ? 'Visible para usuarios' : 'Oculto en la plataforma'}
+                    </span>
+                  </div>
+
+                  {/* iOS Style Switch Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => handleToggle(mod)}
+                    disabled={isSaving}
+                    title={mod.isEnabled ? 'Haz clic para desactivar' : 'Haz clic para activar'}
+                    style={{
+                      width: '52px',
+                      height: '28px',
+                      borderRadius: '14px',
+                      background: mod.isEnabled ? '#10b981' : (dark ? '#272530' : '#d5c7b8'),
+                      border: 'none',
+                      cursor: isSaving ? 'wait' : 'pointer',
+                      position: 'relative',
+                      padding: '2px',
+                      transition: 'background-color 0.25s ease',
+                      outline: 'none',
+                      opacity: isSaving ? 0.6 : 1,
+                    }}
+                  >
+                    <div style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: '#ffffff',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
+                      transform: mod.isEnabled ? 'translateX(24px)' : 'translateX(0px)',
+                      transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.65rem',
+                      color: mod.isEnabled ? '#10b981' : '#9ea4b0',
+                      fontWeight: '800',
+                    }}>
+                      {isSaving ? '...' : mod.isEnabled ? <FaCheck size={10} /> : <FaTimes size={10} />}
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════
 // DASHBOARD SECTION
 // ═══════════════════════════════════════════════════════
 
@@ -1125,6 +1690,41 @@ function DashboardSection({ dark }) {
             {c.sub && <span style={{ fontSize: '0.72rem', color: dark ? '#7e7a8c' : '#a89580' }}>{c.sub}</span>}
           </div>
         ))}
+      </div>
+
+      {/* Module Control shortcut banner */}
+      <div style={{
+        marginTop: '1.5rem',
+        ...cardStyle(dark),
+        padding: '1.25rem 1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        background: dark ? 'linear-gradient(135deg, rgba(135,18,51,0.15), rgba(20,19,25,0.9))' : 'linear-gradient(135deg, #8712330a, #fff)',
+        borderLeft: '4px solid #871233'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{
+            width: '42px', height: '42px', borderRadius: '10px',
+            background: dark ? '#e03b60' : '#871233', color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+          }}>
+            <FaSlidersH size={18} />
+          </div>
+          <div>
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '800', color: dark ? '#fff' : '#1a1715' }}>
+              Control de Visibilidad y Apartados
+            </h4>
+            <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: dark ? '#9ea4b0' : '#5c5248' }}>
+              Activa o desactiva en tiempo real la visualización de las secciones y módulos para los usuarios.
+            </p>
+          </div>
+        </div>
+        <Btn variant="primary" onClick={() => onNavigate?.('modules')} small>
+          <FaSlidersH size={12} /> Administrar Módulos
+        </Btn>
       </div>
 
       {/* APK Management Widget on Main Dashboard */}

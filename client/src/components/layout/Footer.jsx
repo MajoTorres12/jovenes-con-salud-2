@@ -1,9 +1,20 @@
 import { Link } from 'react-router-dom'
 import { FaHeartbeat, FaFacebookF, FaTwitter, FaInstagram } from 'react-icons/fa'
 import { HiMail, HiPhone, HiLocationMarker } from 'react-icons/hi'
+import { useModules } from '../../context/ModuleContext'
 import logo from '../../assets/logo.png'
 
 export default function Footer() {
+  const { isModuleEnabled } = useModules()
+
+  const footerLinks = [
+    { to: '/enfermedades', label: 'Enfermedades Crónicas', key: 'diseases' },
+    { to: '/hecho-en-tamaulipas', label: 'Hecho en Tamaulipas', key: 'hecho_en_tamaulipas' },
+    { to: '/noticias', label: 'Noticias y Artículos', key: 'news' },
+    { to: '/programas', label: 'Programas Sociales', key: 'programs' },
+    { to: '/faq', label: 'Preguntas Frecuentes', key: 'faq' },
+    { to: '/contacto', label: 'Contacto', key: 'contact' },
+  ].filter(l => isModuleEnabled(l.key))
   return (
     <footer style={{
       background: 'linear-gradient(180deg, var(--color-footer-bg-start), var(--color-footer-bg-end))',
@@ -55,12 +66,7 @@ export default function Footer() {
               Navegación
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {[
-                { to: '/enfermedades', label: 'Enfermedades Crónicas' },
-                { to: '/hecho-en-tamaulipas', label: 'Hecho en Tamaulipas' },
-                { to: '/faq', label: 'Preguntas Frecuentes' },
-                { to: '/contacto', label: 'Contacto' },
-              ].map(link => (
+              {footerLinks.map(link => (
                 <Link key={link.to} to={link.to} style={{
                   fontSize: '0.875rem',
                   color: 'var(--color-footer-muted)',

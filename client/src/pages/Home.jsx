@@ -4,6 +4,7 @@ import { FaHeartbeat, FaBookMedical, FaHandsHelping, FaChartLine, FaTimes, FaNew
 import { HiArrowRight } from 'react-icons/hi'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useModules } from '../context/ModuleContext'
 import api, { getApiBaseUrl } from '../services/api'
 import logoLight from '../assets/logo-light.png'
 import logoDark from '../assets/logo-dark.png'
@@ -14,8 +15,9 @@ const API_BASE = getApiBaseUrl()
 const newsImgSrc = (p) => !p ? null : p.startsWith('http') ? p : `${API_BASE}/${p}`
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 
-const features = [
+const allFeatures = [
   {
+    key: 'diseases',
     icon: FaBookMedical,
     title: 'Información sobre ECNT',
     description: 'Conoce sobre diabetes, hipertensión, obesidad y otras enfermedades crónicas no transmisibles.',
@@ -23,6 +25,7 @@ const features = [
     color: 'var(--color-info)',
   },
   {
+    key: 'programs',
     icon: FaHandsHelping,
     title: 'Programas Sociales',
     description: 'Descubre programas de apoyo gubernamental enfocados en la salud de los jóvenes.',
@@ -30,6 +33,7 @@ const features = [
     color: 'var(--color-accent-500)',
   },
   {
+    key: 'health_tracking',
     icon: FaChartLine,
     title: 'Seguimiento de Salud',
     description: 'Registra y monitorea tus indicadores de salud con gráficas personalizadas.',
@@ -57,10 +61,13 @@ const statsTamaulipas = [
 export default function Home() {
   const { isAuthenticated, user } = useAuth()
   const { dark } = useTheme()
+  const { isModuleEnabled } = useModules()
   const [featuredNews, setFeaturedNews] = useState([])
   const [apkInfo, setApkInfo] = useState(null)
   const [downloadingApk, setDownloadingApk] = useState(false)
   const [apkNotice, setApkNotice] = useState('')
+
+  const activeFeatures = allFeatures.filter(f => isModuleEnabled(f.key))
 
   useEffect(() => {
     api.get('/news/featured').then(r => setFeaturedNews(r.data.posts || [])).catch(() => { })
@@ -221,45 +228,66 @@ export default function Home() {
                   <HiArrowRight />
                 </Link>
               )}
-              <button
-                type="button"
-                onClick={handleDownloadApk}
-                disabled={downloadingApk}
-                style={{
+              {isModuleEnabled('download_apk') ? (
+                <button
+                  type="button"
+                  onClick={handleDownloadApk}
+                  disabled={downloadingApk}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    padding: '0.875rem 2rem',
+                    borderRadius: 'var(--radius-xl)',
+                    background: 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: 'white',
+                    fontWeight: '700',
+                    fontSize: '1rem',
+                    cursor: downloadingApk ? 'wait' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.22)'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)'
+                  }}
+                  title={apkInfo?.version ? `Descargar APK v${apkInfo.version} (${(apkInfo.fileSize / (1024 * 1024)).toFixed(1)} MB)` : 'Descargar instalador APK para Android'}
+                >
+                  <FaAndroid style={{ fontSize: '1.25rem', color: '#4ade80' }} />
+                  <span>{downloadingApk ? 'Descargando...' : 'Descargar Apk'}</span>
+                  <FaDownload style={{ fontSize: '0.85rem', opacity: 0.8 }} />
+                </button>
+              ) : (
+                <Link to="/enfermedades" style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.65rem',
+                  gap: '0.5rem',
                   padding: '0.875rem 2rem',
                   borderRadius: 'var(--radius-xl)',
-                  background: 'rgba(255,255,255,0.12)',
+                  background: 'rgba(255,255,255,0.1)',
                   backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.25)',
+                  border: '1px solid rgba(255,255,255,0.2)',
                   color: 'white',
-                  fontWeight: '700',
+                  textDecoration: 'none',
+                  fontWeight: '600',
                   fontSize: '1rem',
-                  cursor: downloadingApk ? 'wait' : 'pointer',
                   transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.22)'
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)'
-                }}
-                title={apkInfo?.version ? `Descargar APK v${apkInfo.version} (${(apkInfo.fileSize / (1024 * 1024)).toFixed(1)} MB)` : 'Descargar instalador APK para Android'}
-              >
-                <FaAndroid style={{ fontSize: '1.25rem', color: '#4ade80' }} />
-                <span>{downloadingApk ? 'Descargando...' : 'Descargar Apk'}</span>
-                <FaDownload style={{ fontSize: '0.85rem', opacity: 0.8 }} />
-              </button>
+                }}>
+                  Explorar Información
+                  <HiArrowRight />
+                </Link>
+              )}
             </div>
 
-            {apkNotice && (
+            {isModuleEnabled('download_apk') && apkNotice && (
               <div style={{
                 marginTop: '0.75rem',
                 display: 'inline-flex',
@@ -578,89 +606,91 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section style={{ padding: '5rem 1.5rem', background: 'var(--color-surface-50)' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <h2 style={{
-              fontSize: '2rem',
-              fontWeight: '700',
-              color: 'var(--color-surface-900)',
-              marginBottom: '0.75rem',
-            }}>
-              ¿Qué encontrarás aquí?
-            </h2>
-            <p style={{ fontSize: '1.05rem', color: 'var(--color-surface-500)', maxWidth: '600px', margin: '0 auto' }}>
-              Herramientas y recursos diseñados para empoderar a jóvenes tamaulipecos en el cuidado de su salud.
-            </p>
-          </div>
+      {activeFeatures.length > 0 && (
+        <section style={{ padding: '5rem 1.5rem', background: 'var(--color-surface-50)' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+              <h2 style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                color: 'var(--color-surface-900)',
+                marginBottom: '0.75rem',
+              }}>
+                ¿Qué encontrarás aquí?
+              </h2>
+              <p style={{ fontSize: '1.05rem', color: 'var(--color-surface-500)', maxWidth: '600px', margin: '0 auto' }}>
+                Herramientas y recursos diseñados para empoderar a jóvenes tamaulipecos en el cuidado de su salud.
+              </p>
+            </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '1.5rem',
-          }}>
-            {features.map((feature, i) => (
-              <Link
-                key={i}
-                to={feature.to}
-                className="animate-fade-in-up"
-                style={{
-                  animationDelay: `${i * 0.15}s`,
-                  padding: '2rem',
-                  borderRadius: 'var(--radius-xl)',
-                  background: 'var(--color-surface-100)',
-                  textDecoration: 'none',
-                  boxShadow: 'var(--shadow-card)',
-                  border: '1px solid var(--color-surface-200)',
-                  transition: 'all 0.3s ease',
-                  display: 'block',
-                }}
-              >
-                <div style={{
-                  width: '48px', height: '48px',
-                  borderRadius: 'var(--radius-lg)',
-                  background: `${feature.color}15`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '1rem',
-                }}>
-                  <feature.icon style={{ fontSize: '1.25rem', color: feature.color }} />
-                </div>
-                <h3 style={{
-                  fontSize: '1.125rem',
-                  fontWeight: '600',
-                  color: 'var(--color-surface-900)',
-                  marginBottom: '0.5rem',
-                }}>
-                  {feature.title}
-                </h3>
-                <p style={{
-                  fontSize: '0.9rem',
-                  color: 'var(--color-surface-500)',
-                  lineHeight: '1.6',
-                  marginBottom: '1rem',
-                }}>
-                  {feature.description}
-                </p>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  color: 'var(--color-primary-500)',
-                }}>
-                  Explorar <HiArrowRight />
-                </span>
-              </Link>
-            ))}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: '1.5rem',
+            }}>
+              {activeFeatures.map((feature, i) => (
+                <Link
+                  key={i}
+                  to={feature.to}
+                  className="animate-fade-in-up"
+                  style={{
+                    animationDelay: `${i * 0.15}s`,
+                    padding: '2rem',
+                    borderRadius: 'var(--radius-xl)',
+                    background: 'var(--color-surface-100)',
+                    textDecoration: 'none',
+                    boxShadow: 'var(--shadow-card)',
+                    border: '1px solid var(--color-surface-200)',
+                    transition: 'all 0.3s ease',
+                    display: 'block',
+                  }}
+                >
+                  <div style={{
+                    width: '48px', height: '48px',
+                    borderRadius: 'var(--radius-lg)',
+                    background: `${feature.color}15`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1rem',
+                  }}>
+                    <feature.icon style={{ fontSize: '1.25rem', color: feature.color }} />
+                  </div>
+                  <h3 style={{
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: 'var(--color-surface-900)',
+                    marginBottom: '0.5rem',
+                  }}>
+                    {feature.title}
+                  </h3>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    color: 'var(--color-surface-500)',
+                    lineHeight: '1.6',
+                    marginBottom: '1rem',
+                  }}>
+                    {feature.description}
+                  </p>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    color: 'var(--color-primary-500)',
+                  }}>
+                    Explorar <HiArrowRight />
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Latest News ──────────────────────────────────── */}
-      {featuredNews.length > 0 && (
+      {isModuleEnabled('news') && featuredNews.length > 0 && (
         <section style={{ padding: '5rem 1.5rem', background: 'var(--color-surface-100)' }}>
           <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>

@@ -16,6 +16,7 @@ import {
 import { FaChartLine } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import { useModules } from '../../context/ModuleContext'
 import api, { getApiBaseUrl } from '../../services/api'
 
 const API_BASE = getApiBaseUrl()
@@ -62,8 +63,11 @@ export default function BottomNav() {
   const isHealthActive = ['/dashboard', '/analytics', '/citas-virtuales', '/historial-medico-universal'].some(p => location.pathname.startsWith(p))
   const isProfileActive = ['/perfil', '/login', '/registro', '/recuperar', '/reset-password'].some(p => location.pathname.startsWith(p))
 
-  const navItems = [
+  const { isModuleEnabled } = useModules()
+
+  const allNavItems = [
     {
+      key: 'home',
       to: '/',
       label: 'Inicio',
       active: isHomeActive,
@@ -72,6 +76,7 @@ export default function BottomNav() {
       badge: null
     },
     {
+      key: 'diseases',
       to: '/enfermedades',
       label: 'Enfermedades',
       active: isDiseasesActive,
@@ -80,6 +85,7 @@ export default function BottomNav() {
       badge: null
     },
     {
+      key: 'hecho_en_tamaulipas',
       to: '/hecho-en-tamaulipas',
       label: 'Hecho en Tam.',
       active: isNutraceuticalsActive,
@@ -88,6 +94,7 @@ export default function BottomNav() {
       badge: null
     },
     {
+      key: 'news',
       to: '/noticias',
       label: 'Noticias',
       active: isNewsActive,
@@ -96,6 +103,7 @@ export default function BottomNav() {
       badge: null
     },
     {
+      key: 'health_tracking',
       to: isAuthenticated ? '/dashboard' : '/login',
       label: 'Mi Salud',
       active: isHealthActive,
@@ -104,6 +112,7 @@ export default function BottomNav() {
       badge: unreadAlertsCount > 0 ? (unreadAlertsCount > 9 ? '9+' : unreadAlertsCount) : null
     },
     {
+      key: 'profile',
       to: isAuthenticated ? '/perfil' : '/login',
       label: 'Mi Perfil',
       active: isProfileActive,
@@ -113,6 +122,8 @@ export default function BottomNav() {
       badge: null
     }
   ]
+
+  const navItems = allNavItems.filter(item => item.key === 'home' || item.key === 'profile' || isModuleEnabled(item.key))
 
   const activeColor = dark ? 'var(--color-primary-400)' : 'var(--color-primary-500)'
   const inactiveColor = dark ? '#7e7a8c' : '#7d6e5e'

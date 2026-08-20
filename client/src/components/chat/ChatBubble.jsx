@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { FaComments, FaTimes, FaPaperPlane, FaUserCircle, FaArrowLeft, FaCircle } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import { useModules } from '../../context/ModuleContext'
 import api, { getApiBaseUrl } from '../../services/api'
 
 const API_BASE = getApiBaseUrl()
@@ -10,6 +11,7 @@ const API_BASE = getApiBaseUrl()
 export default function ChatBubble() {
   const { user, isAuthenticated } = useAuth()
   const { dark } = useTheme()
+  const { isModuleEnabled } = useModules()
   const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
   const [activeContact, setActiveContact] = useState(null) // { id, name, role }
@@ -212,8 +214,8 @@ export default function ChatBubble() {
     }
   }
 
-  // If user is not logged in, do not render bubble
-  if (!isAuthenticated || !user) return null
+  // If user is not logged in or chat_assistant module is disabled, do not render bubble
+  if (!isAuthenticated || !user || !isModuleEnabled('chat_assistant')) return null
 
   // If patient has no doctor assigned, display placeholder in widget body
   const hasDoctor = user.role === 'user' ? !!doctorContact : true

@@ -28,6 +28,7 @@ import analyticsRoutes from './routes/analytics.routes.js'
 import wearableRoutes from './routes/wearable.routes.js'
 import appointmentRoutes from './routes/appointment.routes.js'
 import appReleaseRoutes from './routes/appRelease.routes.js'
+import settingsRoutes from './routes/settings.routes.js'
 import ContactSettings from './models/ContactSettings.js'
 
 const app = express()
@@ -116,6 +117,7 @@ app.use('/api/appointments', appointmentRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/app', appReleaseRoutes)
+app.use('/api/settings', settingsRoutes)
 
 // ========================================
 // Error handling

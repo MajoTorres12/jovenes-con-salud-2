@@ -21,8 +21,7 @@ import './src/models/DoctorSchedule.js'
 import './src/models/Appointment.js'
 import './src/models/Prescription.js'
 import './src/models/AppRelease.js'
-
-
+import ModuleVisibility, { ensureDefaultModules } from './src/models/ModuleVisibility.js'
 
 const PORT = process.env.PORT || 3001
 
@@ -34,6 +33,9 @@ async function startServer() {
 
     await sequelize.sync({ alter: true })
     console.log('✅ Modelos sincronizados con la base de datos')
+
+    await ensureDefaultModules()
+    console.log('✅ Catálogo de módulos sincronizado')
   } catch (dbError) {
     console.warn('⚠️  No se pudo conectar a PostgreSQL:', dbError.message)
     console.warn('   El servidor arrancará sin base de datos.')

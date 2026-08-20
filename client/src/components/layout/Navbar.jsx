@@ -7,6 +7,7 @@ import { MdWatch } from 'react-icons/md'
 import { useAuth } from '../../context/AuthContext'
 import WearableSection from '../dashboard/WearableSection'
 import { useTheme } from '../../context/ThemeContext'
+import { useModules } from '../../context/ModuleContext'
 import api, { getApiBaseUrl } from '../../services/api'
 import logoLight from '../../assets/logo-light.png'
 import logoDark from '../../assets/logo-dark.png'
@@ -86,6 +87,7 @@ export default function Navbar() {
   const navigate = useNavigate()
   const { user, isAuthenticated, logout } = useAuth()
   const { dark, toggleDark } = useTheme()
+  const { isModuleEnabled } = useModules()
   const [showWearableModal, setShowWearableModal] = useState(false)
 
   // Translation support
@@ -268,20 +270,26 @@ export default function Navbar() {
   const todayDoses = getTodayDoses()
   const pendingMedsCount = todayDoses.filter(d => !d.isTaken && d.isWithinOneHour).length
 
-  const links = [
-    { to: '/', label: 'Inicio' },
-    { to: '/enfermedades', label: 'Enfermedades' },
-    { to: '/hecho-en-tamaulipas', label: 'Hecho en Tamaulipas' },
-    { to: '/noticias', label: 'Noticias' },
-    { to: '/contacto', label: 'Contacto' },
-    { to: '/faq', label: 'FAQ' },
+  const allLinks = [
+    { to: '/', label: 'Inicio', key: 'home' },
+    { to: '/enfermedades', label: 'Enfermedades', key: 'diseases' },
+    { to: '/hecho-en-tamaulipas', label: 'Hecho en Tamaulipas', key: 'hecho_en_tamaulipas' },
+    { to: '/noticias', label: 'Noticias', key: 'news' },
+    { to: '/programas', label: 'Programas', key: 'programs' },
+    { to: '/contacto', label: 'Contacto', key: 'contact' },
+    { to: '/faq', label: 'FAQ', key: 'faq' },
   ]
 
-  const mobileLinks = [
-    { to: '/hecho-en-tamaulipas', label: 'Hecho en Tamaulipas' },
-    { to: '/contacto', label: 'Contacto' },
-    { to: '/faq', label: 'FAQ' },
+  const links = allLinks.filter(l => l.key === 'home' || isModuleEnabled(l.key))
+
+  const allMobileLinks = [
+    { to: '/hecho-en-tamaulipas', label: 'Hecho en Tamaulipas', key: 'hecho_en_tamaulipas' },
+    { to: '/programas', label: 'Programas', key: 'programs' },
+    { to: '/contacto', label: 'Contacto', key: 'contact' },
+    { to: '/faq', label: 'FAQ', key: 'faq' },
   ]
+
+  const mobileLinks = allMobileLinks.filter(l => isModuleEnabled(l.key))
 
   const isActive = (path) => {
     if (path === '/hecho-en-tamaulipas') {

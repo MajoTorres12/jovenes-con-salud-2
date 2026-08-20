@@ -13,7 +13,7 @@ import {
   RiUser3Fill,
   RiUser3Line
 } from 'react-icons/ri'
-import { FaChartLine } from 'react-icons/fa'
+import { FaChartLine, FaHeartbeat } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { useModules } from '../../context/ModuleContext'
@@ -65,69 +65,149 @@ export default function BottomNav() {
 
   const { isModuleEnabled } = useModules()
 
-  const allNavItems = [
+  // 1. Left items (Inicio, Enfermedades)
+  const leftItems = [
     {
       key: 'home',
       to: '/',
       label: 'Inicio',
       active: isHomeActive,
-      iconActive: <RiHome5Fill size={22} />,
-      iconInactive: <RiHome5Line size={22} />,
-      badge: null
+      iconActive: <RiHome5Fill size={21} />,
+      iconInactive: <RiHome5Line size={21} />,
     },
     {
       key: 'diseases',
       to: '/enfermedades',
       label: 'Enfermedades',
       active: isDiseasesActive,
-      iconActive: <RiHeartPulseFill size={22} />,
-      iconInactive: <RiHeartPulseLine size={22} />,
-      badge: null
+      iconActive: <RiHeartPulseFill size={21} />,
+      iconInactive: <RiHeartPulseLine size={21} />,
     },
+  ].filter(item => item.key === 'home' || isModuleEnabled(item.key))
+
+  // 2. Center items (Mi Salud & Mi Perfil)
+  const showHealth = isModuleEnabled('health_tracking')
+
+  const healthItem = {
+    key: 'health_tracking',
+    to: isAuthenticated ? '/dashboard' : '/login',
+    label: 'Mi Salud',
+    active: isHealthActive,
+    iconActive: <FaChartLine size={17} />,
+    iconInactive: <FaChartLine size={17} />,
+    badge: unreadAlertsCount > 0 ? (unreadAlertsCount > 9 ? '9+' : unreadAlertsCount) : null
+  }
+
+  const profileItem = {
+    key: 'profile',
+    to: isAuthenticated ? '/perfil' : '/login',
+    label: 'Mi Perfil',
+    active: isProfileActive,
+    isAvatar: true,
+    iconActive: <RiUser3Fill size={18} />,
+    iconInactive: <RiUser3Line size={18} />,
+  }
+
+  // 3. Right items (Hecho en Tam., Noticias)
+  const rightItems = [
     {
       key: 'hecho_en_tamaulipas',
       to: '/hecho-en-tamaulipas',
       label: 'Hecho en Tam.',
       active: isNutraceuticalsActive,
-      iconActive: <RiCapsuleFill size={22} />,
-      iconInactive: <RiCapsuleLine size={22} />,
-      badge: null
+      iconActive: <RiCapsuleFill size={21} />,
+      iconInactive: <RiCapsuleLine size={21} />,
     },
     {
       key: 'news',
       to: '/noticias',
       label: 'Noticias',
       active: isNewsActive,
-      iconActive: <RiNewspaperFill size={22} />,
-      iconInactive: <RiNewspaperLine size={22} />,
-      badge: null
+      iconActive: <RiNewspaperFill size={21} />,
+      iconInactive: <RiNewspaperLine size={21} />,
     },
-    {
-      key: 'health_tracking',
-      to: isAuthenticated ? '/dashboard' : '/login',
-      label: 'Mi Salud',
-      active: isHealthActive,
-      iconActive: <FaChartLine size={20} />,
-      iconInactive: <FaChartLine size={20} style={{ opacity: 0.85 }} />,
-      badge: unreadAlertsCount > 0 ? (unreadAlertsCount > 9 ? '9+' : unreadAlertsCount) : null
-    },
-    {
-      key: 'profile',
-      to: isAuthenticated ? '/perfil' : '/login',
-      label: 'Mi Perfil',
-      active: isProfileActive,
-      isAvatar: true,
-      iconActive: <RiUser3Fill size={22} />,
-      iconInactive: <RiUser3Line size={22} />,
-      badge: null
-    }
-  ]
-
-  const navItems = allNavItems.filter(item => item.key === 'home' || item.key === 'profile' || isModuleEnabled(item.key))
+  ].filter(item => isModuleEnabled(item.key))
 
   const activeColor = dark ? 'var(--color-primary-400)' : 'var(--color-primary-500)'
   const inactiveColor = dark ? '#7e7a8c' : '#7d6e5e'
   const activeBgPill = dark ? 'rgba(214, 92, 126, 0.12)' : 'rgba(135, 18, 51, 0.08)'
+
+  const renderStandardItem = (item) => {
+    const isCurrent = item.active
+
+    return (
+      <Link
+        key={item.key}
+        to={item.to}
+        className="bottom-nav-item"
+        style={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: 1,
+          height: '100%',
+          minWidth: 0,
+          textDecoration: 'none',
+          color: isCurrent ? activeColor : inactiveColor,
+          transition: 'transform 0.15s ease, color 0.2s ease',
+          padding: '2px',
+          gap: '2px',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        {isCurrent && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '2px',
+              width: '36px',
+              height: '26px',
+              borderRadius: '13px',
+              background: activeBgPill,
+              zIndex: 0,
+              animation: 'fadeIn 0.2s ease-out'
+            }}
+          />
+        )}
+
+        <div
+          style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1,
+            width: '24px',
+            height: '24px',
+            transform: isCurrent ? 'scale(1.08)' : 'scale(1)',
+            transition: 'transform 0.2s ease',
+          }}
+        >
+          {isCurrent ? item.iconActive : item.iconInactive}
+        </div>
+
+        <span
+          style={{
+            fontSize: '0.62rem',
+            lineHeight: 1.1,
+            fontWeight: isCurrent ? '700' : '500',
+            color: isCurrent ? activeColor : inactiveColor,
+            zIndex: 1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '100%',
+            letterSpacing: '-0.01em',
+            transition: 'color 0.2s ease',
+          }}
+        >
+          {item.label}
+        </span>
+      </Link>
+    )
+  }
 
   return (
     <nav
@@ -139,169 +219,198 @@ export default function BottomNav() {
         left: 0,
         right: 0,
         zIndex: 9998,
-        height: 'calc(58px + env(safe-area-inset-bottom, 0px))',
+        height: 'calc(62px + env(safe-area-inset-bottom, 0px))',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: '0.35rem',
+        paddingRight: '0.35rem',
         background: dark
-          ? 'rgba(18, 17, 24, 0.92)'
-          : 'rgba(255, 255, 255, 0.92)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: `1px solid ${dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.07)'}`,
+          ? 'rgba(16, 15, 22, 0.94)'
+          : 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderTop: `1px solid ${dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(135, 18, 51, 0.1)'}`,
         boxShadow: dark
-          ? '0 -4px 24px rgba(0, 0, 0, 0.4)'
-          : '0 -2px 16px rgba(78, 4, 19, 0.06)',
+          ? '0 -4px 25px rgba(0, 0, 0, 0.55)'
+          : '0 -2px 20px rgba(135, 18, 51, 0.08)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-around',
+        justifyContent: 'space-between',
         userSelect: 'none',
       }}
     >
-      {navItems.map((item, index) => {
-        const isCurrent = item.active
+      {/* ── Left Items (Inicio, Enfermedades) ──────────────── */}
+      <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'space-around', height: '100%' }}>
+        {leftItems.map(renderStandardItem)}
+      </div>
 
-        return (
+      {/* ── Central Highlighted Hub (Mi Salud & Mi Perfil) ─── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '4px',
+          padding: '4px 6px',
+          borderRadius: '24px',
+          background: dark
+            ? 'linear-gradient(135deg, rgba(135, 18, 51, 0.3), rgba(28, 25, 36, 0.95))'
+            : 'linear-gradient(135deg, rgba(135, 18, 51, 0.12), rgba(255, 255, 255, 0.98))',
+          border: `1.5px solid ${dark ? 'rgba(224, 59, 96, 0.4)' : 'rgba(135, 18, 51, 0.25)'}`,
+          boxShadow: dark
+            ? '0 4px 18px rgba(0, 0, 0, 0.6), 0 0 14px rgba(135, 18, 51, 0.3)'
+            : '0 4px 16px rgba(135, 18, 51, 0.16), 0 2px 6px rgba(0, 0, 0, 0.04)',
+          transform: 'translateY(-3px)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          margin: '0 3px',
+          flexShrink: 0,
+        }}
+      >
+        {/* Mi Salud */}
+        {showHealth && (
           <Link
-            key={item.label + index}
-            to={item.to}
-            className="bottom-nav-item"
+            to={healthItem.to}
             style={{
-              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              flex: 1,
-              height: '100%',
-              minWidth: 0,
+              padding: '4px 8px',
+              minWidth: '54px',
+              borderRadius: '16px',
               textDecoration: 'none',
-              color: isCurrent ? activeColor : inactiveColor,
-              transition: 'transform 0.15s ease, color 0.2s ease',
-              padding: '4px 2px',
-              gap: '2px',
-              WebkitTapHighlightColor: 'transparent',
+              background: healthItem.active
+                ? 'linear-gradient(135deg, #871233, #e03b60)'
+                : (dark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(135, 18, 51, 0.05)'),
+              color: healthItem.active ? '#ffffff' : (dark ? '#e03b60' : '#871233'),
+              boxShadow: healthItem.active
+                ? '0 2px 10px rgba(135, 18, 51, 0.5)'
+                : 'none',
+              transition: 'all 0.2s ease',
+              position: 'relative',
             }}
           >
-            {/* Active Pill Glow/Background */}
-            {isCurrent && (
-              <span
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+              <FaChartLine
+                size={16}
                 style={{
-                  position: 'absolute',
-                  top: '4px',
-                  width: '38px',
-                  height: '28px',
-                  borderRadius: '14px',
-                  background: activeBgPill,
-                  zIndex: 0,
-                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                  animation: 'fadeIn 0.2s ease-out'
+                  color: healthItem.active ? '#ffffff' : (dark ? '#e03b60' : '#871233'),
+                  transform: healthItem.active ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'transform 0.2s ease'
                 }}
               />
-            )}
-
-            {/* Icon Container with Badge */}
-            <div
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1,
-                width: '26px',
-                height: '26px',
-                transform: isCurrent ? 'scale(1.06)' : 'scale(1)',
-                transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              }}
-            >
-              {item.isAvatar && isAuthenticated && user ? (
-                /* Profile Avatar */
-                <div
-                  style={{
-                    width: '26px',
-                    height: '26px',
-                    borderRadius: '50%',
-                    boxSizing: 'border-box',
-                    border: isCurrent
-                      ? `2px solid ${activeColor}`
-                      : `1.5px solid ${dark ? '#3f3b4e' : '#d4c4b0'}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                    background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500))',
-                    color: 'white',
-                    fontSize: '0.68rem',
-                    fontWeight: '700',
-                    boxShadow: isCurrent ? '0 0 8px rgba(135, 18, 51, 0.35)' : 'none',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar.startsWith('http') ? user.avatar : `${API_BASE}/${user.avatar}`}
-                      alt={user.name || 'Perfil'}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
-                    />
-                  ) : (
-                    <span>{user.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>
-                  )}
-                </div>
-              ) : (
-                /* Standard Icon */
-                isCurrent ? item.iconActive : item.iconInactive
-              )}
-
-              {/* Notification / Alert Badge */}
-              {item.badge && (
+              {healthItem.badge && (
                 <span
                   style={{
                     position: 'absolute',
-                    top: '-3px',
-                    right: '-6px',
+                    top: '-6px',
+                    right: '-9px',
                     minWidth: '15px',
                     height: '15px',
-                    padding: '0 3.5px',
+                    padding: '0 3px',
                     borderRadius: '8px',
                     background: '#dc2626',
-                    color: 'white',
-                    fontSize: '0.58rem',
+                    color: '#ffffff',
+                    fontSize: '0.55rem',
                     fontWeight: '800',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: `1.5px solid ${dark ? '#141319' : '#fff'}`,
-                    boxShadow: '0 1px 4px rgba(220, 38, 38, 0.4)',
+                    border: `1.5px solid ${dark ? '#141319' : '#ffffff'}`,
                     lineHeight: 1,
                   }}
                 >
-                  {item.badge}
+                  {healthItem.badge}
                 </span>
               )}
             </div>
-
-            {/* Label */}
             <span
               style={{
-                fontSize: '0.65rem',
-                lineHeight: 1.1,
-                fontWeight: isCurrent ? '700' : '500',
-                color: isCurrent ? activeColor : inactiveColor,
-                zIndex: 1,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%',
+                fontSize: '0.62rem',
+                fontWeight: '800',
                 letterSpacing: '-0.01em',
-                transition: 'color 0.2s ease',
+                marginTop: '2px',
+                whiteSpace: 'nowrap',
+                color: healthItem.active ? '#ffffff' : (dark ? '#e03b60' : '#871233'),
               }}
             >
-              {item.label}
+              Mi Salud
             </span>
           </Link>
-        )
-      })}
+        )}
+
+        {/* Mi Perfil */}
+        <Link
+          to={profileItem.to}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '4px 8px',
+            minWidth: '54px',
+            borderRadius: '16px',
+            textDecoration: 'none',
+            background: profileItem.active
+              ? 'linear-gradient(135deg, #871233, #e03b60)'
+              : (dark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(135, 18, 51, 0.05)'),
+            color: profileItem.active ? '#ffffff' : (dark ? '#e03b60' : '#871233'),
+            boxShadow: profileItem.active
+              ? '0 2px 10px rgba(135, 18, 51, 0.5)'
+              : 'none',
+            transition: 'all 0.2s ease',
+            position: 'relative',
+          }}
+        >
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px' }}>
+            {isAuthenticated && user?.avatar ? (
+              <div
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  border: `1.5px solid ${profileItem.active ? '#ffffff' : (dark ? '#e03b60' : '#871233')}`,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <img
+                  src={user.avatar.startsWith('http') ? user.avatar : `${API_BASE}/${user.avatar}`}
+                  alt={user.name || 'Perfil'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                />
+              </div>
+            ) : (
+              <RiUser3Fill
+                size={17}
+                style={{
+                  color: profileItem.active ? '#ffffff' : (dark ? '#e03b60' : '#871233'),
+                  transform: profileItem.active ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'transform 0.2s ease'
+                }}
+              />
+            )}
+          </div>
+          <span
+            style={{
+              fontSize: '0.62rem',
+              fontWeight: '800',
+              letterSpacing: '-0.01em',
+              marginTop: '2px',
+              whiteSpace: 'nowrap',
+              color: profileItem.active ? '#ffffff' : (dark ? '#e03b60' : '#871233'),
+            }}
+          >
+            Mi Perfil
+          </span>
+        </Link>
+      </div>
+
+      {/* ── Right Items (Hecho en Tam., Noticias) ─────────────── */}
+      <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'space-around', height: '100%' }}>
+        {rightItems.map(renderStandardItem)}
+      </div>
     </nav>
   )
 }
